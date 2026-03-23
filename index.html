@@ -244,6 +244,11 @@ input.fi{resize:none;}
     <div class="step-content" id="sc-analyze">
       <div style="max-width:600px">
         <div class="fg">
+          <div class="fl">Kontext pro analýzu <span class="v">(volitelné)</span></div>
+          <input class="fi" id="sceneHint" placeholder="Např. kuchyně restaurace, kancelář ve 3. patře, obývák s terasou...">
+          <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.3rem;">Pomůže Claudovi správně pochopit, co je na obrázku</div>
+        </div>
+        <div class="fg">
           <button class="btn btn-f" id="analyzeBtn" style="width:100%">Analyzovat scénu</button>
           <div class="st" id="analyzeStatus"></div>
         </div>
@@ -601,8 +606,10 @@ async function analyze(){
   }catch{}
   sta('Analyzuji scénu...',0);
   const {b64:b,mime:m}=await toB64(ST.imageData);
+  const hint=document.getElementById('sceneHint').value.trim();
+  const ctxLine=hint?` Context from the user: this is "${hint}".`:'';
   try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AK,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:m,data:b}},{type:'text',text:'You are an architectural visualization expert. Describe this SketchUp 3D model export in detail for generating a photorealistic render. Include: building form, materials, style, floors, roof, windows, landscape, camera angle. Be factual. Single dense paragraph.'}]}]})});
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:m,data:b}},{type:'text',text:'You are an architectural visualization expert. Describe this SketchUp 3D model export in detail for generating a photorealistic render.'+ctxLine+' Include: building form, materials, style, floors, roof, windows, landscape, camera angle. Be factual. Single dense paragraph.'}]}]})});
     const d=await r.json();if(d.error)throw new Error(d.error.message);
     const desc=d.content[0].text;document.getElementById('description').value=desc;ST.description=desc;updDescPreview();
     sbPost('/rest/v1/analyses',{filename:fname,description:desc}).catch(()=>{});
