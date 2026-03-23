@@ -89,7 +89,8 @@ const nav = {
   showView(id){
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
     $('v-'+id).classList.add('on');
-    document.querySelectorAll('nav a').forEach(a=>{a.classList.toggle('on',a.dataset.nav===(id==='spend'?'spend':'studio'));});
+    const navMap={sessions:'studio',session:'studio',scene:'studio',spend:'spend',master:'master'};
+    document.querySelectorAll('nav a').forEach(a=>{a.classList.toggle('on',a.dataset.nav===(navMap[id]||'studio'));});
   },
   setCrumb(parts){
     $('crumb').innerHTML=parts.map((p,i)=>i<parts.length-1?`<span onclick="${esc(p.fn)}">${esc(p.label)}</span><span class="sep">›</span>`:`<span class="cur">${esc(p.label)}</span>`).join('');
@@ -629,6 +630,218 @@ const presets = {
     const all=presets.getAll();
     $('presetBar').innerHTML=all.map((p,i)=>`<div class="preset-chip" onclick="presets.apply(${i})" title="Dvojklik = smazat" ondblclick="event.stopPropagation();presets.remove(${i})">${esc(p.name)}</div>`).join('')||'<span style="font-size:0.7rem;color:var(--text-light);">Žádné předvolby</span>';
   }
+};
+
+/* ============================================================
+   MASTER MARINADA
+   ============================================================ */
+const MASTER_ATTRS=[
+  {key:'lighting',name:'Osvětlení',section:'LIGHTING'},
+  {key:'materials',name:'Materiály',section:'MATERIALS'},
+  {key:'camera',name:'Kompozice / úhel',section:'CAMERA'},
+  {key:'people',name:'Lidé / aktivita',section:'CONTEXT',match:'people'},
+  {key:'vegetation',name:'Zeleň',section:'CONTEXT',match:'vegetation'},
+  {key:'windows',name:'Výhled z oken',section:'CONTEXT',match:'WINDOWS'},
+  {key:'mood',name:'Barvy / nálada',section:'QUALITY'},
+];
+
+const master = {
+  left: null,   // {render, scene, session, prompt, sourceImg}
+  right: null,
+  attrs: {},    // key -> 'left' | 'right'
+  source: 'left',
+  picking: null, // 'left' | 'right'
+
+  init(){
+    MASTER_ATTRS.forEach(a=>{if(!master.attrs[a.key])master.attrs[a.key]='left';});
+    master.renderAttrs();
+  },
+
+  async pickRender(side){
+    master.picking=side;
+    const el=$('masterBrowser');
+    el.style.display='flex';
+    $('masterBrowserContent').innerHTML='<div class="skeleton skel-card"></div>';
+    // Load all sessions with scenes and renders
+    const sessions=await sb.get('/rest/v1/sessions?select=*,scenes(id,name,source_image_path,renders(id,version,image_path,note,prompt))&order=created_at.desc');
+    let html='';
+    for(const s of(sessions||[])){
+      const scenesHtml=(s.scenes||[]).map(sc=>{
+        const renders=(sc.renders||[]).filter(r=>validUrl(r.image_path)&&r.version>0);
+        if(!renders.length)return'';
+        return`<div class="mbrow-scene"><div class="mbrow-scene-name">${esc(sc.name)}</div><div class="mbrow-renders">${renders.map(r=>
+          `<div class="mbrow-render" onclick="master.selectRender(${s.id},'${esc(s.name)}',${sc.id},'${esc(sc.name)}','${esc(sc.source_image_path||'')}',${r.id},${r.version},'${esc(r.image_path)}',\`${esc(r.prompt||'')}\`,'${esc(r.note||'')}')">
+            <img src="${esc(r.image_path)}"><div class="mbrow-render-label">v${r.version} — ${esc(r.note||'')}</div></div>`
+        ).join('')}</div></div>`;
+      }).join('');
+      if(scenesHtml)html+=`<div class="mbrow-session"><div class="mbrow-session-name">${esc(s.name)}</div>${scenesHtml}</div>`;
+    }
+    $('masterBrowserContent').innerHTML=html||'<div style="color:var(--text-light);padding:2rem;">Žádné rendery</div>';
+  },
+
+  selectRender(sessionId,sessionName,sceneId,sceneName,sourceImg,renderId,version,imgPath,prompt,note){
+    const data={sessionId,sessionName,sceneId,sceneName,sourceImg,renderId,version,imgPath,prompt,note};
+    if(master.picking==='left')master.left=data;
+    else master.right=data;
+    master.closeBrowser();
+    master.renderPicks();
+    if(master.left&&master.right)$('masterAttrs').style.display='';
+    master.renderAttrs();
+  },
+
+  closeBrowser(){$('masterBrowser').style.display='none';master.picking=null;},
+
+  renderPicks(){
+    ['left','right'].forEach(side=>{
+      const el=$('master'+(side==='left'?'Left':'Right')+'Pick');
+      const d=master[side];
+      if(!d){el.innerHTML='<span style="color:var(--text-light);font-size:0.85rem;">Klikni pro výběr renderu</span>';el.style.border='2px dashed var(--border)';return;}
+      el.style.border='2px solid var(--olive)';el.style.borderRadius='var(--r)';el.style.overflow='hidden';el.style.cursor='pointer';
+      el.innerHTML=`<img src="${esc(d.imgPath)}" style="width:100%;height:200px;object-fit:cover;display:block;">
+        <div style="padding:0.5rem 0.75rem;font-size:0.75rem;color:var(--text-dim);">
+          <strong style="color:var(--text)">${esc(d.sessionName)}</strong> → ${esc(d.sceneName)} → v${d.version}
+          <div style="font-size:0.68rem;margin-top:0.15rem;">${esc(d.note)}</div>
+        </div>`;
+    });
+  },
+
+  renderAttrs(){
+    if(!master.left||!master.right){$('masterAttrList').innerHTML='';return;}
+    $('masterAttrList').innerHTML=MASTER_ATTRS.map(a=>{
+      const val=master.attrs[a.key]||'left';
+      return`<div class="mattr">
+        <div class="mattr-name">${a.name}</div>
+        <div class="mattr-pick">
+          <div class="mattr-opt ${val==='left'?'on-l':''}" onclick="master.setAttr('${a.key}','left')">L</div>
+          <div class="mattr-opt ${val==='right'?'on-r':''}" onclick="master.setAttr('${a.key}','right')">R</div>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  setAttr(key,side){master.attrs[key]=side;master.renderAttrs();},
+  setSource(side){
+    master.source=side;
+    $('masterSourcePick').querySelectorAll('.pill').forEach(p=>p.classList.toggle('on',p.dataset.val===side));
+  },
+
+  async generate(){
+    if(!master.left||!master.right){toast('Vyber oba rendery');return;}
+    const btn=$('masterGenBtn');btn.disabled=true;btn.textContent='Generuji Master...';
+    const loader=$('masterLoader');loader.innerHTML='<div class="loader-dots"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div><div class="loader-track"><div class="loader-bar"></div></div><div class="loader-msg">Mixuji to nejlepší z obou renderů...</div>';
+    loader.classList.add('on');
+    const st=$('masterSt');st.textContent='';
+
+    try{
+      // Build hybrid prompt from section assignments
+      const leftPrompt=master.left.prompt||'';
+      const rightPrompt=master.right.prompt||'';
+
+      // Parse sections from prompts
+      function parseSections(p){
+        const sections={};let cur='';
+        for(const line of p.split('\n')){
+          const m=line.match(/^([A-Z]+):/);
+          if(m)cur=m[1];
+          if(cur)sections[cur]=(sections[cur]||'')+line+'\n';
+        }
+        return sections;
+      }
+      const leftSec=parseSections(leftPrompt);
+      const rightSec=parseSections(rightPrompt);
+
+      // Build hybrid prompt
+      let hybridParts=['Transform the attached SketchUp source image into a photorealistic architectural photograph.',''];
+      // Take scene description from the source side
+      const srcSide=master.source==='left'?master.left:master.right;
+      const sceneMatch=(srcSide.prompt||'').match(/Scene: (.+?)(\n\n|\n[A-Z])/s);
+      if(sceneMatch)hybridParts.push('Scene: '+sceneMatch[1],'');
+
+      for(const attr of MASTER_ATTRS){
+        const side=master.attrs[attr.key]||'left';
+        const secs=side==='left'?leftSec:rightSec;
+        const label=side==='left'?'levého':'pravého';
+        if(attr.section&&secs[attr.section]){
+          hybridParts.push(`${attr.section} (z ${label} renderu):`);
+          hybridParts.push(secs[attr.section].trim());
+          hybridParts.push('');
+        }
+      }
+      hybridParts.push('IMPORTANT: This is a hybrid render. Image 1 is the LEFT reference render. Image 2 is the RIGHT reference render. Image 3 is the SketchUp source geometry.');
+      hybridParts.push('Match the visual qualities specified above from the indicated reference images. Generate a FRESH photorealistic render from the SketchUp source.');
+
+      const prompt=hybridParts.filter(Boolean).join('\n');
+
+      // Build parts: left render, right render, source SketchUp
+      const parts=[];
+      const leftD=await sb.toB64(master.left.imgPath);
+      parts.push({inlineData:{mimeType:leftD.mime,data:leftD.b64}});
+      const rightD=await sb.toB64(master.right.imgPath);
+      parts.push({inlineData:{mimeType:rightD.mime,data:rightD.b64}});
+
+      // Source SketchUp image
+      const sourceData=master.source==='left'?master.left:master.right;
+      if(sourceData.sourceImg&&validUrl(sourceData.sourceImg)){
+        const srcD=await sb.toB64(sourceData.sourceImg);
+        parts.push({inlineData:{mimeType:srcD.mime,data:srcD.b64}});
+      }
+      parts.push({text:prompt});
+
+      // Generate
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts}],generationConfig:{responseModalities:['TEXT','IMAGE'],imageConfig:{imageSize:'2K'}}})
+      });
+      const d=await r.json();if(d.error)throw new Error(d.error.message);
+
+      let ok=false;
+      for(const p of d.candidates[0].content.parts){if(p.inlineData){
+        const imgSrc=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+        // Upload to Supabase
+        const fname=`master-${Date.now()}.png`;
+        const url=await sb.uploadImg(imgSrc,fname);
+
+        $('masterResult').innerHTML=`
+          <div class="fl">Master Marinada</div>
+          <img src="${esc(url)}" style="max-width:100%;border:1px solid var(--border);border-radius:var(--r);display:block;">
+          <div class="rmeta" style="margin-top:0.5rem;">
+            L: ${esc(master.left.sessionName)} → v${master.left.version} · R: ${esc(master.right.sessionName)} → v${master.right.version}
+          </div>
+          <div class="btns" style="margin-top:0.75rem;">
+            <button class="btn btn-o btn-sm" onclick="master.download('${esc(url)}')">Stáhnout 2K</button>
+            <button class="btn btn-f btn-sm" onclick="master.gen4K('${esc(url)}')">Stáhnout v 4K</button>
+          </div>
+          <div class="st" id="masterDlSt"></div>`;
+        ok=true;
+      }}
+      if(!ok)throw new Error('Žádný obrázek');
+      st.textContent='';
+    }catch(e){st.textContent=e.message;st.className='st er';}
+    loader.classList.remove('on');btn.disabled=false;btn.textContent='Vytvořit Master Marinadu';
+  },
+
+  async download(url){
+    try{const r=await fetch(url);const blob=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='master-marinada.png';a.click();URL.revokeObjectURL(a.href);}
+    catch{window.open(url,'_blank');}
+  },
+
+  async gen4K(url){
+    const st=$('masterDlSt');st.textContent='Generuji 4K...';st.className='st ld';
+    try{
+      const{b64:b,mime:m}=await sb.toB64(url);
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{inlineData:{mimeType:m,data:b}},{text:'Upscale to 4K. Keep EXACT same image. Only increase resolution.'}]}],generationConfig:{responseModalities:['TEXT','IMAGE'],imageConfig:{imageSize:'4K'}}})
+      });
+      const d=await r.json();if(d.error)throw new Error(d.error.message);
+      for(const p of d.candidates[0].content.parts){if(p.inlineData){
+        const src=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+        const blob=await(await fetch(src)).blob();
+        const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='master-marinada-4k.png';a.click();URL.revokeObjectURL(a.href);
+        st.textContent='4K staženo!';setTimeout(()=>{st.textContent='';},3000);
+      }}
+    }catch(e){st.textContent=e.message;st.className='st er';}
+  },
 };
 
 /* ============================================================

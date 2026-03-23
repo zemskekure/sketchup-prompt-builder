@@ -35,6 +35,7 @@
       <nav>
         <a class="on" data-nav="studio" onclick="nav.goSessions()">Studio</a>
         <a data-nav="spend" onclick="nav.showView('spend');spend.load()">Výdaje</a>
+      <a data-nav="master" onclick="nav.showView('master');master.init()">Master</a>
       </nav>
       <a onclick="logout()" style="font-size:0.8rem;color:var(--text-light);cursor:pointer;text-decoration:none;border-left:1px solid var(--border);padding-left:1rem;font-weight:500;letter-spacing:0.02em;transition:color 0.15s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-light)'">Odhlásit</a>
     </div>
@@ -236,6 +237,62 @@
       <div class="st" id="outputSt"></div>
       <div class="step-nav" style="margin-top:1.5rem">
         <button class="btn btn-o" onclick="scene.goStep(4)">← Iterace</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MASTER MARINADA -->
+  <div class="view" id="v-master">
+    <div class="sec-title">Master Marinada</div>
+    <div class="sec-sub">Vyber dva rendery z libovolných projektů a zkombinuj to nejlepší z obou — osvětlení jednoho, materiály druhého.</div>
+
+    <div class="duo" style="margin-bottom:2rem;">
+      <!-- Left pick -->
+      <div>
+        <div class="fl">Levý render</div>
+        <div id="masterLeftPick" style="min-height:120px;background:var(--white);border:2px dashed var(--border);border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;" onclick="master.pickRender('left')">
+          <span style="color:var(--text-light);font-size:0.85rem;">Klikni pro výběr renderu</span>
+        </div>
+      </div>
+      <!-- Right pick -->
+      <div>
+        <div class="fl">Pravý render</div>
+        <div id="masterRightPick" style="min-height:120px;background:var(--white);border:2px dashed var(--border);border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;" onclick="master.pickRender('right')">
+          <span style="color:var(--text-light);font-size:0.85rem;">Klikni pro výběr renderu</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attribute picker -->
+    <div id="masterAttrs" style="display:none;">
+      <div class="fl">Co vzít odkud?</div>
+      <div id="masterAttrList"></div>
+      <div style="margin-top:1.25rem;">
+        <div class="fl">Zdrojový SketchUp obrázek</div>
+        <div class="pills" id="masterSourcePick">
+          <div class="pill on" data-val="left" onclick="master.setSource('left')">Z levého renderu</div>
+          <div class="pill" data-val="right" onclick="master.setSource('right')">Z pravého renderu</div>
+        </div>
+        <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.3rem;">Geometrie a úhel pohledu se použije z tohoto zdroje</div>
+      </div>
+      <div class="btns" style="margin-top:1.5rem;">
+        <button class="btn btn-r" onclick="master.generate()" id="masterGenBtn">Vytvořit Master Marinadu</button>
+      </div>
+      <div class="loader" id="masterLoader"><div class="loader-bar"></div></div>
+      <div class="st" id="masterSt"></div>
+    </div>
+
+    <!-- Result -->
+    <div id="masterResult" style="margin-top:2rem;"></div>
+
+    <!-- Render browser modal -->
+    <div id="masterBrowser" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:300;display:none;align-items:center;justify-content:center;">
+      <div style="background:var(--cream);border-radius:var(--r-lg);padding:2rem;max-width:800px;width:90%;max-height:80vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <div class="fl" style="margin:0;">Vyber render</div>
+          <button class="btn btn-o btn-sm" onclick="master.closeBrowser()">Zavřít</button>
+        </div>
+        <div id="masterBrowserContent"></div>
       </div>
     </div>
   </div>
