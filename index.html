@@ -535,7 +535,13 @@ async function goScene(id){
   document.getElementById('sceneTitle').textContent=curScene.name;
   // Load renders for this scene
   const rows=await sbGet(`/rest/v1/renders?scene_id=eq.${id}&select=*&order=version.asc`);
-  sceneRenders=(rows||[]).map(r=>({id:r.version,imgSrc:r.image_path,note:r.note||'',prompt:r.prompt||'',cost:parseFloat(r.cost)||CPR,parentId:r.parent_id,dbId:r.id}));
+  // Separate real renders (version>0) and 4K entries (version=0)
+  const fourKs=(rows||[]).filter(r=>r.version===0&&r.note&&r.note.startsWith('4K verze'));
+  sceneRenders=(rows||[]).filter(r=>r.version>0).map(r=>({id:r.version,imgSrc:r.image_path,note:r.note||'',prompt:r.prompt||'',cost:parseFloat(r.cost)||CPR,parentId:r.parent_id,dbId:r.id}));
+  // Attach 4K URLs to parent renders
+  for(const fk of fourKs){
+    if(fk.parent_id){const parent=sceneRenders.find(x=>x.dbId===fk.parent_id);if(parent)parent.url4k=fk.image_path;}
+  }
   // Restore state from scene
   if(curScene.source_image_path){ST.imageData=curScene.source_image_path;showUploadedImg(ST.imageData);document.getElementById('toAnalyzeBtn').disabled=false;}
   if(curScene.description){ST.description=curScene.description;document.getElementById('description').value=ST.description;}
@@ -720,14 +726,24 @@ async function loadStyleRef(){if(!curSession?.style_ref_render_id)return null;
   return r?.[0]?{imgSrc:r[0].image_path,dbId:r[0].id}:null;}
 
 function showRender(v){
+  const has4k=v.url4k;
   document.getElementById('rout').innerHTML=`<img src="${v.imgSrc}">
     <div class="rmeta">v${v.id} · $${v.cost.toFixed(3)} · ${(v.cost*CZK).toFixed(1)} Kč · ${v.note}</div>
     <div class="btns" style="margin-top:0.5rem">
-      <button class="btn btn-o btn-sm" onclick="dlV(${v.id})">Stáhnout</button>
-      <button class="btn btn-f btn-sm" onclick="render4K(${v.id})" id="btn4k">Stáhnout v 4K</button>
+      <button class="btn btn-o btn-sm" onclick="dlV(${v.id})">Stáhnout 2K</button>
+      ${has4k
+        ?`<button class="btn btn-f btn-sm" onclick="dl4K(${v.id})">Stáhnout 4K</button>`
+        :`<button class="btn btn-f btn-sm" onclick="render4K(${v.id})" id="btn4k">Vygenerovat 4K</button>`}
       <button class="btn btn-o btn-sm" onclick="setStyleRef(${v.dbId})">Referenční styl</button>
     </div>
     <div class="st" id="st4k"></div>`;
+}
+
+async function dl4K(id){
+  const v=sceneRenders.find(x=>x.id===id);if(!v||!v.url4k)return;
+  try{const r=await fetch(v.url4k);const blob=await r.blob();
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`marinada-v${v.id}-4k.png`;a.click();URL.revokeObjectURL(a.href);
+  }catch{window.open(v.url4k,'_blank');}
 }
 function refine(){const i=document.getElementById('refIn'),n=i.value.trim();if(!n)return;i.value='';doRender(n);}
 
@@ -753,11 +769,19 @@ async function render4K(id){
     const d=await r.json();if(d.error)throw new Error(d.error.message);
     for(const p of d.candidates[0].content.parts){if(p.inlineData){
       const src=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+      // Upload 4K to Supabase storage
+      const fname=`render-s${curScene.id}-v${v.id}-4k-${Date.now()}.png`;
+      const url=await uploadImg(src,fname);
+      // Save to DB with reference to parent
+      if(curScene)sbPost('/rest/v1/renders',{version:0,scene_id:curScene.id,note:'4K verze v'+v.id,cost:0.151,parent_id:v.dbId,image_path:url},{'Prefer':'return=minimal'}).catch(()=>{});
+      // Store 4K URL on the version object
+      v.url4k=url;
+      // Auto-download
       const blob=await(await fetch(src)).blob();
       const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`marinada-v${v.id}-4k.png`;a.click();URL.revokeObjectURL(a.href);
-      // Save cost
-      if(curScene)sbPost('/rest/v1/renders',{version:0,scene_id:curScene.id,note:'4K verze v'+v.id,cost:0.151,image_path:'4k-download'},{'Prefer':'return=minimal'}).catch(()=>{});
-      if(el){el.textContent='4K staženo!';setTimeout(()=>{el.textContent='';},3000);}
+      if(el){el.textContent='4K uloženo a staženo!';setTimeout(()=>{el.textContent='';},3000);}
+      // Update the render view to show 4K download link
+      showRender(v);
     }}
   }catch(e){if(el){el.textContent=e.message;el.className='st er';}}
   if(btn){btn.disabled=false;btn.textContent='Stáhnout v 4K';}
