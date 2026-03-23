@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>marinada</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -155,6 +156,15 @@ input.fi{resize:none;}
 .ltab tr:last-child td{border-bottom:none;}
 .ltab .it{font-family:var(--serif);font-style:italic;}
 
+/* Manage menu */
+.mgmt{display:inline-flex;gap:0.4rem;margin-left:0.75rem;vertical-align:middle;}
+.mgmt .btn{font-size:0.7rem;padding:0.25rem 0.5rem;}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;}
+.card-actions{display:flex;gap:0.25rem;margin-top:0.3rem;}
+.card-actions .btn{font-size:0.65rem;padding:0.2rem 0.4rem;}
+.sec-title-row{display:flex;align-items:center;gap:0.75rem;margin-bottom:0.3rem;}
+.sec-title-row .sec-title{margin-bottom:0;}
+
 @media(max-width:900px){.duo,.cards{grid-template-columns:1fr;}.shell{padding:0 1.25rem;}.sp-cards{grid-template-columns:1fr;}}
 </style>
 </head>
@@ -189,7 +199,10 @@ input.fi{resize:none;}
 
   <!-- SESSION DETAIL (scenes list) -->
   <div class="view" id="v-session">
-    <div class="sec-title" id="sessionTitle"></div>
+    <div class="sec-title-row">
+      <div class="sec-title" id="sessionTitle"></div>
+      <div class="mgmt" id="sessionMgmt"></div>
+    </div>
     <div class="sec-sub">Scény tohoto projektu. Referenční styl se sdílí napříč scénami.</div>
     <div class="style-ref" id="styleRefBox">
       <div class="fl">Referenční styl <span class="v" id="styleRefStatus">žádný</span></div>
@@ -200,7 +213,10 @@ input.fi{resize:none;}
 
   <!-- SCENE STUDIO (step by step) -->
   <div class="view" id="v-scene">
-    <div class="sec-title" id="sceneTitle"></div>
+    <div class="sec-title-row">
+      <div class="sec-title" id="sceneTitle"></div>
+      <div class="mgmt" id="sceneMgmt"></div>
+    </div>
     <div class="steps" id="stepsBar"></div>
 
     <!-- Step 1: Upload -->
@@ -398,16 +414,45 @@ function setCrumb(parts){document.getElementById('crumb').innerHTML=parts.map((p
 
 // --- SESSIONS ---
 async function goSessions(){showView('sessions');setCrumb([{label:'Projekty'}]);
-  const rows=await sbGet('/rest/v1/sessions?select=*,scenes(id)&order=created_at.desc');
+  const rows=await sbGet('/rest/v1/sessions?select=*,scenes(id,renders(id))&order=created_at.desc');
   const el=document.getElementById('sessionCards');
   el.innerHTML=`<div class="card card-new" onclick="createSession()">+ Nový projekt</div>`+
-    (rows||[]).map(s=>`<div class="card" onclick="goSession(${s.id})">
-      <div class="card-body"><div class="card-name">${s.name}</div>
-      <div class="card-meta">${(s.scenes||[]).length} scén</div></div></div>`).join('');
+    (rows||[]).map(s=>{
+      const totalRenders=(s.scenes||[]).reduce((n,sc)=>(sc.renders||[]).length+n,0);
+      return`<div class="card">
+        <div class="card-body" onclick="goSession(${s.id})" style="cursor:pointer">
+          <div class="card-name">${s.name}</div>
+          <div class="card-meta">${(s.scenes||[]).length} scén · ${totalRenders} renderů</div>
+        </div>
+        <div class="card-actions" style="padding:0 0.75rem 0.6rem">
+          <button class="btn btn-o" style="font-size:0.65rem;padding:0.2rem 0.4rem" onclick="event.stopPropagation();renameSession(${s.id},'${s.name.replace(/'/g,"\\'")}')">Přejmenovat</button>
+          <button class="btn btn-o" style="font-size:0.65rem;padding:0.2rem 0.4rem" onclick="event.stopPropagation();downloadSessionZip(${s.id},'${s.name.replace(/'/g,"\\'")}')">Stáhnout ZIP</button>
+          <button class="btn btn-o" style="font-size:0.65rem;padding:0.2rem 0.4rem;color:var(--red)" onclick="event.stopPropagation();deleteSession(${s.id},'${s.name.replace(/'/g,"\\'")}')">Smazat</button>
+        </div>
+      </div>`}).join('');
 }
 async function createSession(){const name=prompt('Název projektu:');if(!name)return;
   const r=await sbPost('/rest/v1/sessions',{name},{'Prefer':'return=representation'});
   if(r&&r[0])goSession(r[0].id);else goSessions();}
+async function renameSession(id,old){const name=prompt('Nový název:',old);if(!name||name===old)return;
+  await sbPatch(`/rest/v1/sessions?id=eq.${id}`,{name});goSessions();}
+async function deleteSession(id,name){if(!confirm(`Opravdu smazat projekt "${name}" a všechny jeho scény a rendery?`))return;
+  await fetch(`${SB}/rest/v1/sessions?id=eq.${id}`,{method:'DELETE',headers:hdr()});goSessions();}
+async function downloadSessionZip(id,name){
+  const scenes=await sbGet(`/rest/v1/scenes?session_id=eq.${id}&select=name,renders(version,image_path,note)`);
+  if(!scenes||!scenes.length){alert('Žádné scény ke stažení.');return;}
+  const zip=new JSZip();
+  for(const sc of scenes){
+    const folder=zip.folder(sc.name.replace(/[\/\\]/g,'-'));
+    for(const r of (sc.renders||[])){
+      try{const resp=await fetch(r.image_path);const blob=await resp.blob();
+        folder.file(`v${r.version}-${(r.note||'render').replace(/[\/\\]/g,'-')}.png`,blob);
+      }catch(e){console.warn('Skip:',r.image_path,e);}
+    }
+  }
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${name.replace(/[\/\\]/g,'-')}.zip`;a.click();
+}
 
 // --- SESSION DETAIL ---
 async function goSession(id){
@@ -415,19 +460,48 @@ async function goSession(id){
   if(!curSession)return goSessions();
   showView('session');setCrumb([{label:'Projekty',fn:'goSessions()'},{label:curSession.name}]);
   document.getElementById('sessionTitle').textContent=curSession.name;
+  document.getElementById('sessionMgmt').innerHTML=`
+    <button class="btn btn-o" onclick="renameSession(${curSession.id},'${curSession.name.replace(/'/g,"\\'")}')">Přejmenovat</button>
+    <button class="btn btn-o" onclick="downloadSessionZip(${curSession.id},'${curSession.name.replace(/'/g,"\\'")}')">Stáhnout ZIP</button>
+    <button class="btn btn-o" style="color:var(--red)" onclick="deleteSession(${curSession.id},'${curSession.name.replace(/'/g,"\\'")}')">Smazat</button>`;
   updStyleRefUI();
-  const scenes=await sbGet(`/rest/v1/scenes?session_id=eq.${id}&select=*,renders(id,image_path,version)&order=created_at.desc`);
+  const scenes=await sbGet(`/rest/v1/scenes?session_id=eq.${id}&select=*,renders(id,image_path,version,note)&order=created_at.desc`);
   const el=document.getElementById('sceneCards');
   el.innerHTML=`<div class="card card-new" onclick="createScene()">+ Nová scéna</div>`+
     (scenes||[]).map(sc=>{
       const last=(sc.renders||[]).sort((a,b)=>b.version-a.version)[0];
       const img=last?`<img class="card-img" src="${last.image_path}">`:`<div class="card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:0.8rem;">Žádný render</div>`;
-      return`<div class="card" onclick="goScene(${sc.id})">${img}<div class="card-body"><div class="card-name">${sc.name}</div><div class="card-meta">${(sc.renders||[]).length} renderů</div></div></div>`;
+      return`<div class="card">
+        <div onclick="goScene(${sc.id})" style="cursor:pointer">${img}
+          <div class="card-body"><div class="card-name">${sc.name}</div><div class="card-meta">${(sc.renders||[]).length} renderů</div></div>
+        </div>
+        <div class="card-actions" style="padding:0 0.75rem 0.6rem">
+          <button class="btn btn-o" style="font-size:0.65rem;padding:0.2rem 0.4rem" onclick="event.stopPropagation();renameScene(${sc.id},'${sc.name.replace(/'/g,"\\'")}')">Přejmenovat</button>
+          <button class="btn btn-o" style="font-size:0.65rem;padding:0.2rem 0.4rem" onclick="event.stopPropagation();downloadSceneZip(${sc.id},'${sc.name.replace(/'/g,"\\'")}')">ZIP</button>
+          <button class="btn btn-o" style="font-size:0.65rem;padding:0.2rem 0.4rem;color:var(--red)" onclick="event.stopPropagation();deleteScene(${sc.id},'${sc.name.replace(/'/g,"\\'")}')">Smazat</button>
+        </div>
+      </div>`;
     }).join('');
 }
 async function createScene(){const name=prompt('Název scény:');if(!name||!curSession)return;
   const r=await sbPost('/rest/v1/scenes',{session_id:curSession.id,name},{'Prefer':'return=representation'});
   if(r&&r[0])goScene(r[0].id);else goSession(curSession.id);}
+async function renameScene(id,old){const name=prompt('Nový název scény:',old);if(!name||name===old)return;
+  await sbPatch(`/rest/v1/scenes?id=eq.${id}`,{name});goSession(curSession.id);}
+async function deleteScene(id,name){if(!confirm(`Smazat scénu "${name}" a všechny její rendery?`))return;
+  await fetch(`${SB}/rest/v1/scenes?id=eq.${id}`,{method:'DELETE',headers:hdr()});goSession(curSession.id);}
+async function downloadSceneZip(id,name){
+  const renders=await sbGet(`/rest/v1/renders?scene_id=eq.${id}&select=version,image_path,note`);
+  if(!renders||!renders.length){alert('Žádné rendery ke stažení.');return;}
+  const zip=new JSZip();
+  for(const r of renders){
+    try{const resp=await fetch(r.image_path);const blob=await resp.blob();
+      zip.file(`v${r.version}-${(r.note||'render').replace(/[\/\\]/g,'-')}.png`,blob);
+    }catch(e){console.warn('Skip:',r.image_path,e);}
+  }
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${name.replace(/[\/\\]/g,'-')}.zip`;a.click();
+}
 
 // --- SCENE STUDIO ---
 let curStep=0;
@@ -439,6 +513,10 @@ async function goScene(id){
   showView('scene');
   setCrumb([{label:'Projekty',fn:'goSessions()'},{label:curSession.name,fn:`goSession(${curSession.id})`},{label:curScene.name}]);
   document.getElementById('sceneTitle').textContent=curScene.name;
+  document.getElementById('sceneMgmt').innerHTML=`
+    <button class="btn btn-o" style="font-size:0.7rem;padding:0.25rem 0.5rem" onclick="renameScene(${curScene.id},'${curScene.name.replace(/'/g,"\\'")}')">Přejmenovat</button>
+    <button class="btn btn-o" style="font-size:0.7rem;padding:0.25rem 0.5rem" onclick="downloadSceneZip(${curScene.id},'${curScene.name.replace(/'/g,"\\'")}')">ZIP</button>
+    <button class="btn btn-o" style="font-size:0.7rem;padding:0.25rem 0.5rem;color:var(--red)" onclick="if(confirm('Smazat scénu?')){deleteScene(${curScene.id},'${curScene.name.replace(/'/g,"\\'")}');}">Smazat</button>`;
   // Load renders for this scene
   const rows=await sbGet(`/rest/v1/renders?scene_id=eq.${id}&select=*&order=version.asc`);
   sceneRenders=(rows||[]).map(r=>({id:r.version,imgSrc:r.image_path,note:r.note||'',prompt:r.prompt||'',cost:parseFloat(r.cost)||CPR,parentId:r.parent_id,dbId:r.id}));
