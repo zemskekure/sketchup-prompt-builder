@@ -389,23 +389,43 @@ const render = {
   async run(note){
     const pr=$('promptOut').value.trim();
     if(!pr||pr.startsWith('Nejdřív')){render.stR('Nejdřív vygeneruj prompt',1);return;}
-    const src=note&&state.renders.length?state.renders[state.renders.length-1].imgSrc:state.settings.imageData;
-    if(!src){render.stR('Nahraj obrázek',1);return;}
+    const sourceImg=state.settings.imageData;
+    if(!sourceImg){render.stR('Nahraj obrázek',1);return;}
+    const lastRender=state.renders.length?state.renders[state.renders.length-1]:null;
     const sRef=state.curSession?.style_ref_render_id?state.renders.find(x=>x.dbId===state.curSession.style_ref_render_id)||await styleRef.load():null;
+
+    // Build prompt: always use full prompt as base, add edits on top
     let rp;
-    if(note)rp=`Edit the attached architectural render. Keep everything EXCEPT: ${note}. Same angle, composition. Photorealistic output.`;
-    else if(sRef)rp=pr+'\n\nSTYLE REFERENCE:\nFirst image = style reference. Match its EXACT rendering style. Second image = new SketchUp view to render in that style.';
-    else rp=pr;
+    if(note){
+      // Collect all previous edit notes for context
+      const history=state.renders.filter(v=>v.note&&v.note!=='Základní render').map(v=>v.note);
+      const allEdits=[...history,note];
+      rp=pr+`\n\nADDITIONAL EDITS (apply all of these to the render):\n${allEdits.map((e,i)=>`${i+1}. ${e}`).join('\n')}\n\nIMPORTANT: Generate a FRESH render from the SketchUp source image with ALL the above edits applied. Do not degrade quality.`;
+    } else if(sRef){
+      rp=pr+'\n\nSTYLE REFERENCE:\nFirst image = style reference. Match its EXACT rendering style. Second image = new SketchUp view to render in that style.';
+    } else {
+      rp=pr;
+    }
 
     render.showLoader(true);render.startMsgs(note);
     $('renderBtn').disabled=true;$('refBtn').disabled=true;
     const parts=[];
     try{
-      if(sRef&&!note){const{b64:sb,mime:sm}=await sb.toB64(sRef.imgSrc);parts.push({inlineData:{mimeType:sm,data:sb}});}
-      // ^ bug: sb shadows the supabase module. Need different var name
+      // Style ref image first (if set and not iterating)
+      if(sRef&&!note){const d=await sb.toB64(sRef.imgSrc);parts.push({inlineData:{mimeType:d.mime,data:d.b64}});}
     }catch(e){console.warn('Style ref fetch failed:',e);}
     try{
-      const{b64:b,mime:m}=await sb.toB64(src);parts.push({inlineData:{mimeType:m,data:b}});parts.push({text:rp});
+      // For iterations: send source image + last render as reference
+      // For initial: just source image
+      if(note&&lastRender){
+        const refD=await sb.toB64(lastRender.imgSrc);
+        parts.push({inlineData:{mimeType:refD.mime,data:refD.b64}});
+      }
+      const{b64:b,mime:m}=await sb.toB64(sourceImg);parts.push({inlineData:{mimeType:m,data:b}});
+      if(note){
+        rp+='\n\nThe first image is a reference render showing the desired style and previous edits. The second image is the original SketchUp source. Generate a new photorealistic render from the SketchUp source, matching the reference style but with ALL edits applied.';
+      }
+      parts.push({text:rp});
       const S=state.settings;
       const genCfg={responseModalities:['TEXT','IMAGE'],imageConfig:{imageSize:'2K'}};
       if(S.aspect!=='auto')genCfg.imageConfig.aspectRatio=S.aspect;
