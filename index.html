@@ -389,6 +389,11 @@ const SB='https://vlbisbnvwfvvjbveihdf.supabase.co';
 const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYmlzYm52d2Z2dmpidmVpaGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNzQ0MDYsImV4cCI6MjA4OTg1MDQwNn0.QjE8GFLVMpPA1NCb7sf54l1ZJyTlgRhX0qeEPNHXCnM';
 let AK='',GK='';
 
+// Czech pluralization
+function czPlural(n,one,few,many){return n===1?one:(n>=2&&n<=4)?few:many;}
+function czRender(n){return n+' '+czPlural(n,'render','rendery','renderů');}
+function czScene(n){return n+' '+czPlural(n,'scéna','scény','scén');}
+
 // Current context
 let curSession=null,curScene=null,sceneRenders=[];
 const ST={imageData:null,fileName:'',description:'',sceneType:'exterior',timeOfDay:'midday',weather:'clear',material:75,angle:80,vegetation:50,people:30,floor:'low'};
@@ -441,7 +446,7 @@ async function goSessions(){showView('sessions');setCrumb([{label:'Projekty'}]);
         <div onclick="goSession(${s.id})" style="cursor:pointer">${img}
           <div class="card-body">
             <div class="card-name">${s.name}</div>
-            <div class="card-meta">${(s.scenes||[]).length} scén · ${allRenders.length} renderů</div>
+            <div class="card-meta">${czScene((s.scenes||[]).length)} · ${czRender(allRenders.length)}</div>
           </div>
         </div>
         <div class="card-actions" style="padding:0 0.75rem 0.6rem">
@@ -493,7 +498,7 @@ async function goSession(id){
       const img=last?`<img class="card-img" src="${last.image_path}">`:`<div class="card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:0.8rem;">Žádný render</div>`;
       return`<div class="card">
         <div onclick="goScene(${sc.id})" style="cursor:pointer">${img}
-          <div class="card-body"><div class="card-name">${sc.name}</div><div class="card-meta">${(sc.renders||[]).length} renderů</div></div>
+          <div class="card-body"><div class="card-name">${sc.name}</div><div class="card-meta">${czRender((sc.renders||[]).length)}</div></div>
         </div>
         <div class="card-actions" style="padding:0 0.75rem 0.6rem">
           <button class="btn btn-o" style="font-size:0.65rem;padding:0.2rem 0.4rem" onclick="event.stopPropagation();renameScene(${sc.id},'${sc.name.replace(/'/g,"\\'")}')">Přejmenovat</button>
@@ -528,6 +533,22 @@ let curStep=0;
 const STEPS=[{id:'upload',label:'Obrázek'},{id:'analyze',label:'Analýza'},{id:'settings',label:'Nastavení'},{id:'render',label:'Render'}];
 
 async function goScene(id){
+  // Reset state from previous scene
+  sceneRenders=[];
+  document.getElementById('rout').innerHTML='';
+  document.getElementById('vStr').innerHTML='';
+  document.getElementById('refineBox').style.display='none';
+  document.getElementById('reRenderBtn').style.display='none';
+  document.getElementById('uploadZone').classList.remove('has');
+  document.getElementById('uploadHint').style.display='';
+  document.getElementById('description').value='';
+  document.getElementById('descPreview').textContent='';
+  document.getElementById('windowView').value='';
+  document.getElementById('sceneHint').value='';
+  document.getElementById('promptOut').value='';
+  ST.imageData=null;ST.description='';ST.fileName='';
+  showSub('render');
+
   curScene=await sbGet(`/rest/v1/scenes?id=eq.${id}&select=*`).then(r=>r[0]);
   if(!curScene||!curSession)return;
   showView('scene');
