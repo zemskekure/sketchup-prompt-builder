@@ -316,37 +316,32 @@ input.fi{resize:none;}
 
       <!-- Sub: Render -->
       <div id="sub-render">
-        <div class="duo">
-          <div>
-            <div class="fg">
-              <div class="fl" style="cursor:pointer" onclick="togglePrompt()">
-                Prompt <span class="v" id="promptToggle">zobrazit ▾</span>
-              </div>
-              <div id="promptWrap" style="display:none">
-                <textarea class="fi fi-mono" id="promptOut" readonly></textarea>
-                <div class="btns" style="margin-top:0.5rem">
-                  <button class="btn btn-f" id="genBtn">Vygenerovat prompt</button>
-                  <button class="btn btn-o" id="copyBtn">Kopírovat</button>
-                </div>
-              </div>
-            </div>
+        <div class="btns" style="margin-bottom:1rem">
+          <button class="btn btn-r" id="renderBtn">Renderovat</button>
+          <button class="btn btn-o btn-sm" id="reRenderBtn" style="display:none" onclick="doRender(null)">Nový render ze zdroje</button>
+        </div>
+        <div class="rout" id="rout"></div>
+        <div class="refine-box" id="refineBox" style="display:none">
+          <div class="fl">Nová iterace</div>
+          <div class="refine-row">
+            <input class="fi" id="refIn" placeholder="Změň podlahu na dub, teplejší světlo...">
+            <button class="btn btn-r btn-sm" id="refBtn">Renderovat</button>
           </div>
-          <div>
-            <div class="btns">
-              <button class="btn btn-r" id="renderBtn">Renderovat</button>
-              <button class="btn btn-o btn-sm" id="reRenderBtn" style="display:none" onclick="doRender(null)">Nový render ze zdroje</button>
+          <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.3rem;">Pošle předchozí render zpět do AI s tvými změnami</div>
+        </div>
+        <div class="loader" id="loader"><div class="loader-bar"></div></div>
+        <div class="st" id="renderSt"></div>
+
+        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border);">
+          <div class="fl" style="cursor:pointer" onclick="togglePrompt()">
+            Prompt <span class="v" id="promptToggle">zobrazit ▾</span>
+          </div>
+          <div id="promptWrap" style="display:none">
+            <textarea class="fi fi-mono" id="promptOut" readonly></textarea>
+            <div class="btns" style="margin-top:0.5rem">
+              <button class="btn btn-f btn-sm" id="genBtn">Vygenerovat prompt</button>
+              <button class="btn btn-o btn-sm" id="copyBtn">Kopírovat</button>
             </div>
-            <div class="rout" id="rout"></div>
-            <div class="refine-box" id="refineBox" style="display:none">
-              <div class="fl">Nová iterace</div>
-              <div class="refine-row">
-                <input class="fi" id="refIn" placeholder="Změň podlahu na dub, teplejší světlo...">
-                <button class="btn btn-r btn-sm" id="refBtn">Renderovat</button>
-              </div>
-              <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.3rem;">Pošle předchozí render zpět do AI s tvými změnami</div>
-            </div>
-            <div class="loader" id="loader"><div class="loader-bar"></div></div>
-            <div class="st" id="renderSt"></div>
           </div>
         </div>
       </div>
@@ -722,11 +717,44 @@ function showRender(v){
     <div class="rmeta">v${v.id} · $${v.cost.toFixed(3)} · ${(v.cost*CZK).toFixed(1)} Kč · ${v.note}</div>
     <div class="btns" style="margin-top:0.5rem">
       <button class="btn btn-o btn-sm" onclick="dlV(${v.id})">Stáhnout</button>
+      <button class="btn btn-f btn-sm" onclick="render4K(${v.id})" id="btn4k">Stáhnout v 4K</button>
       <button class="btn btn-o btn-sm" onclick="setStyleRef(${v.dbId})">Referenční styl</button>
-    </div>`;
+    </div>
+    <div class="st" id="st4k"></div>`;
 }
 function refine(){const i=document.getElementById('refIn'),n=i.value.trim();if(!n)return;i.value='';doRender(n);}
-function dlV(id){const v=sceneRenders.find(x=>x.id===id);if(!v)return;const a=document.createElement('a');a.href=v.imgSrc;a.download=`marinada-v${v.id}.png`;a.click();}
+
+async function dlV(id){
+  const v=sceneRenders.find(x=>x.id===id);if(!v)return;
+  try{const r=await fetch(v.imgSrc);const blob=await r.blob();
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`marinada-v${v.id}.png`;a.click();URL.revokeObjectURL(a.href);
+  }catch{const a=document.createElement('a');a.href=v.imgSrc;a.download=`marinada-v${v.id}.png`;a.target='_blank';a.click();}
+}
+
+async function render4K(id){
+  const v=sceneRenders.find(x=>x.id===id);if(!v)return;
+  const btn=document.getElementById('btn4k');
+  if(btn){btn.disabled=true;btn.textContent='Generuji 4K...';}
+  const el=document.getElementById('st4k');if(el){el.textContent='Generuji 4K (~3,2 Kč)...';el.className='st ld';}
+  try{
+    const {b64:b,mime:m}=await toB64(v.imgSrc);
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{inlineData:{mimeType:m,data:b}},{text:'Upscale this architectural render to 4K. Keep EXACT same image. Only increase resolution and sharpen details.'}]}],
+        generationConfig:{responseModalities:['TEXT','IMAGE'],imageConfig:{imageSize:'4K'}}})
+    });
+    const d=await r.json();if(d.error)throw new Error(d.error.message);
+    for(const p of d.candidates[0].content.parts){if(p.inlineData){
+      const src=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+      const blob=await(await fetch(src)).blob();
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`marinada-v${v.id}-4k.png`;a.click();URL.revokeObjectURL(a.href);
+      // Save cost
+      if(curScene)sbPost('/rest/v1/renders',{version:0,scene_id:curScene.id,note:'4K verze v'+v.id,cost:0.151,image_path:'4k-download'},{'Prefer':'return=minimal'}).catch(()=>{});
+      if(el){el.textContent='4K staženo!';setTimeout(()=>{el.textContent='';},3000);}
+    }}
+  }catch(e){if(el){el.textContent=e.message;el.className='st er';}}
+  if(btn){btn.disabled=false;btn.textContent='Stáhnout v 4K';}
+}
 function stR(msg,err){const el=document.getElementById('renderSt');el.textContent=msg;el.className='st '+(err?'er':'ld');}
 
 // --- Style ref ---
@@ -816,6 +844,10 @@ function selectIter(id){
           <div style="font-family:var(--serif);font-size:1.1rem;margin-bottom:0.5rem;">Zdrojový obrázek</div>
           <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.3rem;">Původní export ze SketchUp</div>
           <div style="font-size:0.75rem;color:var(--text-light);margin-bottom:1rem;font-family:var(--serif);font-style:italic;">Vstup pro AI rendering</div>
+          <div class="btns">
+            <button class="btn btn-o btn-sm" onclick="reAnalyze()">Znovu analyzovat</button>
+            <button class="btn btn-o btn-sm" onclick="editDesc()">Upravit popis</button>
+          </div>
         </div>
       </div>`;
     return;
@@ -841,9 +873,34 @@ function selectIter(id){
           <button class="btn btn-o btn-sm" onclick="dlV(${v.id})">Stáhnout</button>
           <button class="btn btn-o btn-sm" onclick="setStyleRef(${v.dbId})">Referenční styl</button>
           <button class="btn btn-o btn-sm" onclick="loadIterToRender(${v.id})">Iterovat z této verze</button>
+          <button class="btn btn-o btn-sm" style="color:var(--red)" onclick="deleteRender(${v.id},${v.dbId})">Smazat</button>
         </div>
       </div>
     </div>`;
+}
+
+async function deleteRender(verId,dbId){
+  if(!confirm('Smazat tento render?'))return;
+  if(dbId)await fetch(`${SB}/rest/v1/renders?id=eq.${dbId}`,{method:'DELETE',headers:hdr()});
+  sceneRenders=sceneRenders.filter(x=>x.id!==verId);
+  renderStrip();updIterCount();
+  if(sceneRenders.length)selectIter(sceneRenders[sceneRenders.length-1].id);
+  else{document.getElementById('iterDetail').innerHTML='';document.getElementById('iterEmpty').style.display='';}
+}
+
+async function reAnalyze(){
+  // Delete cached analysis so it re-runs
+  if(ST.fileName)await fetch(`${SB}/rest/v1/analyses?filename=eq.${encodeURIComponent(ST.fileName)}`,{method:'DELETE',headers:hdr()}).catch(()=>{});
+  goStep(1);
+  setTimeout(()=>analyze(),100);
+}
+
+function editDesc(){
+  goStep(1);
+  // Show the description editor expanded
+  document.getElementById('descWrap').style.display='';
+  document.getElementById('descToggle').textContent='skrýt ▴';
+  document.getElementById('description').focus();
 }
 
 function loadIterToRender(id){
