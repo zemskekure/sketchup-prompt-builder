@@ -3,877 +3,731 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SketchUp Render Prompt Builder</title>
+<title>Cihla — SketchUp to Reality</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --bg: #08080c;
+    --surface: #111118;
+    --surface2: #18181f;
+    --border: #232330;
+    --border-hover: #35354a;
+    --text: #d4d4e0;
+    --text-dim: #7a7a90;
+    --text-bright: #f0f0ff;
+    --accent: #6366f1;
+    --accent-dim: #4f46e5;
+    --accent-glow: rgba(99,102,241,0.15);
+    --green: #22c55e;
+    --green-dim: #16a34a;
+    --green-glow: rgba(34,197,94,0.12);
+    --orange: #f59e0b;
+    --purple: #a78bfa;
+    --red: #f43f5e;
+    --radius: 10px;
+    --font: 'DM Sans', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #0a0a0a;
-    color: #e0e0e0;
-    min-height: 100vh;
-    padding: 2rem;
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Lock */
+  #lockScreen {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; align-items: center; justify-content: center; z-index: 1000;
   }
-  h1 { font-size: 1.4rem; font-weight: 600; color: #fff; }
-  .top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
+  .lock-box { text-align: center; width: 300px; }
+  .lock-logo {
+    font-size: 2.5rem; font-weight: 700; color: var(--text-bright);
+    margin-bottom: 0.25rem;
   }
-  .cost-badge {
-    background: #1a1a2e;
-    border: 1px solid #2a2a4a;
-    border-radius: 8px;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
-    color: #a0a0ff;
+  .lock-sub { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 2rem; }
+  .lock-input {
+    width: 100%; padding: 0.75rem 1rem; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    color: var(--text-bright); font-family: var(--mono); font-size: 1rem;
+    text-align: center; letter-spacing: 0.15em;
+    outline: none; transition: border-color 0.2s;
   }
-  .cost-badge strong { color: #c0c0ff; }
-  .layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-  .panel {
-    background: #161616;
-    border: 1px solid #2a2a2a;
-    border-radius: 12px;
-    padding: 1.5rem;
-  }
-  .panel h2 {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #888;
-    margin-bottom: 1rem;
-  }
-  .upload-zone {
-    border: 2px dashed #333;
-    border-radius: 8px;
-    padding: 2rem;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    margin-bottom: 1rem;
-    min-height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .upload-zone:hover { border-color: #555; }
-  .upload-zone.has-image { padding: 0; border-style: solid; }
-  .upload-zone img { max-width: 100%; max-height: 350px; border-radius: 6px; }
-  .upload-zone input { display: none; }
-  .upload-hint { color: #666; font-size: 0.9rem; }
-  .btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    font-weight: 500;
+  .lock-input:focus { border-color: var(--accent); }
+  .lock-input::placeholder { color: var(--text-dim); letter-spacing: 0; font-family: var(--font); }
+  .lock-btn {
+    width: 100%; margin-top: 0.75rem; padding: 0.7rem;
+    background: var(--accent); color: #fff; border: none;
+    border-radius: var(--radius); font-family: var(--font);
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
     transition: background 0.2s;
   }
-  .btn-primary { background: #2563eb; color: #fff; }
-  .btn-primary:hover { background: #1d4ed8; }
-  .btn-primary:disabled { background: #1e3a5f; color: #667; cursor: not-allowed; }
-  .btn-secondary { background: #222; color: #ccc; border: 1px solid #333; }
-  .btn-secondary:hover { background: #2a2a2a; }
-  .btn-render { background: #16a34a; color: #fff; }
-  .btn-render:hover { background: #15803d; }
-  .btn-render:disabled { background: #1a3a2a; color: #667; cursor: not-allowed; }
-  .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
-  .description-box {
-    width: 100%;
-    min-height: 100px;
-    padding: 0.75rem;
-    background: #0a0a0a;
-    border: 1px solid #2a2a2a;
-    border-radius: 6px;
-    color: #e0e0e0;
-    font-size: 0.9rem;
-    font-family: inherit;
-    resize: vertical;
-  }
-  .control-group { margin-bottom: 1.25rem; }
-  .control-group label {
-    display: block;
-    font-size: 0.85rem;
-    color: #aaa;
-    margin-bottom: 0.5rem;
-  }
-  .toggle-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-  .toggle-opt {
-    padding: 0.4rem 0.8rem;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    color: #aaa;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .toggle-opt:hover { border-color: #555; color: #ddd; }
-  .toggle-opt.active { background: #1e3a5f; border-color: #2563eb; color: #fff; }
-  .slider-row { display: flex; align-items: center; gap: 0.75rem; }
-  .slider-row input[type="range"] { flex: 1; accent-color: #2563eb; height: 4px; }
-  .slider-value { font-size: 0.8rem; color: #888; min-width: 3rem; text-align: right; }
-  .text-input {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    background: #0a0a0a;
-    border: 1px solid #2a2a2a;
-    border-radius: 6px;
-    color: #e0e0e0;
-    font-size: 0.85rem;
-    font-family: inherit;
-  }
-  .prompt-output {
-    width: 100%;
-    min-height: 180px;
-    padding: 0.75rem;
-    background: #0a0a0a;
-    border: 1px solid #2a2a2a;
-    border-radius: 6px;
-    color: #e0e0e0;
-    font-size: 0.9rem;
-    font-family: inherit;
-    resize: vertical;
-    margin-bottom: 0.75rem;
-  }
-  .btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-  .loading { color: #2563eb; font-size: 0.85rem; padding: 0.5rem 0; }
-  .error { color: #ef4444; font-size: 0.85rem; padding: 0.5rem 0; }
-  #renderResult { margin-top: 1rem; }
-  #renderResult img { max-width: 100%; border-radius: 8px; border: 1px solid #2a2a2a; }
-  .refine-row {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-  }
-  .refine-row input { flex: 1; }
-  .history-panel {
-    background: #161616;
-    border: 1px solid #2a2a2a;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-top: 2rem;
-    max-width: 1400px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .history-panel h2 {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #888;
-    margin-bottom: 1rem;
-  }
-  .version-strip {
-    display: flex;
-    gap: 1rem;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-  }
-  .version-card {
-    flex-shrink: 0;
-    width: 200px;
-    background: #1a1a1a;
-    border: 2px solid #2a2a2a;
-    border-radius: 8px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: border-color 0.2s;
-  }
-  .version-card:hover { border-color: #555; }
-  .version-card.compare-a { border-color: #f59e0b; }
-  .version-card.compare-b { border-color: #8b5cf6; }
-  .version-card img { width: 100%; height: 130px; object-fit: cover; }
-  .version-info { padding: 0.5rem; font-size: 0.75rem; }
-  .version-info .ver-label { font-weight: 600; color: #ccc; margin-bottom: 0.2rem; }
-  .version-info .ver-note { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .version-info .ver-cost { color: #a0a0ff; margin-top: 0.2rem; }
-  .compare-view { display: none; margin-top: 1rem; }
-  .compare-view.active { display: block; }
-  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .compare-side {
-    background: #1a1a1a;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 2px solid #2a2a2a;
-  }
-  .compare-side img { width: 100%; display: block; }
-  .compare-label { padding: 0.5rem; font-size: 0.8rem; color: #aaa; text-align: center; }
-  .compare-side:first-child { border-color: #f59e0b; }
-  .compare-side:last-child { border-color: #8b5cf6; }
-
-  /* Lock screen */
-  #lockScreen {
-    position: fixed;
-    inset: 0;
-    background: #0a0a0a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-  .lock-box {
-    background: #161616;
-    border: 1px solid #2a2a2a;
-    border-radius: 12px;
-    padding: 2rem;
-    text-align: center;
-    width: 320px;
-  }
-  .lock-box h2 { color: #fff; font-size: 1.1rem; margin-bottom: 1rem; }
-  .lock-box input {
-    width: 100%;
-    padding: 0.6rem 0.75rem;
-    background: #0a0a0a;
-    border: 1px solid #2a2a2a;
-    border-radius: 6px;
-    color: #e0e0e0;
-    font-size: 1rem;
-    text-align: center;
-    margin-bottom: 0.75rem;
-  }
-  .lock-box .lock-error { color: #ef4444; font-size: 0.85rem; min-height: 1.2em; }
+  .lock-btn:hover { background: var(--accent-dim); }
+  .lock-error { color: var(--red); font-size: 0.8rem; margin-top: 0.5rem; min-height: 1.2em; }
 
   #appContent { display: none; }
 
-  @media (max-width: 768px) {
-    .layout { grid-template-columns: 1fr; }
-    body { padding: 1rem; }
+  /* Shell */
+  .shell {
+    max-width: 1440px; margin: 0 auto; padding: 1.25rem 2rem;
+  }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 1.25rem; border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 1rem; }
+  .logo { font-size: 1.3rem; font-weight: 700; color: var(--text-bright); }
+  .logo-brick { color: var(--accent); }
+  .topbar-tag {
+    font-size: 0.7rem; padding: 0.2rem 0.5rem;
+    background: var(--accent-glow); color: var(--accent);
+    border-radius: 4px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 1.5rem; }
+  .tab-switcher { display: flex; gap: 0.25rem; background: var(--surface); border-radius: 8px; padding: 3px; }
+  .tab-btn {
+    padding: 0.4rem 0.8rem; border: none; background: transparent;
+    color: var(--text-dim); font-family: var(--font); font-size: 0.8rem;
+    font-weight: 500; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+  }
+  .tab-btn.active { background: var(--accent); color: #fff; }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+
+  /* Tabs */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Grid */
+  .grid {
+    display: grid; grid-template-columns: 380px 1fr;
+    gap: 1.5rem; align-items: start;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.25rem;
+  }
+  .card + .card { margin-top: 1rem; }
+  .card-title {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-dim); margin-bottom: 0.75rem; font-weight: 600;
+  }
+
+  /* Upload */
+  .drop-zone {
+    border: 1.5px dashed var(--border); border-radius: 10px;
+    padding: 1.5rem; text-align: center; cursor: pointer;
+    transition: all 0.2s; min-height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; overflow: hidden; margin-bottom: 0.75rem;
+    background: var(--surface2);
+  }
+  .drop-zone:hover { border-color: var(--accent); background: var(--accent-glow); }
+  .drop-zone.has-image { padding: 0; border-style: solid; border-color: var(--border); background: var(--surface2); }
+  .drop-zone img { max-width: 100%; max-height: 280px; border-radius: 8px; }
+  .drop-zone input { display: none; }
+  .drop-hint { color: var(--text-dim); font-size: 0.85rem; }
+  .drop-hint strong { color: var(--accent); }
+
+  /* Buttons */
+  .btn {
+    padding: 0.5rem 0.9rem; border: none; border-radius: 8px;
+    font-family: var(--font); font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; display: inline-flex;
+    align-items: center; gap: 0.4rem;
+  }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-accent:hover { background: var(--accent-dim); }
+  .btn-accent:disabled { background: #2a2a40; color: #555; cursor: not-allowed; }
+  .btn-ghost { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-green:hover { background: var(--green-dim); }
+  .btn-green:disabled { background: #1a2a1a; color: #555; cursor: not-allowed; }
+  .btn-sm { padding: 0.35rem 0.6rem; font-size: 0.75rem; }
+  .btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+  /* Textarea / Input */
+  .input-area {
+    width: 100%; padding: 0.6rem 0.75rem; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: var(--font); font-size: 0.85rem;
+    resize: vertical; outline: none; transition: border-color 0.2s;
+  }
+  .input-area:focus { border-color: var(--accent); }
+  .input-area::placeholder { color: var(--text-dim); }
+  input.input-area { resize: none; }
+
+  /* Controls */
+  .ctrl { margin-bottom: 1rem; }
+  .ctrl-label {
+    font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.4rem;
+    font-weight: 500; display: flex; justify-content: space-between;
+  }
+  .ctrl-label span { color: var(--accent); font-family: var(--mono); font-size: 0.7rem; }
+  .pill-group { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+  .pill {
+    padding: 0.3rem 0.65rem; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 6px;
+    font-size: 0.75rem; color: var(--text-dim);
+    cursor: pointer; transition: all 0.15s; font-family: var(--font);
+  }
+  .pill:hover { border-color: var(--border-hover); color: var(--text); }
+  .pill.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+  .slider-track { display: flex; align-items: center; gap: 0.5rem; }
+  .slider-track input[type="range"] {
+    flex: 1; accent-color: var(--accent); height: 3px;
+    -webkit-appearance: none; background: var(--border); border-radius: 2px;
+  }
+  .slider-track input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    background: var(--accent); border-radius: 50%; cursor: pointer;
+  }
+  .slider-edge { font-size: 0.65rem; color: var(--text-dim); min-width: 2.5rem; }
+  .slider-edge:last-child { text-align: right; }
+
+  /* Prompt box */
+  .prompt-box {
+    width: 100%; min-height: 150px; padding: 0.6rem 0.75rem;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: var(--mono);
+    font-size: 0.78rem; resize: vertical; outline: none;
+    line-height: 1.5;
+  }
+
+  /* Status */
+  .status { font-size: 0.8rem; padding: 0.3rem 0; min-height: 1.4em; }
+  .status.loading { color: var(--accent); }
+  .status.error { color: var(--red); }
+
+  /* Render result */
+  #renderResult { margin-top: 1rem; }
+  #renderResult img {
+    max-width: 100%; border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .render-meta {
+    margin-top: 0.4rem; font-size: 0.75rem; color: var(--text-dim);
+    font-family: var(--mono);
+  }
+  .refine-row { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+  .refine-row input { flex: 1; }
+
+  /* Version history */
+  .history { margin-top: 1.5rem; }
+  .version-strip {
+    display: flex; gap: 0.75rem; overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  .v-card {
+    flex-shrink: 0; width: 170px; background: var(--surface2);
+    border: 2px solid var(--border); border-radius: 10px;
+    overflow: hidden; cursor: pointer; transition: border-color 0.2s;
+  }
+  .v-card:hover { border-color: var(--border-hover); }
+  .v-card.cmp-a { border-color: var(--orange); }
+  .v-card.cmp-b { border-color: var(--purple); }
+  .v-card img { width: 100%; height: 110px; object-fit: cover; }
+  .v-meta { padding: 0.4rem 0.5rem; font-size: 0.7rem; }
+  .v-meta .v-id { font-weight: 600; color: var(--text); }
+  .v-meta .v-note { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .v-meta .v-cost { color: var(--accent); font-family: var(--mono); margin-top: 0.15rem; }
+
+  /* Compare */
+  .compare { display: none; margin-top: 1rem; }
+  .compare.active { display: block; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .compare-pane {
+    background: var(--surface2); border-radius: 10px;
+    overflow: hidden; border: 2px solid var(--border);
+  }
+  .compare-pane img { width: 100%; display: block; }
+  .compare-pane-label { padding: 0.4rem 0.6rem; font-size: 0.75rem; color: var(--text-dim); text-align: center; }
+  .compare-pane:first-child { border-color: var(--orange); }
+  .compare-pane:last-child { border-color: var(--purple); }
+
+  /* Spendings tab */
+  .spend-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+  .spend-stat {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.25rem; text-align: center;
+  }
+  .spend-stat .stat-val {
+    font-size: 1.8rem; font-weight: 700; color: var(--text-bright);
+    font-family: var(--mono);
+  }
+  .spend-stat .stat-label { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.3rem; }
+  .spend-stat .stat-sub { font-size: 0.8rem; color: var(--accent); font-family: var(--mono); margin-top: 0.15rem; }
+  .spend-table {
+    width: 100%; border-collapse: collapse; font-size: 0.8rem;
+  }
+  .spend-table th {
+    text-align: left; padding: 0.6rem 0.75rem;
+    color: var(--text-dim); font-weight: 600; font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+  }
+  .spend-table td {
+    padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .spend-table tr:last-child td { border-bottom: none; }
+  .spend-table .mono { font-family: var(--mono); }
+
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+    .shell { padding: 1rem; }
+    .spend-grid { grid-template-columns: 1fr; }
     .compare-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
-<!-- Lock Screen -->
+<!-- Lock -->
 <div id="lockScreen">
   <div class="lock-box">
-    <h2>SketchUp Render</h2>
-    <input type="password" id="passwordInput" placeholder="Password" autofocus>
-    <button class="btn btn-primary" style="width: 100%;" id="unlockBtn">Unlock</button>
+    <div class="lock-logo">Cihla<span style="color:var(--accent)">.</span></div>
+    <div class="lock-sub">SketchUp to reality, one click at a time</div>
+    <input type="password" class="lock-input" id="passwordInput" placeholder="password" autofocus>
+    <button class="lock-btn" id="unlockBtn">Unlock</button>
     <div class="lock-error" id="lockError"></div>
   </div>
 </div>
 
-<!-- App (hidden until unlocked) -->
+<!-- App -->
 <div id="appContent">
-<div class="top-bar">
-  <h1>SketchUp &rarr; Realistic Render</h1>
-  <div class="cost-badge">Renders: <strong id="renderCount">0</strong> &middot; Cost: <strong>$<span id="totalCost">0.00</span></strong></div>
-</div>
-
-<div class="layout">
-  <div>
-    <div class="panel">
-      <h2>1. Upload SketchUp Export</h2>
-      <div class="upload-zone" id="uploadZone">
-        <span class="upload-hint" id="uploadHint">Drop image here or click to upload<br>(JPG / PNG)</span>
-        <input type="file" id="fileInput" accept="image/*">
+<div class="shell">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo"><span class="logo-brick">Cihla</span><span style="color:var(--text-dim)">.</span></div>
+      <div class="topbar-tag">Nano Banana 2</div>
+    </div>
+    <div class="topbar-right">
+      <div class="tab-switcher">
+        <button class="tab-btn active" data-tab="studio">Studio</button>
+        <button class="tab-btn" data-tab="spendings">Spendings</button>
       </div>
-      <div class="btn-row" style="margin-bottom: 0.5rem;">
-        <button class="btn btn-primary" id="analyzeBtn" disabled>Analyze Scene</button>
-      </div>
-      <div id="analyzeStatus"></div>
-      <h2 style="margin-top: 1rem;">2. Scene Description</h2>
-      <textarea class="description-box" id="description" placeholder="Auto-filled after analysis, or type manually..."></textarea>
     </div>
   </div>
 
-  <div>
-    <div class="panel">
-      <h2>3. Render Settings</h2>
-      <div class="control-group">
-        <label>Scene Type</label>
-        <div class="toggle-group" id="sceneType">
-          <div class="toggle-opt active" data-val="exterior">Exterior</div>
-          <div class="toggle-opt" data-val="interior">Interior</div>
-          <div class="toggle-opt" data-val="aerial">Aerial</div>
-          <div class="toggle-opt" data-val="street-level">Street Level</div>
+  <!-- STUDIO TAB -->
+  <div class="tab-content active" id="tab-studio">
+    <div class="grid">
+      <!-- LEFT COL -->
+      <div>
+        <div class="card">
+          <div class="card-title">Source Image</div>
+          <div class="drop-zone" id="uploadZone">
+            <span class="drop-hint" id="uploadHint"><strong>Drop</strong> your SketchUp export here<br>or click to browse</span>
+            <input type="file" id="fileInput" accept="image/*">
+          </div>
+          <button class="btn btn-accent" id="analyzeBtn" disabled style="width:100%">Analyze with Claude</button>
+          <div class="status" id="analyzeStatus"></div>
         </div>
-      </div>
-      <div class="control-group">
-        <label>Time of Day</label>
-        <div class="toggle-group" id="timeOfDay">
-          <div class="toggle-opt" data-val="dawn">Dawn</div>
-          <div class="toggle-opt" data-val="morning">Morning</div>
-          <div class="toggle-opt active" data-val="midday">Midday</div>
-          <div class="toggle-opt" data-val="golden-hour">Golden Hour</div>
-          <div class="toggle-opt" data-val="sunset">Sunset</div>
-          <div class="toggle-opt" data-val="dusk">Dusk</div>
-          <div class="toggle-opt" data-val="night">Night</div>
-        </div>
-      </div>
-      <div class="control-group">
-        <label>Weather</label>
-        <div class="toggle-group" id="weather">
-          <div class="toggle-opt active" data-val="clear">Clear</div>
-          <div class="toggle-opt" data-val="partly-cloudy">Partly Cloudy</div>
-          <div class="toggle-opt" data-val="overcast">Overcast</div>
-          <div class="toggle-opt" data-val="rainy">Rainy</div>
-          <div class="toggle-opt" data-val="foggy">Foggy</div>
-          <div class="toggle-opt" data-val="snowy">Snowy</div>
-        </div>
-      </div>
-      <div class="control-group">
-        <label>Material Fidelity &mdash; <span id="matLabel">High</span></label>
-        <div class="slider-row">
-          <span class="slider-value">Loose</span>
-          <input type="range" id="materialSlider" min="0" max="100" value="75">
-          <span class="slider-value">Exact</span>
-        </div>
-      </div>
-      <div class="control-group">
-        <label>Angle Consistency &mdash; <span id="angleLabel">High</span></label>
-        <div class="slider-row">
-          <span class="slider-value">Loose</span>
-          <input type="range" id="angleSlider" min="0" max="100" value="80">
-          <span class="slider-value">Exact</span>
-        </div>
-      </div>
-      <div class="control-group">
-        <label>Window View / Outside Scene</label>
-        <input type="text" class="text-input" id="windowView" placeholder="e.g. Prague old town, city park with trees, courtyard garden...">
-      </div>
-      <div class="control-group">
-        <label>Vegetation / Landscaping</label>
-        <div class="slider-row">
-          <span class="slider-value">None</span>
-          <input type="range" id="vegSlider" min="0" max="100" value="50">
-          <span class="slider-value">Lush</span>
-        </div>
-      </div>
-      <div class="control-group">
-        <label>People / Activity</label>
-        <div class="slider-row">
-          <span class="slider-value">Empty</span>
-          <input type="range" id="peopleSlider" min="0" max="100" value="30">
-          <span class="slider-value">Busy</span>
-        </div>
-      </div>
-    </div>
 
-    <div class="panel" style="margin-top: 1rem;">
-      <h2>4. Generated Prompt</h2>
-      <textarea class="prompt-output" id="promptOutput" readonly placeholder="Adjust settings and click Generate Prompt..."></textarea>
-      <div class="btn-row">
-        <button class="btn btn-primary" id="generateBtn">Generate Prompt</button>
-        <button class="btn btn-secondary" id="copyBtn">Copy</button>
-        <button class="btn btn-render" id="renderBtn">Render Image</button>
+        <div class="card">
+          <div class="card-title">Scene Description</div>
+          <textarea class="input-area" id="description" rows="5" placeholder="What Claude sees in your image... or describe manually"></textarea>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Settings</div>
+
+          <div class="ctrl">
+            <div class="ctrl-label">Scene</div>
+            <div class="pill-group" id="sceneType">
+              <div class="pill active" data-val="exterior">Exterior</div>
+              <div class="pill" data-val="interior">Interior</div>
+              <div class="pill" data-val="aerial">Aerial</div>
+              <div class="pill" data-val="street-level">Street</div>
+            </div>
+          </div>
+
+          <div class="ctrl">
+            <div class="ctrl-label">Time of Day</div>
+            <div class="pill-group" id="timeOfDay">
+              <div class="pill" data-val="dawn">Dawn</div>
+              <div class="pill" data-val="morning">Morning</div>
+              <div class="pill active" data-val="midday">Midday</div>
+              <div class="pill" data-val="golden-hour">Golden hr</div>
+              <div class="pill" data-val="sunset">Sunset</div>
+              <div class="pill" data-val="dusk">Dusk</div>
+              <div class="pill" data-val="night">Night</div>
+            </div>
+          </div>
+
+          <div class="ctrl">
+            <div class="ctrl-label">Weather</div>
+            <div class="pill-group" id="weather">
+              <div class="pill active" data-val="clear">Clear</div>
+              <div class="pill" data-val="partly-cloudy">Cloudy</div>
+              <div class="pill" data-val="overcast">Overcast</div>
+              <div class="pill" data-val="rainy">Rain</div>
+              <div class="pill" data-val="foggy">Fog</div>
+              <div class="pill" data-val="snowy">Snow</div>
+            </div>
+          </div>
+
+          <div class="ctrl">
+            <div class="ctrl-label">Material Fidelity <span id="matLabel">High</span></div>
+            <div class="slider-track">
+              <span class="slider-edge">Loose</span>
+              <input type="range" id="materialSlider" min="0" max="100" value="75">
+              <span class="slider-edge">Exact</span>
+            </div>
+          </div>
+
+          <div class="ctrl">
+            <div class="ctrl-label">Angle Consistency <span id="angleLabel">High</span></div>
+            <div class="slider-track">
+              <span class="slider-edge">Loose</span>
+              <input type="range" id="angleSlider" min="0" max="100" value="80">
+              <span class="slider-edge">Exact</span>
+            </div>
+          </div>
+
+          <div class="ctrl">
+            <div class="ctrl-label">Window View</div>
+            <input class="input-area" id="windowView" placeholder="Prague rooftops, park, courtyard...">
+          </div>
+
+          <div class="ctrl">
+            <div class="ctrl-label">Vegetation <span id="vegLabel">50%</span></div>
+            <div class="slider-track">
+              <span class="slider-edge">None</span>
+              <input type="range" id="vegSlider" min="0" max="100" value="50">
+              <span class="slider-edge">Lush</span>
+            </div>
+          </div>
+
+          <div class="ctrl">
+            <div class="ctrl-label">People <span id="pplLabel">30%</span></div>
+            <div class="slider-track">
+              <span class="slider-edge">Empty</span>
+              <input type="range" id="peopleSlider" min="0" max="100" value="30">
+              <span class="slider-edge">Busy</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div id="renderStatus"></div>
-      <div id="renderResult"></div>
+
+      <!-- RIGHT COL -->
+      <div>
+        <div class="card">
+          <div class="card-title">Prompt</div>
+          <textarea class="prompt-box" id="promptOutput" readonly placeholder="Adjust settings, then hit Generate..."></textarea>
+          <div class="btn-row" style="margin-top:0.75rem">
+            <button class="btn btn-accent" id="generateBtn">Generate Prompt</button>
+            <button class="btn btn-ghost" id="copyBtn">Copy</button>
+            <button class="btn btn-green" id="renderBtn">Render</button>
+          </div>
+          <div class="status" id="renderStatus"></div>
+          <div id="renderResult"></div>
+        </div>
+
+        <div class="history card" id="historyPanel" style="display:none">
+          <div class="card-title">Versions <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim)">— click one to load, two to compare</span></div>
+          <div class="version-strip" id="versionStrip"></div>
+          <div class="compare" id="compareView">
+            <div class="compare-grid">
+              <div class="compare-pane"><img id="cmpImgA"><div class="compare-pane-label" id="cmpLblA"></div></div>
+              <div class="compare-pane"><img id="cmpImgB"><div class="compare-pane-label" id="cmpLblB"></div></div>
+            </div>
+            <div class="btn-row" style="margin-top:0.5rem"><button class="btn btn-ghost btn-sm" onclick="clearCompare()">Clear</button></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="history-panel" id="historyPanel" style="display: none;">
-  <h2>Version History <span style="font-size: 0.75rem; text-transform: none; letter-spacing: 0; color: #666;">&mdash; click one to select, click two to compare</span></h2>
-  <div class="version-strip" id="versionStrip"></div>
-  <div class="compare-view" id="compareView">
-    <div class="compare-grid">
-      <div class="compare-side">
-        <img id="compareImgA" src="" alt="">
-        <div class="compare-label" id="compareLabelA"></div>
+  <!-- SPENDINGS TAB -->
+  <div class="tab-content" id="tab-spendings">
+    <div class="spend-grid">
+      <div class="spend-stat">
+        <div class="stat-val" id="spTotalRenders">0</div>
+        <div class="stat-label">Total Renders</div>
       </div>
-      <div class="compare-side">
-        <img id="compareImgB" src="" alt="">
-        <div class="compare-label" id="compareLabelB"></div>
+      <div class="spend-stat">
+        <div class="stat-val" id="spTotalUsd">$0.00</div>
+        <div class="stat-label">Total Spent (USD)</div>
+      </div>
+      <div class="spend-stat">
+        <div class="stat-val" id="spTotalCzk">0 Kc</div>
+        <div class="stat-label">Total Spent (CZK)</div>
+        <div class="stat-sub">1 USD = 21.2 CZK</div>
       </div>
     </div>
-    <div class="btn-row" style="margin-top: 0.5rem;">
-      <button class="btn btn-secondary btn-sm" onclick="clearCompare()">Clear comparison</button>
+    <div class="card">
+      <div class="card-title">Render Log</div>
+      <table class="spend-table">
+        <thead><tr><th>#</th><th>Type</th><th>Note</th><th>USD</th><th>CZK</th></tr></thead>
+        <tbody id="spTableBody">
+          <tr><td colspan="5" style="color:var(--text-dim);text-align:center;padding:2rem;">No renders yet</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
+
 </div>
-</div><!-- /appContent -->
+</div>
 
 <script>
-// --- Encrypted API keys ---
+// --- Config ---
 const ENC_ANTHROPIC = 'YrwsDbSwfHgAGSqPK5Vq8zJH3ubVNOBpBkoFPwHA/zcS3U6Cq1StskfgLiftypXBdNDh5f9440fXqEJMdtZlFMMZkhdf/kIzbvO2YJJeOfYRPdN71YX4OQ9A3nUBbJYOdbCZmpeRJJd9xLUbCf5y/z8I9GhRByMS1kCf1qrzpslG/XxQOJhOPF0KhhFs8q5fSWtrW+os5tI=';
 const ENC_GEMINI = 'MzyQzn3RfMCVJOMSbfchNtHCe+QxwuVxp/k8Eyda10iGmeQfeydEGq93VsTWgY048QHh3b9z6FG0dsGMRjQlux3V/yWfVkKJ96Qep1Ds0CAOoAQ=';
 const COST_PER_RENDER = 0.067;
+const CZK_RATE = 21.2;
 
-let ANTHROPIC_KEY = '';
-let GEMINI_KEY = '';
+let ANTHROPIC_KEY = '', GEMINI_KEY = '';
 
-// --- Decryption ---
+// --- Decrypt ---
 async function decrypt(encB64, password) {
   const raw = Uint8Array.from(atob(encB64), c => c.charCodeAt(0));
-  const salt = raw.slice(0, 16);
-  const iv = raw.slice(16, 28);
-  const tag = raw.slice(28, 44);
-  const ciphertext = raw.slice(44);
-
-  const keyMaterial = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
-    keyMaterial,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['decrypt']
-  );
-
-  const combined = new Uint8Array(ciphertext.length + tag.length);
-  combined.set(ciphertext);
-  combined.set(tag, ciphertext.length);
-
-  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, combined);
-  return new TextDecoder().decode(decrypted);
+  const salt = raw.slice(0, 16), iv = raw.slice(16, 28), tag = raw.slice(28, 44), ct = raw.slice(44);
+  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  const combined = new Uint8Array(ct.length + tag.length);
+  combined.set(ct); combined.set(tag, ct.length);
+  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, combined));
 }
 
-// --- Lock screen ---
-const passwordInput = document.getElementById('passwordInput');
-const unlockBtn = document.getElementById('unlockBtn');
-const lockError = document.getElementById('lockError');
-
+// --- Lock ---
 async function tryUnlock() {
-  const pwd = passwordInput.value;
+  const pwd = document.getElementById('passwordInput').value;
   if (!pwd) return;
-  lockError.textContent = '';
+  document.getElementById('lockError').textContent = '';
   try {
     ANTHROPIC_KEY = await decrypt(ENC_ANTHROPIC, pwd);
     GEMINI_KEY = await decrypt(ENC_GEMINI, pwd);
     document.getElementById('lockScreen').style.display = 'none';
     document.getElementById('appContent').style.display = 'block';
   } catch {
-    lockError.textContent = 'Wrong password';
-    passwordInput.value = '';
-    passwordInput.focus();
+    document.getElementById('lockError').textContent = 'Wrong password';
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('passwordInput').focus();
   }
 }
+document.getElementById('unlockBtn').addEventListener('click', tryUnlock);
+document.getElementById('passwordInput').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
 
-unlockBtn.addEventListener('click', tryUnlock);
-passwordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+// --- Tabs ---
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
 
-// --- App state ---
-const state = {
-  imageData: null,
-  description: '',
-  sceneType: 'exterior',
-  timeOfDay: 'midday',
-  weather: 'clear',
-  material: 75,
-  angle: 80,
-  vegetation: 50,
-  people: 30,
-};
-
+// --- State ---
+const state = { imageData: null, description: '', sceneType: 'exterior', timeOfDay: 'midday', weather: 'clear', material: 75, angle: 80, vegetation: 50, people: 30 };
 const versions = [];
 let compareSelection = [];
 
 // --- Upload ---
 const uploadZone = document.getElementById('uploadZone');
 const fileInput = document.getElementById('fileInput');
-const uploadHint = document.getElementById('uploadHint');
-const analyzeBtn = document.getElementById('analyzeBtn');
-
 uploadZone.addEventListener('click', () => fileInput.click());
-uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.style.borderColor = '#2563eb'; });
-uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = '#333'; });
-uploadZone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  uploadZone.style.borderColor = '#333';
-  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-});
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = 'var(--accent)'; });
+uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
+uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.style.borderColor = ''; if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
 fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
 
 function handleFile(file) {
   if (!file.type.startsWith('image/')) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
+  const r = new FileReader();
+  r.onload = e => {
     state.imageData = e.target.result;
     uploadZone.classList.add('has-image');
-    uploadHint.style.display = 'none';
-    const existing = uploadZone.querySelector('img');
-    if (existing) existing.remove();
-    const img = document.createElement('img');
-    img.src = state.imageData;
-    uploadZone.appendChild(img);
-    analyzeBtn.disabled = false;
+    document.getElementById('uploadHint').style.display = 'none';
+    const old = uploadZone.querySelector('img'); if (old) old.remove();
+    const img = document.createElement('img'); img.src = state.imageData; uploadZone.appendChild(img);
+    document.getElementById('analyzeBtn').disabled = false;
   };
-  reader.readAsDataURL(file);
+  r.readAsDataURL(file);
 }
 
 // --- Toggles ---
-function setupToggle(containerId, stateKey) {
-  const container = document.getElementById(containerId);
-  container.addEventListener('click', (e) => {
-    const opt = e.target.closest('[data-val]');
-    if (!opt) return;
-    container.querySelectorAll('[data-val]').forEach(el => el.classList.remove('active'));
-    opt.classList.add('active');
-    state[stateKey] = opt.dataset.val;
+function setupToggle(id, key) {
+  document.getElementById(id).addEventListener('click', e => {
+    const p = e.target.closest('[data-val]'); if (!p) return;
+    p.parentElement.querySelectorAll('[data-val]').forEach(el => el.classList.remove('active'));
+    p.classList.add('active'); state[key] = p.dataset.val;
   });
 }
-setupToggle('timeOfDay', 'timeOfDay');
-setupToggle('weather', 'weather');
-setupToggle('sceneType', 'sceneType');
+setupToggle('timeOfDay', 'timeOfDay'); setupToggle('weather', 'weather'); setupToggle('sceneType', 'sceneType');
 
 // --- Sliders ---
-function sliderLabel(val) {
-  if (val < 25) return 'Low';
-  if (val < 50) return 'Medium';
-  if (val < 75) return 'High';
-  return 'Very High';
-}
-document.getElementById('materialSlider').addEventListener('input', (e) => {
-  state.material = parseInt(e.target.value);
-  document.getElementById('matLabel').textContent = sliderLabel(state.material);
-});
-document.getElementById('angleSlider').addEventListener('input', (e) => {
-  state.angle = parseInt(e.target.value);
-  document.getElementById('angleLabel').textContent = sliderLabel(state.angle);
-});
-document.getElementById('vegSlider').addEventListener('input', (e) => { state.vegetation = parseInt(e.target.value); });
-document.getElementById('peopleSlider').addEventListener('input', (e) => { state.people = parseInt(e.target.value); });
+function sLabel(v) { return v < 25 ? 'Low' : v < 50 ? 'Med' : v < 75 ? 'High' : 'Max'; }
+document.getElementById('materialSlider').addEventListener('input', e => { state.material = +e.target.value; document.getElementById('matLabel').textContent = sLabel(state.material); });
+document.getElementById('angleSlider').addEventListener('input', e => { state.angle = +e.target.value; document.getElementById('angleLabel').textContent = sLabel(state.angle); });
+document.getElementById('vegSlider').addEventListener('input', e => { state.vegetation = +e.target.value; document.getElementById('vegLabel').textContent = e.target.value + '%'; });
+document.getElementById('peopleSlider').addEventListener('input', e => { state.people = +e.target.value; document.getElementById('pplLabel').textContent = e.target.value + '%'; });
 
-// --- Analyze (Claude) ---
-analyzeBtn.addEventListener('click', analyzeImage);
-
+// --- Analyze ---
+document.getElementById('analyzeBtn').addEventListener('click', analyzeImage);
 async function analyzeImage() {
-  if (!state.imageData) { showStatus('Upload an image first', true); return; }
-  showStatus('Analyzing...', false);
-  analyzeBtn.disabled = true;
-
-  const base64 = state.imageData.split(',')[1];
-  const mimeType = state.imageData.split(';')[0].split(':')[1];
-
+  if (!state.imageData) { showStatus('analyzeStatus', 'Upload first', true); return; }
+  showStatus('analyzeStatus', 'Analyzing with Claude...', false);
+  document.getElementById('analyzeBtn').disabled = true;
+  const b64 = state.imageData.split(',')[1], mime = state.imageData.split(';')[0].split(':')[1];
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
-            { type: 'text', text: 'You are an architectural visualization expert. Describe this SketchUp 3D model export in detail for the purpose of generating a photorealistic render. Include: building form and massing, materials visible (concrete, wood, glass, metal, brick, etc.), architectural style, number of floors, roof type, window types, any landscape or context visible, camera angle and perspective. Be factual and precise. Do not add anything not visible in the image. Output a single dense paragraph.' },
-          ],
-        }],
-      }),
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1024, messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: mime, data: b64 } },
+        { type: 'text', text: 'You are an architectural visualization expert. Describe this SketchUp 3D model export in detail for the purpose of generating a photorealistic render. Include: building form and massing, materials visible (concrete, wood, glass, metal, brick, etc.), architectural style, number of floors, roof type, window types, any landscape or context visible, camera angle and perspective. Be factual and precise. Do not add anything not visible in the image. Output a single dense paragraph.' }
+      ]}] }),
     });
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error.message);
-    document.getElementById('description').value = data.content[0].text;
-    state.description = data.content[0].text;
-    showStatus('Done', false);
-  } catch (err) {
-    showStatus('Error: ' + err.message, true);
-  }
-  analyzeBtn.disabled = false;
+    const d = await r.json(); if (d.error) throw new Error(d.error.message);
+    document.getElementById('description').value = d.content[0].text; state.description = d.content[0].text;
+    showStatus('analyzeStatus', 'Done', false);
+  } catch (e) { showStatus('analyzeStatus', e.message, true); }
+  document.getElementById('analyzeBtn').disabled = false;
+}
+document.getElementById('description').addEventListener('input', e => { state.description = e.target.value; });
+
+function showStatus(id, msg, err) {
+  const el = document.getElementById(id); el.textContent = msg; el.className = 'status ' + (err ? 'error' : 'loading');
+  if (!err && msg === 'Done') setTimeout(() => { el.textContent = ''; }, 2000);
 }
 
-function showStatus(msg, isError) {
-  const el = document.getElementById('analyzeStatus');
-  el.textContent = msg;
-  el.className = isError ? 'error' : 'loading';
-  if (!isError && msg === 'Done') setTimeout(() => { el.textContent = ''; }, 2000);
-}
-
-// --- Description sync ---
-document.getElementById('description').addEventListener('input', (e) => { state.description = e.target.value; });
-
-// --- Generate Prompt ---
+// --- Prompt ---
 document.getElementById('generateBtn').addEventListener('click', generatePrompt);
-
 function generatePrompt() {
   const desc = document.getElementById('description').value.trim();
-  if (!desc) {
-    document.getElementById('promptOutput').value = 'Add a scene description first (analyze or type manually).';
-    return;
-  }
-
-  const timeMap = {
-    'dawn': 'early dawn light, soft pink and blue sky, first light of day',
-    'morning': 'bright morning sunlight, crisp shadows, clear blue sky',
-    'midday': 'direct midday sun, strong overhead lighting, minimal shadows',
-    'golden-hour': 'warm golden hour sunlight, long soft shadows, rich amber tones',
-    'sunset': 'dramatic sunset lighting, orange and purple sky, warm reflections on surfaces',
-    'dusk': 'blue hour dusk lighting, ambient twilight, interior lights glowing warmly',
-    'night': 'nighttime scene, building lit from within, exterior architectural lighting, dark sky',
-  };
-  const weatherMap = {
-    'clear': 'clear sky',
-    'partly-cloudy': 'partly cloudy sky with scattered clouds',
-    'overcast': 'overcast sky, soft diffused lighting, no harsh shadows',
-    'rainy': 'rainy weather, wet surfaces with reflections, puddles on ground',
-    'foggy': 'misty fog, atmospheric haze, soft edges',
-    'snowy': 'snow covering ground and rooftops, winter atmosphere',
-  };
-
-  let matInstruction;
-  if (state.material < 25) matInstruction = 'Materials can be loosely interpreted and enhanced for visual impact.';
-  else if (state.material < 50) matInstruction = 'Keep the general material palette but allow creative enhancement.';
-  else if (state.material < 75) matInstruction = 'Faithfully reproduce the materials shown: textures, colors, and finishes should closely match the original model.';
-  else matInstruction = 'Exactly replicate all materials from the original model with precise textures, colors, reflectivity, and surface detail. No creative deviation.';
-
-  let angInstruction;
-  if (state.angle < 25) angInstruction = 'Camera angle can be freely adjusted for best composition.';
-  else if (state.angle < 50) angInstruction = 'Maintain a similar viewing direction but allow minor adjustments.';
-  else if (state.angle < 75) angInstruction = 'Closely match the original camera angle, perspective, and field of view. Keep the same composition and framing.';
-  else angInstruction = 'CRITICAL: Keep the EXACT same camera position, angle, perspective, focal length, and field of view as the attached image. Do NOT rotate, tilt, shift, or reframe the view in any way. Every wall, edge, and surface must appear at the same position and proportion as in the original.';
-
-  let vegLine;
-  if (state.vegetation < 15) vegLine = 'No vegetation or landscaping.';
-  else if (state.vegetation < 40) vegLine = 'Minimal landscaping with sparse, clean vegetation.';
-  else if (state.vegetation < 65) vegLine = 'Moderate landscaping with realistic trees, shrubs, and ground cover.';
-  else vegLine = 'Lush, abundant vegetation with mature trees, dense shrubs, ground cover, and climbing plants.';
-
-  let peopleLine;
-  if (state.people < 15) peopleLine = 'No people in the scene.';
-  else if (state.people < 40) peopleLine = 'One or two people at a distance for scale.';
-  else if (state.people < 65) peopleLine = 'Several people naturally using the space, adding life to the scene.';
-  else peopleLine = 'Busy scene with many people, active street life, and human activity.';
-
-  const isInterior = state.sceneType === 'interior';
-  const windowView = document.getElementById('windowView').value.trim();
-
-  const prompt = [
-    `Transform the attached SketchUp 3D model screenshot into a photorealistic ${state.sceneType} architectural photograph.`,
-    '',
-    `The scene shows: ${desc}`,
-    '',
-    'LIGHTING AND ATMOSPHERE:',
-    `- ${timeMap[state.timeOfDay]}`,
-    `- ${weatherMap[state.weather]}`,
-    isInterior
-      ? '- Realistic interior lighting: ambient light from windows combined with artificial light sources visible in the model. Warm light spill, soft shadows, natural light falloff.'
-      : '- Realistic environmental lighting with natural sky illumination, ambient occlusion in corners and under overhangs, and accurate shadow casting.',
-    '',
-    'MATERIALS AND SURFACES:',
-    `- ${matInstruction}`,
-    '- All surfaces must have physically accurate properties: correct reflectivity, roughness, bump/displacement for texture depth, and subsurface scattering where appropriate (e.g. marble, fabric).',
-    '- Glass should show realistic reflections, transparency, and slight green tint on edges. Metal surfaces should have accurate specular highlights.',
-    '',
-    'CAMERA AND COMPOSITION:',
-    `- ${angInstruction}`,
-    '- The output image must be a 1:1 match of the original layout — same walls visible, same proportions, same spatial arrangement. Only upgrade materials and lighting, do not reorganize the scene.',
-    '- Render as if shot on a Canon EOS R5 with a 24mm tilt-shift lens, f/5.6, natural depth of field.',
-    '- Correct lens distortion and vertical lines. Professional architectural photography framing.',
-    '',
-    'ENVIRONMENT AND CONTEXT:',
-    `- ${vegLine}`,
-    `- ${peopleLine}`,
-    !isInterior
-      ? '- Add realistic sky, distant context (neighboring buildings or landscape), and ground plane with appropriate surface (pavement, grass, gravel).'
-      : '- Add realistic room context: appropriate decor items, books, small objects that make the space feel lived-in but not cluttered.',
-    windowView ? `- WINDOW VIEW: Through all windows and glass surfaces, show a realistic view of: ${windowView}. The view should have natural depth, atmospheric perspective, and appropriate lighting matching the time of day.` : '',
-    '',
-    'RENDER QUALITY:',
-    '- Ultra-photorealistic architectural visualization indistinguishable from a real photograph.',
-    '- Global illumination with accurate light bouncing between surfaces.',
-    '- High dynamic range with detail preserved in both highlights and shadows.',
-    '- Subtle atmospheric effects: light haze, dust particles in light beams where appropriate.',
-    '- No 3D render artifacts, no flat shading, no CG look. Must look like a real photo from an architecture magazine.',
+  if (!desc) { document.getElementById('promptOutput').value = 'Describe the scene first.'; return; }
+  const T = { dawn:'early dawn light, soft pink and blue sky', morning:'bright morning sun, crisp shadows, blue sky', midday:'direct midday sun, strong overhead light, minimal shadows', 'golden-hour':'warm golden hour, long soft shadows, amber tones', sunset:'dramatic sunset, orange and purple sky, warm reflections', dusk:'blue hour dusk, ambient twilight, interior lights glowing', night:'night scene, building lit from within, dark sky' };
+  const W = { clear:'clear sky', 'partly-cloudy':'partly cloudy, scattered clouds', overcast:'overcast, soft diffused light', rainy:'rain, wet reflections, puddles', foggy:'fog, atmospheric haze', snowy:'snow on ground and roofs, winter' };
+  const mat = state.material < 25 ? 'Freely interpret materials.' : state.material < 50 ? 'Keep general palette, allow enhancement.' : state.material < 75 ? 'Faithfully match materials, textures, colors.' : 'Exactly replicate all materials. No deviation.';
+  const ang = state.angle < 25 ? 'Adjust angle freely.' : state.angle < 50 ? 'Similar direction, minor adjustments OK.' : state.angle < 75 ? 'Closely match camera angle and FOV.' : 'CRITICAL: EXACT same camera position, angle, FOV. Every wall/edge at same position. No reframing.';
+  const veg = state.vegetation < 15 ? 'No vegetation.' : state.vegetation < 40 ? 'Minimal, sparse vegetation.' : state.vegetation < 65 ? 'Moderate trees, shrubs, ground cover.' : 'Lush vegetation, mature trees, dense planting.';
+  const ppl = state.people < 15 ? 'No people.' : state.people < 40 ? 'One or two people for scale.' : state.people < 65 ? 'Several people using the space.' : 'Busy scene with many people.';
+  const wv = document.getElementById('windowView').value.trim();
+  const isInt = state.sceneType === 'interior';
+  document.getElementById('promptOutput').value = [
+    `Transform the attached SketchUp model screenshot into a photorealistic ${state.sceneType} architectural photograph.`,
+    '', `Scene: ${desc}`,
+    '', 'LIGHTING:', `- ${T[state.timeOfDay]}`, `- ${W[state.weather]}`,
+    isInt ? '- Interior: ambient window light + artificial sources, warm spill, soft shadows.' : '- Exterior: natural sky illumination, ambient occlusion, accurate shadows.',
+    '', 'MATERIALS:', `- ${mat}`, '- Physically accurate: reflectivity, roughness, bump, subsurface scattering.', '- Glass: reflections, transparency, green edge tint. Metal: specular highlights.',
+    '', 'CAMERA:', `- ${ang}`, '- 1:1 layout match. Same walls, proportions, spatial arrangement. Only upgrade materials & lighting.', '- Canon EOS R5, 24mm tilt-shift, f/5.6. Correct verticals.',
+    '', 'CONTEXT:', `- ${veg}`, `- ${ppl}`,
+    isInt ? '- Realistic room context, tasteful decor.' : '- Realistic sky, neighboring context, ground surface.',
+    wv ? `- WINDOWS: View of ${wv}. Natural depth, atmospheric perspective.` : '',
+    '', 'QUALITY:', '- Indistinguishable from real photo. Architecture magazine quality.', '- Global illumination, HDR, subtle atmosphere.', '- Zero CG artifacts or flat shading.',
   ].filter(Boolean).join('\n');
-
-  document.getElementById('promptOutput').value = prompt;
 }
 
 // --- Copy ---
 document.getElementById('copyBtn').addEventListener('click', () => {
   navigator.clipboard.writeText(document.getElementById('promptOutput').value).then(() => {
-    const btn = document.getElementById('copyBtn');
-    btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+    const b = document.getElementById('copyBtn'); b.textContent = 'Copied!'; setTimeout(() => b.textContent = 'Copy', 1500);
   });
 });
 
-// --- Render (Nano Banana 2) ---
+// --- Render ---
 document.getElementById('renderBtn').addEventListener('click', () => doRender(null));
 
-async function doRender(refinementNote) {
+async function doRender(note) {
   const prompt = document.getElementById('promptOutput').value.trim();
-  if (!prompt || prompt.startsWith('Add a scene') || prompt.startsWith('Adjust settings')) {
-    showRenderStatus('Generate a prompt first', true);
-    return;
-  }
-
-  const sourceImage = refinementNote && versions.length > 0
-    ? versions[versions.length - 1].imgSrc
-    : state.imageData;
-
-  if (!sourceImage) {
-    showRenderStatus('Upload an image first', true);
-    return;
-  }
-
-  const renderPrompt = refinementNote
-    ? `Edit the attached rendered architectural photograph. Keep everything the same EXCEPT: ${refinementNote}. Maintain the exact same camera angle, composition, and overall scene. Only change what was specifically requested. Output a photorealistic architectural photograph.`
-    : prompt;
-
-  showRenderStatus('Rendering with Nano Banana 2... (15-30s)', false);
+  if (!prompt || prompt === 'Describe the scene first.') { showStatus('renderStatus', 'Generate a prompt first', true); return; }
+  const src = note && versions.length ? versions[versions.length - 1].imgSrc : state.imageData;
+  if (!src) { showStatus('renderStatus', 'Upload an image first', true); return; }
+  const rPrompt = note ? `Edit the attached architectural render. Keep everything EXCEPT: ${note}. Same angle, composition. Only change what was requested. Photorealistic output.` : prompt;
+  showStatus('renderStatus', 'Rendering with Nano Banana 2...', false);
   document.getElementById('renderBtn').disabled = true;
-
-  const base64 = sourceImage.split(',')[1];
-  const mimeType = sourceImage.split(';')[0].split(':')[1];
-
+  const b64 = src.split(',')[1], mime = src.split(';')[0].split(':')[1];
   try {
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              { inlineData: { mimeType, data: base64 } },
-              { text: renderPrompt },
-            ]
-          }],
-          generationConfig: {
-            responseModalities: ['TEXT', 'IMAGE'],
-          },
-        })
-      }
-    );
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error.message);
-
-    let rendered = false;
-    for (const part of data.candidates[0].content.parts) {
-      if (part.inlineData) {
-        const imgSrc = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        const version = {
-          id: versions.length + 1,
-          imgSrc,
-          note: refinementNote || 'Initial render',
-          prompt: renderPrompt,
-          cost: COST_PER_RENDER,
-          parentId: refinementNote && versions.length > 0 ? versions[versions.length - 1].id : null,
-        };
-        versions.push(version);
-        updateCostDisplay();
-        renderVersionStrip();
-        showCurrentRender(version);
-        rendered = true;
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GEMINI_KEY}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ inlineData: { mimeType: mime, data: b64 } }, { text: rPrompt }] }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } })
+    });
+    const d = await r.json(); if (d.error) throw new Error(d.error.message);
+    let ok = false;
+    for (const p of d.candidates[0].content.parts) {
+      if (p.inlineData) {
+        const imgSrc = `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+        const v = { id: versions.length + 1, imgSrc, note: note || 'Initial render', prompt: rPrompt, cost: COST_PER_RENDER, parentId: note && versions.length ? versions[versions.length - 1].id : null };
+        versions.push(v); updateSpend(); renderStrip(); showRender(v); ok = true;
       }
     }
-    showRenderStatus(rendered ? '' : 'No image returned — try adjusting the prompt', !rendered);
-  } catch (err) {
-    showRenderStatus('Error: ' + err.message, true);
-  }
+    showStatus('renderStatus', ok ? '' : 'No image returned', !ok);
+  } catch (e) { showStatus('renderStatus', e.message, true); }
   document.getElementById('renderBtn').disabled = false;
 }
 
-function showCurrentRender(version) {
+function showRender(v) {
   document.getElementById('renderResult').innerHTML = `
-    <img src="${version.imgSrc}" alt="Render v${version.id}">
-    <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #888;">
-      Version ${version.id} &middot; $${version.cost.toFixed(3)} &middot; ${version.note}
-    </div>
+    <img src="${v.imgSrc}">
+    <div class="render-meta">v${v.id} · $${v.cost.toFixed(3)} · ${(v.cost * CZK_RATE).toFixed(1)} Kc · ${v.note}</div>
     <div class="refine-row">
-      <input type="text" class="text-input" id="refineInput" placeholder="Refine: e.g. change floor to light oak, warmer lighting, add rug...">
-      <button class="btn btn-render" onclick="refineRender()">Refine</button>
+      <input class="input-area" id="refineInput" placeholder="Refine: change floor to oak, warmer light, add plants...">
+      <button class="btn btn-green btn-sm" onclick="refineRender()">Refine</button>
     </div>
-    <div class="btn-row" style="margin-top: 0.5rem;">
-      <button class="btn btn-secondary btn-sm" onclick="downloadVersion(${version.id})">Download</button>
-      <button class="btn btn-secondary btn-sm" onclick="doRender(null)">Re-render from scratch</button>
-    </div>
-  `;
+    <div class="btn-row" style="margin-top:0.5rem">
+      <button class="btn btn-ghost btn-sm" onclick="dlVersion(${v.id})">Download</button>
+      <button class="btn btn-ghost btn-sm" onclick="doRender(null)">New from scratch</button>
+    </div>`;
 }
 
-function refineRender() {
-  const input = document.getElementById('refineInput');
-  const note = input.value.trim();
-  if (!note) return;
-  input.value = '';
-  doRender(note);
+function refineRender() { const i = document.getElementById('refineInput'); const n = i.value.trim(); if (!n) return; i.value = ''; doRender(n); }
+function dlVersion(id) { const v = versions.find(x => x.id === id); if (!v) return; const a = document.createElement('a'); a.href = v.imgSrc; a.download = `cihla-v${v.id}.png`; a.click(); }
+
+// --- Spendings ---
+function updateSpend() {
+  const n = versions.length, usd = versions.reduce((s, v) => s + v.cost, 0), czk = usd * CZK_RATE;
+  document.getElementById('spTotalRenders').textContent = n;
+  document.getElementById('spTotalUsd').textContent = '$' + usd.toFixed(2);
+  document.getElementById('spTotalCzk').textContent = Math.round(czk) + ' Kc';
+  document.getElementById('spTableBody').innerHTML = versions.map(v => `
+    <tr>
+      <td class="mono">v${v.id}</td>
+      <td>${v.parentId ? 'Refine (v' + v.parentId + ')' : 'Initial'}</td>
+      <td>${v.note}</td>
+      <td class="mono">$${v.cost.toFixed(3)}</td>
+      <td class="mono">${(v.cost * CZK_RATE).toFixed(1)} Kc</td>
+    </tr>`).join('');
 }
 
-function downloadVersion(id) {
-  const v = versions.find(v => v.id === id);
-  if (!v) return;
-  const a = document.createElement('a');
-  a.href = v.imgSrc;
-  a.download = `sketchup-render-v${v.id}.png`;
-  a.click();
-}
-
-function updateCostDisplay() {
-  document.getElementById('renderCount').textContent = versions.length;
-  document.getElementById('totalCost').textContent = versions.reduce((s, v) => s + v.cost, 0).toFixed(2);
-}
-
-function renderVersionStrip() {
-  const panel = document.getElementById('historyPanel');
-  const strip = document.getElementById('versionStrip');
-  if (versions.length === 0) { panel.style.display = 'none'; return; }
+// --- Version strip ---
+function renderStrip() {
+  const panel = document.getElementById('historyPanel'), strip = document.getElementById('versionStrip');
+  if (!versions.length) { panel.style.display = 'none'; return; }
   panel.style.display = 'block';
   strip.innerHTML = versions.map(v => {
-    let cls = '';
-    if (compareSelection[0] === v.id) cls = 'compare-a';
-    else if (compareSelection[1] === v.id) cls = 'compare-b';
-    return `
-      <div class="version-card ${cls}" onclick="onVersionClick(${v.id})" title="${v.note}">
-        <img src="${v.imgSrc}" alt="v${v.id}">
-        <div class="version-info">
-          <div class="ver-label">v${v.id}${v.parentId ? ' (from v' + v.parentId + ')' : ''}</div>
-          <div class="ver-note">${v.note}</div>
-          <div class="ver-cost">$${v.cost.toFixed(3)}</div>
-        </div>
-      </div>`;
+    const cls = compareSelection[0] === v.id ? 'cmp-a' : compareSelection[1] === v.id ? 'cmp-b' : '';
+    return `<div class="v-card ${cls}" onclick="onVClick(${v.id})" title="${v.note}">
+      <img src="${v.imgSrc}"><div class="v-meta">
+        <div class="v-id">v${v.id}${v.parentId ? ' ← v' + v.parentId : ''}</div>
+        <div class="v-note">${v.note}</div>
+        <div class="v-cost">$${v.cost.toFixed(3)} · ${(v.cost * CZK_RATE).toFixed(1)} Kc</div>
+      </div></div>`;
   }).join('');
 }
 
-function onVersionClick(id) {
-  if (compareSelection.length === 0) {
-    compareSelection = [id];
-  } else if (compareSelection.length === 1) {
-    if (compareSelection[0] === id) {
-      const v = versions.find(vv => vv.id === id);
-      if (v) showCurrentRender(v);
-      compareSelection = [];
-      document.getElementById('compareView').classList.remove('active');
-    } else {
-      compareSelection.push(id);
-      showCompare();
-    }
-  } else {
-    compareSelection = [id];
-    document.getElementById('compareView').classList.remove('active');
-  }
-  renderVersionStrip();
+function onVClick(id) {
+  if (!compareSelection.length) { compareSelection = [id]; }
+  else if (compareSelection.length === 1) {
+    if (compareSelection[0] === id) { const v = versions.find(x => x.id === id); if (v) showRender(v); compareSelection = []; document.getElementById('compareView').classList.remove('active'); }
+    else { compareSelection.push(id); showCmp(); }
+  } else { compareSelection = [id]; document.getElementById('compareView').classList.remove('active'); }
+  renderStrip();
 }
 
-function showCompare() {
-  const a = versions.find(v => v.id === compareSelection[0]);
-  const b = versions.find(v => v.id === compareSelection[1]);
+function showCmp() {
+  const a = versions.find(v => v.id === compareSelection[0]), b = versions.find(v => v.id === compareSelection[1]);
   if (!a || !b) return;
-  document.getElementById('compareImgA').src = a.imgSrc;
-  document.getElementById('compareImgB').src = b.imgSrc;
-  document.getElementById('compareLabelA').textContent = `v${a.id} — ${a.note}`;
-  document.getElementById('compareLabelB').textContent = `v${b.id} — ${b.note}`;
+  document.getElementById('cmpImgA').src = a.imgSrc; document.getElementById('cmpImgB').src = b.imgSrc;
+  document.getElementById('cmpLblA').textContent = `v${a.id} — ${a.note}`;
+  document.getElementById('cmpLblB').textContent = `v${b.id} — ${b.note}`;
   document.getElementById('compareView').classList.add('active');
 }
 
-function clearCompare() {
-  compareSelection = [];
-  document.getElementById('compareView').classList.remove('active');
-  renderVersionStrip();
-}
-
-function showRenderStatus(msg, isError) {
-  const el = document.getElementById('renderStatus');
-  el.textContent = msg;
-  el.className = isError ? 'error' : 'loading';
-}
+function clearCompare() { compareSelection = []; document.getElementById('compareView').classList.remove('active'); renderStrip(); }
 </script>
 </body>
 </html>
