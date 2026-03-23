@@ -401,20 +401,11 @@ const render = {
     const baseRender=baseId?state.renders.find(x=>x.id===baseId):state.renders[state.renders.length-1]||null;
     const sRef=state.curSession?.style_ref_render_id?state.renders.find(x=>x.dbId===state.curSession.style_ref_render_id)||await styleRef.load():null;
 
-    // Build prompt: always use full prompt as base, add edits on top
+    // Build prompt
     let rp;
     if(note){
-      // Build edit chain: walk from base version back through parentId to collect all edits
-      const editChain=[];
-      if(baseRender){
-        let cur=baseRender;
-        while(cur){
-          if(cur.note&&cur.note!=='Základní render')editChain.unshift(cur.note);
-          cur=cur.parentId?state.renders.find(x=>x.dbId===cur.parentId):null;
-        }
-      }
-      editChain.push(note);
-      rp=pr+`\n\nADDITIONAL EDITS (apply all of these to the render):\n${editChain.map((e,i)=>`${i+1}. ${e}`).join('\n')}\n\nIMPORTANT: Generate a FRESH render from the SketchUp source image with ALL the above edits applied. Do not degrade quality.`;
+      // Simple: base prompt + ONE edit. The reference image already shows all previous edits visually.
+      rp=pr+`\n\nIMPORTANT EDIT: ${note}\n\nYou are given two images. The FIRST image is a previous photorealistic render — use it as your visual reference for style, lighting, materials, and overall look. The SECOND image is the original SketchUp 3D model source.\n\nGenerate a NEW photorealistic render from the SketchUp source that looks like the reference render, but with this ONE change applied: ${note}\n\nKeep everything else identical to the reference render. Same quality, same style, same angle. Only change what was requested.`;
     } else if(sRef){
       rp=pr+'\n\nSTYLE REFERENCE:\nFirst image = style reference. Match its EXACT rendering style. Second image = new SketchUp view to render in that style.';
     } else {
@@ -425,20 +416,17 @@ const render = {
     $('renderBtn').disabled=true;$('refBtn').disabled=true;
     const parts=[];
     try{
-      // Style ref image first (if set and not iterating)
       if(sRef&&!note){const d=await sb.toB64(sRef.imgSrc);parts.push({inlineData:{mimeType:d.mime,data:d.b64}});}
     }catch(e){console.warn('Style ref fetch failed:',e);}
     try{
-      // For iterations: send base render as reference + source image
-      // For initial: just source image
+      // For iterations: reference render first, then source SketchUp
+      // For initial: just source SketchUp (+ optional style ref above)
       if(note&&baseRender){
         const refD=await sb.toB64(baseRender.imgSrc);
         parts.push({inlineData:{mimeType:refD.mime,data:refD.b64}});
       }
-      const{b64:b,mime:m}=await sb.toB64(sourceImg);parts.push({inlineData:{mimeType:m,data:b}});
-      if(note){
-        rp+='\n\nThe first image is a reference render showing the desired style and previous edits. The second image is the original SketchUp source. Generate a new photorealistic render from the SketchUp source, matching the reference style but with ALL edits applied.';
-      }
+      const{b64:b,mime:m}=await sb.toB64(sourceImg);
+      parts.push({inlineData:{mimeType:m,data:b}});
       parts.push({text:rp});
       const S=state.settings;
       const genCfg={responseModalities:['TEXT','IMAGE'],imageConfig:{imageSize:'2K'}};
