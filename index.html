@@ -7,285 +7,201 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --cream: #f4f1ea;
-    --white: #faf8f4;
-    --olive: #5c6442;
-    --olive-light: #7a8259;
-    --olive-pale: #e8e6d8;
-    --olive-bg: rgba(92,100,66,0.06);
-    --brown: #8a7d6b;
-    --text: #2c2c28;
-    --text-dim: #8a8578;
-    --text-light: #b0a99c;
-    --border: #ddd8cc;
-    --border-light: #e8e4da;
-    --red: #c44;
-    --serif: 'EB Garamond', Georgia, serif;
-    --sans: 'Inter', -apple-system, sans-serif;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: var(--sans); background: var(--cream); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+:root {
+  --cream:#f4f1ea;--white:#faf8f4;--olive:#5c6442;--olive-light:#7a8259;
+  --olive-pale:#e8e6d8;--brown:#8a7d6b;--text:#2c2c28;--text-dim:#8a8578;
+  --text-light:#b0a99c;--border:#ddd8cc;--border-light:#e8e4da;--red:#c44;
+  --serif:'EB Garamond',Georgia,serif;--sans:'Inter',-apple-system,sans-serif;
+  --grotesk:Helvetica Neue,Helvetica,Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--sans);background:var(--cream);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
 
-  /* --- Lock --- */
-  #lockScreen {
-    position: fixed; inset: 0; background: var(--cream);
-    display: flex; align-items: center; justify-content: center; z-index: 100;
-  }
-  .lock-wrap { text-align: center; width: 280px; }
-  .lock-logo-area { margin-bottom: 2.5rem; }
-  .lock-name { font-family: Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 2rem; font-weight: 700; color: var(--text); letter-spacing: -0.03em; text-transform: lowercase; }
-  .lock-input {
-    width: 100%; padding: 0.65rem 0; background: transparent;
-    border: none; border-bottom: 1px solid var(--border);
-    color: var(--text); font-family: var(--serif); font-size: 1.1rem;
-    text-align: center; outline: none; letter-spacing: 0.1em;
-  }
-  .lock-input::placeholder { color: var(--text-light); letter-spacing: 0; font-size: 0.9rem; }
-  .lock-input:focus { border-color: var(--olive); }
-  .lock-enter {
-    display: inline-block; margin-top: 1.5rem; padding: 0.5rem 2rem;
-    background: var(--olive); color: var(--cream); border: none;
-    font-family: var(--sans); font-size: 0.8rem; font-weight: 500;
-    letter-spacing: 0.05em; cursor: pointer; transition: background 0.2s;
-  }
-  .lock-enter:hover { background: var(--olive-light); }
-  .lock-err { color: var(--red); font-size: 0.8rem; margin-top: 0.75rem; min-height: 1em; }
+/* Lock */
+#lock{position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;z-index:100;}
+.lk-wrap{text-align:center;width:280px;}
+.lk-logo{font-family:var(--grotesk);font-size:2rem;font-weight:700;color:var(--text);letter-spacing:-0.03em;text-transform:lowercase;margin-bottom:2.5rem;}
+.lk-in{width:100%;padding:0.65rem 0;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--serif);font-size:1.1rem;text-align:center;outline:none;letter-spacing:0.1em;}
+.lk-in::placeholder{color:var(--text-light);letter-spacing:0;font-size:0.9rem;}
+.lk-in:focus{border-color:var(--olive);}
+.lk-btn{display:inline-block;margin-top:1.5rem;padding:0.5rem 2rem;background:var(--olive);color:var(--cream);border:none;font-family:var(--sans);font-size:0.8rem;font-weight:500;letter-spacing:0.05em;cursor:pointer;}
+.lk-btn:hover{background:var(--olive-light);}
+.lk-err{color:var(--red);font-size:0.8rem;margin-top:0.75rem;min-height:1em;}
 
-  #app { display: none; }
+#app{display:none;}
+.shell{max-width:1280px;margin:0 auto;padding:0 2.5rem;}
 
-  /* --- Shell --- */
-  .shell { max-width: 1200px; margin: 0 auto; padding: 0 2.5rem; }
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 0;border-bottom:1px solid var(--border);}
+.hdr-name{font-family:var(--grotesk);font-size:1.05rem;font-weight:700;color:var(--text);letter-spacing:-0.03em;text-transform:lowercase;}
+nav{display:flex;gap:1.75rem;}
+nav a{font-size:0.8rem;color:var(--text-dim);text-decoration:none;cursor:pointer;font-weight:500;letter-spacing:0.02em;transition:color 0.15s;}
+nav a:hover,nav a.on{color:var(--text);}
 
-  /* --- Header --- */
-  header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1.25rem 0; border-bottom: 1px solid var(--border);
-  }
-  .hdr-left { display: flex; align-items: center; gap: 0.6rem; }
-  .hdr-name { font-family: Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 1.05rem; font-weight: 700; color: var(--text); letter-spacing: -0.03em; text-transform: lowercase; }
-  nav { display: flex; gap: 1.75rem; }
-  nav a {
-    font-size: 0.8rem; color: var(--text-dim); text-decoration: none;
-    cursor: pointer; transition: color 0.15s; font-weight: 500;
-    letter-spacing: 0.02em;
-  }
-  nav a:hover, nav a.active { color: var(--text); }
+.view{display:none;padding:2rem 0 4rem;}
+.view.on{display:block;}
+.sec-title{font-family:var(--serif);font-size:1.6rem;font-weight:400;color:var(--text);margin-bottom:0.3rem;}
+.sec-sub{font-size:0.8rem;color:var(--text-dim);margin-bottom:2rem;max-width:480px;line-height:1.5;}
 
-  /* --- Sections --- */
-  .view { display: none; padding: 2.5rem 0 4rem; }
-  .view.active { display: block; }
+/* --- Source row: image left, settings right --- */
+.source-row{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem;align-items:start;}
 
-  .section-title {
-    font-family: var(--serif); font-size: 1.6rem; font-weight: 400;
-    color: var(--text); margin-bottom: 0.3rem;
-  }
-  .section-sub {
-    font-size: 0.8rem; color: var(--text-dim); margin-bottom: 2rem;
-    max-width: 480px; line-height: 1.5;
-  }
+/* --- Output row: prompt left, render right --- */
+.output-row{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;}
 
-  /* --- Studio layout --- */
-  .studio-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 2.5rem; align-items: start;
-  }
-  .studio-col { min-width: 0; }
+.fl{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);font-weight:500;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:baseline;}
+.fl .v{font-family:var(--serif);font-size:0.8rem;text-transform:none;letter-spacing:0;color:var(--olive);}
+.fg{margin-bottom:1rem;}
 
-  /* --- Fieldset --- */
-  .fieldset { margin-bottom: 2rem; }
-  .fieldset-label {
-    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--text-dim); font-weight: 500; margin-bottom: 0.6rem;
-    display: flex; justify-content: space-between; align-items: baseline;
-  }
-  .fieldset-label .val { font-family: var(--serif); font-size: 0.8rem; text-transform: none; letter-spacing: 0; color: var(--olive); }
+/* Upload */
+.drop{background:var(--white);border:1px solid var(--border);padding:2rem;text-align:center;cursor:pointer;min-height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:border-color 0.2s;margin-bottom:0.75rem;}
+.drop:hover{border-color:var(--olive);}
+.drop.has{padding:0;border-style:solid;}
+.drop img{max-width:100%;max-height:300px;display:block;}
+.drop input{display:none;}
+.drop-hint{font-size:0.85rem;color:var(--text-light);}
+.drop-hint em{font-family:var(--serif);color:var(--olive);font-style:italic;}
 
-  /* --- Upload --- */
-  .drop {
-    background: var(--white); border: 1px solid var(--border);
-    padding: 2rem; text-align: center; cursor: pointer;
-    min-height: 180px; display: flex; align-items: center;
-    justify-content: center; flex-direction: column; transition: border-color 0.2s;
-    margin-bottom: 0.75rem;
-  }
-  .drop:hover { border-color: var(--olive); }
-  .drop.has-img { padding: 0; }
-  .drop img { max-width: 100%; max-height: 300px; display: block; }
-  .drop input { display: none; }
-  .drop-hint { font-size: 0.85rem; color: var(--text-light); }
-  .drop-hint em { font-family: var(--serif); color: var(--olive); font-style: italic; }
+/* Fields */
+.fi{width:100%;padding:0.55rem 0.7rem;background:var(--white);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:0.85rem;outline:none;transition:border-color 0.2s;resize:vertical;}
+.fi:focus{border-color:var(--olive);}
+.fi::placeholder{color:var(--text-light);}
+.fi-mono{font-family:'Courier New',monospace;font-size:0.78rem;line-height:1.55;min-height:180px;background:var(--white);}
+input.fi{resize:none;}
 
-  /* --- Textarea / Input --- */
-  .field {
-    width: 100%; padding: 0.55rem 0.7rem; background: var(--white);
-    border: 1px solid var(--border); color: var(--text);
-    font-family: var(--sans); font-size: 0.85rem; outline: none;
-    transition: border-color 0.2s; resize: vertical;
-  }
-  .field:focus { border-color: var(--olive); }
-  .field::placeholder { color: var(--text-light); }
-  .field-mono {
-    font-family: 'Courier New', monospace; font-size: 0.78rem;
-    line-height: 1.55; min-height: 180px; background: var(--white);
-  }
-  input.field { resize: none; }
+.pills{display:flex;gap:0.3rem;flex-wrap:wrap;}
+.pill{padding:0.3rem 0.6rem;background:transparent;border:1px solid var(--border);font-size:0.75rem;color:var(--text-dim);cursor:pointer;transition:all 0.15s;font-family:var(--sans);}
+.pill:hover{border-color:var(--olive);color:var(--text);}
+.pill.on{background:var(--olive);border-color:var(--olive);color:var(--cream);}
 
-  /* --- Pills --- */
-  .pills { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-  .pill {
-    padding: 0.3rem 0.6rem; background: transparent;
-    border: 1px solid var(--border); font-size: 0.75rem;
-    color: var(--text-dim); cursor: pointer; transition: all 0.15s;
-    font-family: var(--sans);
-  }
-  .pill:hover { border-color: var(--olive); color: var(--text); }
-  .pill.on { background: var(--olive); border-color: var(--olive); color: var(--cream); }
+.sl{display:flex;align-items:center;gap:0.5rem;}
+.sl input[type="range"]{flex:1;-webkit-appearance:none;height:1px;background:var(--border);outline:none;}
+.sl input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--olive);border-radius:50%;cursor:pointer;}
+.sl-e{font-size:0.65rem;color:var(--text-light);min-width:2rem;}
+.sl-e:last-child{text-align:right;}
 
-  /* --- Slider --- */
-  .slide { display: flex; align-items: center; gap: 0.5rem; }
-  .slide input[type="range"] {
-    flex: 1; -webkit-appearance: none; height: 1px;
-    background: var(--border); outline: none;
-  }
-  .slide input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 12px; height: 12px;
-    background: var(--olive); border-radius: 50%; cursor: pointer;
-  }
-  .slide-edge { font-size: 0.65rem; color: var(--text-light); min-width: 2rem; }
-  .slide-edge:last-child { text-align: right; }
+.btn{padding:0.5rem 1rem;border:none;font-family:var(--sans);font-size:0.78rem;font-weight:500;cursor:pointer;transition:all 0.15s;letter-spacing:0.02em;}
+.btn-f{background:var(--olive);color:var(--cream);}
+.btn-f:hover{background:var(--olive-light);}
+.btn-f:disabled{background:var(--olive-pale);color:var(--text-light);cursor:default;}
+.btn-o{background:transparent;border:1px solid var(--border);color:var(--text-dim);}
+.btn-o:hover{border-color:var(--olive);color:var(--text);}
+.btn-r{background:#6b7a4a;color:var(--cream);}
+.btn-r:hover{background:#5c6a3e;}
+.btn-r:disabled{background:var(--olive-pale);color:var(--text-light);cursor:default;}
+.btn-sm{padding:0.35rem 0.7rem;font-size:0.72rem;}
+.btns{display:flex;gap:0.4rem;flex-wrap:wrap;}
 
-  /* --- Buttons --- */
-  .btn {
-    padding: 0.5rem 1rem; border: none; font-family: var(--sans);
-    font-size: 0.78rem; font-weight: 500; cursor: pointer;
-    transition: all 0.15s; letter-spacing: 0.02em;
-  }
-  .btn-fill { background: var(--olive); color: var(--cream); }
-  .btn-fill:hover { background: var(--olive-light); }
-  .btn-fill:disabled { background: var(--olive-pale); color: var(--text-light); cursor: default; }
-  .btn-line { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
-  .btn-line:hover { border-color: var(--olive); color: var(--text); }
-  .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.72rem; }
-  .btns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.st{font-size:0.78rem;min-height:1.3em;margin-top:0.3rem;}
+.st.ld{color:var(--olive);}
+.st.er{color:var(--red);}
 
-  /* --- Status --- */
-  .st { font-size: 0.78rem; min-height: 1.3em; margin-top: 0.3rem; }
-  .st.ld { color: var(--olive); }
-  .st.er { color: var(--red); }
+/* Loading bar */
+.loader{height:2px;background:var(--border);margin-top:0.5rem;border-radius:1px;overflow:hidden;display:none;}
+.loader.on{display:block;}
+.loader-bar{height:100%;width:0;background:var(--olive);animation:load 12s ease-out forwards;}
+@keyframes load{0%{width:0}30%{width:45%}60%{width:70%}80%{width:85%}100%{width:95%}}
 
-  /* --- Render output --- */
-  .render-out { margin-top: 1.5rem; }
-  .render-out img { max-width: 100%; border: 1px solid var(--border); display: block; }
-  .render-meta { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.4rem; font-family: var(--serif); font-style: italic; }
-  .refine-row { display: flex; gap: 0.4rem; margin-top: 0.75rem; }
-  .refine-row input { flex: 1; }
+/* Render output */
+.rout{margin-top:1.5rem;}
+.rout img{max-width:100%;border:1px solid var(--border);display:block;}
+.rmeta{font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;font-family:var(--serif);font-style:italic;}
 
-  /* --- History --- */
-  .hist { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border); }
-  .hist-strip { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem; }
-  .vc {
-    flex-shrink: 0; width: 160px; border: 1px solid var(--border);
-    background: var(--white); cursor: pointer; transition: border-color 0.2s;
-  }
-  .vc:hover { border-color: var(--olive); }
-  .vc.ca { border-color: var(--brown); border-width: 2px; }
-  .vc.cb { border-color: var(--olive); border-width: 2px; }
-  .vc img { width: 100%; height: 100px; object-fit: cover; display: block; }
-  .vc-info { padding: 0.4rem 0.5rem; font-size: 0.7rem; }
-  .vc-info .vc-id { font-weight: 500; color: var(--text); }
-  .vc-info .vc-note { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .vc-info .vc-cost { color: var(--olive); font-family: var(--serif); font-style: italic; }
+/* Refine — prominent */
+.refine-box{margin-top:1rem;padding:1rem;background:var(--white);border:1px solid var(--border);}
+.refine-box .fl{margin-bottom:0.4rem;}
+.refine-row{display:flex;gap:0.4rem;}
+.refine-row input{flex:1;}
 
-  .cmp { display: none; margin-top: 1.25rem; }
-  .cmp.on { display: block; }
-  .cmp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .cmp-pane { border: 1px solid var(--border); background: var(--white); }
-  .cmp-pane img { width: 100%; display: block; }
-  .cmp-pane-lbl { padding: 0.4rem 0.5rem; font-size: 0.72rem; color: var(--text-dim); text-align: center; font-family: var(--serif); font-style: italic; }
-  .cmp-pane:first-child { border-color: var(--brown); }
-  .cmp-pane:last-child { border-color: var(--olive); }
+/* History */
+.hist{margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);}
+.hist-strip{display:flex;gap:0.75rem;overflow-x:auto;padding-bottom:0.5rem;}
+.vc{flex-shrink:0;width:150px;border:1px solid var(--border);background:var(--white);cursor:pointer;transition:border-color 0.2s;}
+.vc:hover{border-color:var(--olive);}
+.vc.ca{border-color:var(--brown);border-width:2px;}
+.vc.cb{border-color:var(--olive);border-width:2px;}
+.vc img{width:100%;height:95px;object-fit:cover;display:block;}
+.vc-i{padding:0.35rem 0.45rem;font-size:0.68rem;}
+.vc-i .vi{font-weight:500;color:var(--text);}
+.vc-i .vn{color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vc-i .vp{color:var(--olive);font-family:var(--serif);font-style:italic;}
 
-  /* --- Spendings --- */
-  .spend-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
-  .spend-card {
-    background: var(--white); border: 1px solid var(--border);
-    padding: 1.5rem; text-align: center;
-  }
-  .spend-val { font-family: var(--serif); font-size: 2rem; font-weight: 400; color: var(--text); }
-  .spend-lbl { font-size: 0.72rem; color: var(--text-dim); margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.06em; }
-  .spend-sub { font-size: 0.75rem; color: var(--olive); font-family: var(--serif); font-style: italic; margin-top: 0.15rem; }
+.cmp{display:none;margin-top:1rem;}
+.cmp.on{display:block;}
+.cmp-g{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.cmp-p{border:1px solid var(--border);background:var(--white);}
+.cmp-p img{width:100%;display:block;}
+.cmp-pl{padding:0.4rem 0.5rem;font-size:0.72rem;color:var(--text-dim);text-align:center;font-family:var(--serif);font-style:italic;}
+.cmp-p:first-child{border-color:var(--brown);}
+.cmp-p:last-child{border-color:var(--olive);}
 
-  .log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-  .log-table th {
-    text-align: left; padding: 0.6rem 0.75rem; font-weight: 500;
-    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--text-dim); border-bottom: 1px solid var(--border);
-  }
-  .log-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border-light); color: var(--text); }
-  .log-table tr:last-child td { border-bottom: none; }
-  .log-table .it { font-family: var(--serif); font-style: italic; }
+/* Spendings */
+.sp-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:2.5rem;}
+.sp-c{background:var(--white);border:1px solid var(--border);padding:1.5rem;text-align:center;}
+.sp-v{font-family:var(--serif);font-size:2rem;font-weight:400;color:var(--text);}
+.sp-l{font-size:0.72rem;color:var(--text-dim);margin-top:0.2rem;text-transform:uppercase;letter-spacing:0.06em;}
+.sp-s{font-size:0.75rem;color:var(--olive);font-family:var(--serif);font-style:italic;margin-top:0.15rem;}
+.ltab{width:100%;border-collapse:collapse;font-size:0.8rem;}
+.ltab th{text-align:left;padding:0.6rem 0.75rem;font-weight:500;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-dim);border-bottom:1px solid var(--border);}
+.ltab td{padding:0.6rem 0.75rem;border-bottom:1px solid var(--border-light);color:var(--text);}
+.ltab tr:last-child td{border-bottom:none;}
+.ltab .it{font-family:var(--serif);font-style:italic;}
 
-  @media (max-width: 820px) {
-    .studio-grid { grid-template-columns: 1fr; }
-    .shell { padding: 0 1.25rem; }
-    .spend-cards { grid-template-columns: 1fr; }
-    .cmp-grid { grid-template-columns: 1fr; }
-  }
+@media(max-width:900px){
+  .source-row,.output-row{grid-template-columns:1fr;}
+  .shell{padding:0 1.25rem;}
+  .sp-cards{grid-template-columns:1fr;}
+  .cmp-g{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
 
-<!-- Lock -->
-<div id="lockScreen">
-  <div class="lock-wrap">
-    <div class="lock-logo-area">
-      <div class="lock-name">marinada</div>
-    </div>
-    <input type="password" class="lock-input" id="pwdIn" placeholder="heslo" autofocus>
-    <button class="lock-enter" id="unlockBtn">Vstoupit</button>
-    <div class="lock-err" id="lockErr"></div>
+<div id="lock">
+  <div class="lk-wrap">
+    <div class="lk-logo">marinada</div>
+    <input type="password" class="lk-in" id="pwdIn" placeholder="heslo" autofocus>
+    <button class="lk-btn" id="unlockBtn">Vstoupit</button>
+    <div class="lk-err" id="lockErr"></div>
   </div>
 </div>
 
-<!-- App -->
 <div id="app">
 <div class="shell">
   <header>
-    <div class="hdr-left">
-      <span class="hdr-name">marinada</span>
-    </div>
+    <span class="hdr-name">marinada</span>
     <nav>
-      <a class="active" data-view="studio">Studio</a>
+      <a class="on" data-view="studio">Studio</a>
       <a data-view="spend">Výdaje</a>
     </nav>
   </header>
 
   <!-- STUDIO -->
-  <div class="view active" id="v-studio">
-    <div class="section-title">Nový render</div>
-    <div class="section-sub">Nahraj export ze SketchUp, uprav nastavení a nech AI vytvořit fotorealistickou vizualizaci.</div>
+  <div class="view on" id="v-studio">
+    <div class="sec-title">Nový render</div>
+    <div class="sec-sub">Nahraj export ze SketchUp, uprav nastavení a nech AI vytvořit fotorealistickou vizualizaci.</div>
 
-    <div class="studio-grid">
-      <div class="studio-col">
-
-        <div class="fieldset">
-          <div class="fieldset-label">Zdrojový obrázek</div>
+    <!-- Source: image left, settings right -->
+    <div class="source-row">
+      <div>
+        <div class="fg">
+          <div class="fl">Zdrojový obrázek</div>
           <div class="drop" id="uploadZone">
             <span class="drop-hint" id="uploadHint"><em>Přetáhni</em> sem obrázek nebo klikni</span>
             <input type="file" id="fileInput" accept="image/*">
           </div>
-          <button class="btn btn-fill" id="analyzeBtn" disabled style="width:100%">Analyzovat scénu</button>
+          <button class="btn btn-f" id="analyzeBtn" disabled style="width:100%">Analyzovat scénu</button>
           <div class="st" id="analyzeStatus"></div>
         </div>
-
-        <div class="fieldset">
-          <div class="fieldset-label">Popis scény</div>
-          <textarea class="field" id="description" rows="5" placeholder="Co je na obrázku — vyplní se automaticky, nebo napiš ručně..."></textarea>
+        <div class="fg">
+          <div class="fl">Popis scény</div>
+          <textarea class="fi" id="description" rows="4" placeholder="Vyplní se automaticky, nebo napiš ručně..."></textarea>
         </div>
+      </div>
 
-        <div class="fieldset">
-          <div class="fieldset-label">Typ scény</div>
+      <div>
+        <div class="fg">
+          <div class="fl">Typ scény</div>
           <div class="pills" id="sceneType">
             <div class="pill on" data-val="exterior">Exteriér</div>
             <div class="pill" data-val="interior">Interiér</div>
@@ -293,22 +209,20 @@
             <div class="pill" data-val="street-level">Z ulice</div>
           </div>
         </div>
-
-        <div class="fieldset">
-          <div class="fieldset-label">Denní doba</div>
+        <div class="fg">
+          <div class="fl">Denní doba</div>
           <div class="pills" id="timeOfDay">
             <div class="pill" data-val="dawn">Úsvit</div>
             <div class="pill" data-val="morning">Ráno</div>
             <div class="pill on" data-val="midday">Poledne</div>
-            <div class="pill" data-val="golden-hour">Zlatá hodinka</div>
+            <div class="pill" data-val="golden-hour">Zlatá hod.</div>
             <div class="pill" data-val="sunset">Západ</div>
             <div class="pill" data-val="dusk">Soumrak</div>
             <div class="pill" data-val="night">Noc</div>
           </div>
         </div>
-
-        <div class="fieldset">
-          <div class="fieldset-label">Počasí</div>
+        <div class="fg">
+          <div class="fl">Počasí</div>
           <div class="pills" id="weather">
             <div class="pill on" data-val="clear">Jasno</div>
             <div class="pill" data-val="partly-cloudy">Polojasno</div>
@@ -318,72 +232,73 @@
             <div class="pill" data-val="snowy">Sníh</div>
           </div>
         </div>
-
-        <div class="fieldset">
-          <div class="fieldset-label">Věrnost materiálů <span class="val" id="matLabel">Vysoká</span></div>
-          <div class="slide">
-            <span class="slide-edge">Volně</span>
-            <input type="range" id="materialSlider" min="0" max="100" value="75">
-            <span class="slide-edge">Přesně</span>
-          </div>
+        <div class="fg">
+          <div class="fl">Věrnost materiálů <span class="v" id="matL">Vysoká</span></div>
+          <div class="sl"><span class="sl-e">Volně</span><input type="range" id="matS" min="0" max="100" value="75"><span class="sl-e">Přesně</span></div>
         </div>
-
-        <div class="fieldset">
-          <div class="fieldset-label">Konzistence úhlu <span class="val" id="angleLabel">Vysoká</span></div>
-          <div class="slide">
-            <span class="slide-edge">Volně</span>
-            <input type="range" id="angleSlider" min="0" max="100" value="80">
-            <span class="slide-edge">Přesně</span>
-          </div>
+        <div class="fg">
+          <div class="fl">Konzistence úhlu <span class="v" id="angL">Vysoká</span></div>
+          <div class="sl"><span class="sl-e">Volně</span><input type="range" id="angS" min="0" max="100" value="80"><span class="sl-e">Přesně</span></div>
         </div>
-
-        <div class="fieldset">
-          <div class="fieldset-label">Výhled z oken</div>
-          <input class="field" id="windowView" placeholder="Např. pražské Staré Město, park, vnitroblok...">
+        <div class="fg">
+          <div class="fl">Výhled z oken</div>
+          <input class="fi" id="windowView" placeholder="Pražské Staré Město, park, vnitroblok...">
         </div>
-
-        <div class="fieldset">
-          <div class="fieldset-label">Zeleň <span class="val" id="vegLabel">50 %</span></div>
-          <div class="slide">
-            <span class="slide-edge">Žádná</span>
-            <input type="range" id="vegSlider" min="0" max="100" value="50">
-            <span class="slide-edge">Bujná</span>
-          </div>
+        <div class="fg">
+          <div class="fl">Zeleň <span class="v" id="vegL">50 %</span></div>
+          <div class="sl"><span class="sl-e">Žádná</span><input type="range" id="vegS" min="0" max="100" value="50"><span class="sl-e">Bujná</span></div>
         </div>
+        <div class="fg">
+          <div class="fl">Lidé <span class="v" id="pplL">30 %</span></div>
+          <div class="sl"><span class="sl-e">Prázdno</span><input type="range" id="pplS" min="0" max="100" value="30"><span class="sl-e">Rušno</span></div>
+        </div>
+      </div>
+    </div>
 
-        <div class="fieldset">
-          <div class="fieldset-label">Lidé <span class="val" id="pplLabel">30 %</span></div>
-          <div class="slide">
-            <span class="slide-edge">Prázdno</span>
-            <input type="range" id="peopleSlider" min="0" max="100" value="30">
-            <span class="slide-edge">Rušno</span>
+    <!-- Output: prompt left, render right -->
+    <div class="output-row">
+      <div>
+        <div class="fg">
+          <div class="fl">Prompt</div>
+          <textarea class="fi fi-mono" id="promptOut" readonly placeholder="Nastav parametry a klikni na Vygenerovat..."></textarea>
+          <div class="btns" style="margin-top:0.6rem">
+            <button class="btn btn-f" id="genBtn">Vygenerovat prompt</button>
+            <button class="btn btn-o" id="copyBtn">Kopírovat</button>
           </div>
         </div>
       </div>
-
-      <div class="studio-col">
-        <div class="fieldset">
-          <div class="fieldset-label">Prompt</div>
-          <textarea class="field field-mono" id="promptOutput" readonly placeholder="Nastav parametry a klikni na Vygenerovat..."></textarea>
-          <div class="btns" style="margin-top:0.6rem">
-            <button class="btn btn-fill" id="generateBtn">Vygenerovat prompt</button>
-            <button class="btn btn-line" id="copyBtn">Kopírovat</button>
-            <button class="btn btn-fill" id="renderBtn" style="background:#6b7a4a">Renderovat</button>
+      <div>
+        <div class="fg">
+          <div class="fl">Render</div>
+          <div class="btns">
+            <button class="btn btn-r" id="renderBtn">Renderovat</button>
+            <button class="btn btn-o btn-sm" id="rerunBtn" style="display:none">Znovu od začátku</button>
           </div>
-          <div class="st" id="renderStatus"></div>
+          <div class="loader" id="loader"><div class="loader-bar"></div></div>
+          <div class="st" id="renderSt"></div>
+        </div>
+        <div class="rout" id="rout"></div>
+
+        <!-- Refine box — shown after first render -->
+        <div class="refine-box" id="refineBox" style="display:none">
+          <div class="fl">Upravit render</div>
+          <div class="refine-row">
+            <input class="fi" id="refIn" placeholder="Změň podlahu na dub, teplejší světlo, přidej koberec...">
+            <button class="btn btn-r btn-sm" id="refBtn">Upravit</button>
+          </div>
+          <div style="font-size:0.7rem;color:var(--text-light);margin-top:0.35rem;">Pošle předchozí render zpět do AI s tvými úpravami</div>
         </div>
 
-        <div class="render-out" id="renderResult"></div>
-
-        <div class="hist" id="histPanel" style="display:none">
-          <div class="fieldset-label">Verze <span class="val" style="font-weight:400">— klikni na jednu pro výběr, dvě pro porovnání</span></div>
-          <div class="hist-strip" id="vStrip"></div>
-          <div class="cmp" id="cmpView">
-            <div class="cmp-grid">
-              <div class="cmp-pane"><img id="cmpA"><div class="cmp-pane-lbl" id="cmpLA"></div></div>
-              <div class="cmp-pane"><img id="cmpB"><div class="cmp-pane-lbl" id="cmpLB"></div></div>
+        <!-- History -->
+        <div class="hist" id="histP" style="display:none">
+          <div class="fl">Verze <span class="v" style="font-weight:400">klikni jednu = výběr, dvě = porovnání</span></div>
+          <div class="hist-strip" id="vStr"></div>
+          <div class="cmp" id="cmpV">
+            <div class="cmp-g">
+              <div class="cmp-p"><img id="cA"><div class="cmp-pl" id="cLA"></div></div>
+              <div class="cmp-p"><img id="cB"><div class="cmp-pl" id="cLB"></div></div>
             </div>
-            <div class="btns" style="margin-top:0.5rem"><button class="btn btn-line btn-sm" onclick="clearCmp()">Zavřít</button></div>
+            <div class="btns" style="margin-top:0.5rem"><button class="btn btn-o btn-sm" onclick="clearCmp()">Zavřít</button></div>
           </div>
         </div>
       </div>
@@ -392,54 +307,45 @@
 
   <!-- SPENDINGS -->
   <div class="view" id="v-spend">
-    <div class="section-title">Výdaje</div>
-    <div class="section-sub">Přehled nákladů na generování renderů.</div>
-
-    <div class="spend-cards">
-      <div class="spend-card">
-        <div class="spend-val" id="spN">0</div>
-        <div class="spend-lbl">Renderů celkem</div>
-      </div>
-      <div class="spend-card">
-        <div class="spend-val" id="spUsd">$0.00</div>
-        <div class="spend-lbl">Celkem (USD)</div>
-      </div>
-      <div class="spend-card">
-        <div class="spend-val" id="spCzk">0 Kč</div>
-        <div class="spend-lbl">Celkem (CZK)</div>
-        <div class="spend-sub">1 USD ≈ 21,2 Kč</div>
-      </div>
+    <div class="sec-title">Výdaje</div>
+    <div class="sec-sub">Přehled nákladů na generování renderů.</div>
+    <div class="sp-cards">
+      <div class="sp-c"><div class="sp-v" id="spN">0</div><div class="sp-l">Renderů celkem</div></div>
+      <div class="sp-c"><div class="sp-v" id="spU">$0.00</div><div class="sp-l">Celkem (USD)</div></div>
+      <div class="sp-c"><div class="sp-v" id="spK">0 Kč</div><div class="sp-l">Celkem (CZK)</div><div class="sp-s">1 USD ≈ 21,2 Kč</div></div>
     </div>
-
-    <div class="fieldset-label">Historie renderů</div>
-    <table class="log-table">
+    <div class="fl">Historie renderů</div>
+    <table class="ltab">
       <thead><tr><th>#</th><th>Typ</th><th>Poznámka</th><th>USD</th><th>CZK</th></tr></thead>
-      <tbody id="spBody"><tr><td colspan="5" style="color:var(--text-light);text-align:center;padding:2rem;">Zatím žádné rendery</td></tr></tbody>
+      <tbody id="spB"><tr><td colspan="5" style="color:var(--text-light);text-align:center;padding:2rem;">Zatím žádné rendery</td></tr></tbody>
     </table>
   </div>
-
 </div>
 </div>
 
 <script>
-const ENC_A='YrwsDbSwfHgAGSqPK5Vq8zJH3ubVNOBpBkoFPwHA/zcS3U6Cq1StskfgLiftypXBdNDh5f9440fXqEJMdtZlFMMZkhdf/kIzbvO2YJJeOfYRPdN71YX4OQ9A3nUBbJYOdbCZmpeRJJd9xLUbCf5y/z8I9GhRByMS1kCf1qrzpslG/XxQOJhOPF0KhhFs8q5fSWtrW+os5tI=';
-const ENC_G='MzyQzn3RfMCVJOMSbfchNtHCe+QxwuVxp/k8Eyda10iGmeQfeydEGq93VsTWgY048QHh3b9z6FG0dsGMRjQlux3V/yWfVkKJ96Qep1Ds0CAOoAQ=';
-const CPR=0.067,CZK=21.2;
+const EA='YrwsDbSwfHgAGSqPK5Vq8zJH3ubVNOBpBkoFPwHA/zcS3U6Cq1StskfgLiftypXBdNDh5f9440fXqEJMdtZlFMMZkhdf/kIzbvO2YJJeOfYRPdN71YX4OQ9A3nUBbJYOdbCZmpeRJJd9xLUbCf5y/z8I9GhRByMS1kCf1qrzpslG/XxQOJhOPF0KhhFs8q5fSWtrW+os5tI=';
+const EG='MzyQzn3RfMCVJOMSbfchNtHCe+QxwuVxp/k8Eyda10iGmeQfeydEGq93VsTWgY048QHh3b9z6FG0dsGMRjQlux3V/yWfVkKJ96Qep1Ds0CAOoAQ=';
+const CPR=0.067,CZK=21.2,LS_KEY='marinada_versions';
 let AK='',GK='';
 
 async function dec(e,p){const r=Uint8Array.from(atob(e),c=>c.charCodeAt(0)),s=r.slice(0,16),iv=r.slice(16,28),tg=r.slice(28,44),ct=r.slice(44);const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);const k=await crypto.subtle.deriveKey({name:'PBKDF2',salt:s,iterations:100000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);const c=new Uint8Array(ct.length+tg.length);c.set(ct);c.set(tg,ct.length);return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv},k,c));}
 
 // Lock
-async function unlock(){const p=document.getElementById('pwdIn').value;if(!p)return;document.getElementById('lockErr').textContent='';try{AK=await dec(ENC_A,p);GK=await dec(ENC_G,p);document.getElementById('lockScreen').style.display='none';document.getElementById('app').style.display='block';}catch{document.getElementById('lockErr').textContent='Špatné heslo';document.getElementById('pwdIn').value='';document.getElementById('pwdIn').focus();}}
+async function unlock(){const p=document.getElementById('pwdIn').value;if(!p)return;document.getElementById('lockErr').textContent='';try{AK=await dec(EA,p);GK=await dec(EG,p);document.getElementById('lock').style.display='none';document.getElementById('app').style.display='block';loadVersions();}catch{document.getElementById('lockErr').textContent='Špatné heslo';document.getElementById('pwdIn').value='';document.getElementById('pwdIn').focus();}}
 document.getElementById('unlockBtn').addEventListener('click',unlock);
 document.getElementById('pwdIn').addEventListener('keydown',e=>{if(e.key==='Enter')unlock();});
 
 // Nav
-document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));a.classList.add('active');document.getElementById('v-'+a.dataset.view).classList.add('active');}));
+document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('nav a').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));a.classList.add('on');document.getElementById('v-'+a.dataset.view).classList.add('on');}));
 
 // State
 const S={imageData:null,description:'',sceneType:'exterior',timeOfDay:'midday',weather:'clear',material:75,angle:80,vegetation:50,people:30};
-const V=[];let cmpSel=[];
+let V=[],cmpSel=[];
+
+// LocalStorage
+function saveVersions(){try{localStorage.setItem(LS_KEY,JSON.stringify(V));}catch(e){console.warn('Storage full, removing oldest');V.shift();saveVersions();}}
+function loadVersions(){try{const d=localStorage.getItem(LS_KEY);if(d){V=JSON.parse(d);updSpend();renderStrip();if(V.length){showRender(V[V.length-1]);document.getElementById('refineBox').style.display='block';document.getElementById('rerunBtn').style.display='';}}}catch{}}
 
 // Upload
 const uz=document.getElementById('uploadZone'),fi=document.getElementById('fileInput');
@@ -448,7 +354,7 @@ uz.addEventListener('dragover',e=>{e.preventDefault();uz.style.borderColor='var(
 uz.addEventListener('dragleave',()=>{uz.style.borderColor='';});
 uz.addEventListener('drop',e=>{e.preventDefault();uz.style.borderColor='';if(e.dataTransfer.files.length)loadFile(e.dataTransfer.files[0]);});
 fi.addEventListener('change',()=>{if(fi.files.length)loadFile(fi.files[0]);});
-function loadFile(f){if(!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=e=>{S.imageData=e.target.result;uz.classList.add('has-img');document.getElementById('uploadHint').style.display='none';const old=uz.querySelector('img');if(old)old.remove();const img=document.createElement('img');img.src=S.imageData;uz.appendChild(img);document.getElementById('analyzeBtn').disabled=false;};r.readAsDataURL(f);}
+function loadFile(f){if(!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=e=>{S.imageData=e.target.result;uz.classList.add('has');document.getElementById('uploadHint').style.display='none';const old=uz.querySelector('img');if(old)old.remove();const img=document.createElement('img');img.src=S.imageData;uz.appendChild(img);document.getElementById('analyzeBtn').disabled=false;};r.readAsDataURL(f);}
 
 // Toggles
 function tog(id,key){document.getElementById(id).addEventListener('click',e=>{const p=e.target.closest('[data-val]');if(!p)return;p.parentElement.querySelectorAll('[data-val]').forEach(x=>x.classList.remove('on'));p.classList.add('on');S[key]=p.dataset.val;});}
@@ -456,50 +362,138 @@ tog('sceneType','sceneType');tog('timeOfDay','timeOfDay');tog('weather','weather
 
 // Sliders
 function sL(v){return v<25?'Nízká':v<50?'Střední':v<75?'Vysoká':'Maximální';}
-document.getElementById('materialSlider').addEventListener('input',e=>{S.material=+e.target.value;document.getElementById('matLabel').textContent=sL(S.material);});
-document.getElementById('angleSlider').addEventListener('input',e=>{S.angle=+e.target.value;document.getElementById('angleLabel').textContent=sL(S.angle);});
-document.getElementById('vegSlider').addEventListener('input',e=>{S.vegetation=+e.target.value;document.getElementById('vegLabel').textContent=e.target.value+' %';});
-document.getElementById('peopleSlider').addEventListener('input',e=>{S.people=+e.target.value;document.getElementById('pplLabel').textContent=e.target.value+' %';});
+document.getElementById('matS').addEventListener('input',e=>{S.material=+e.target.value;document.getElementById('matL').textContent=sL(S.material);});
+document.getElementById('angS').addEventListener('input',e=>{S.angle=+e.target.value;document.getElementById('angL').textContent=sL(S.angle);});
+document.getElementById('vegS').addEventListener('input',e=>{S.vegetation=+e.target.value;document.getElementById('vegL').textContent=e.target.value+' %';});
+document.getElementById('pplS').addEventListener('input',e=>{S.people=+e.target.value;document.getElementById('pplL').textContent=e.target.value+' %';});
 document.getElementById('description').addEventListener('input',e=>{S.description=e.target.value;});
 
 // Analyze
 document.getElementById('analyzeBtn').addEventListener('click',analyze);
-async function analyze(){if(!S.imageData){st('analyzeStatus','Nejdřív nahraj obrázek',1);return;}st('analyzeStatus','Analyzuji...',0);document.getElementById('analyzeBtn').disabled=true;const b=S.imageData.split(',')[1],m=S.imageData.split(';')[0].split(':')[1];try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AK,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:m,data:b}},{type:'text',text:'You are an architectural visualization expert. Describe this SketchUp 3D model export in detail for the purpose of generating a photorealistic render. Include: building form and massing, materials visible (concrete, wood, glass, metal, brick, etc.), architectural style, number of floors, roof type, window types, any landscape or context visible, camera angle and perspective. Be factual and precise. Do not add anything not visible in the image. Output a single dense paragraph.'}]}]})});const d=await r.json();if(d.error)throw new Error(d.error.message);document.getElementById('description').value=d.content[0].text;S.description=d.content[0].text;st('analyzeStatus','Hotovo',0);}catch(e){st('analyzeStatus',e.message,1);}document.getElementById('analyzeBtn').disabled=false;}
+async function analyze(){
+  if(!S.imageData){st('analyzeStatus','Nejdřív nahraj obrázek',1);return;}
+  st('analyzeStatus','Analyzuji scénu...',0);document.getElementById('analyzeBtn').disabled=true;
+  const b=S.imageData.split(',')[1],m=S.imageData.split(';')[0].split(':')[1];
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AK,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:m,data:b}},{type:'text',text:'You are an architectural visualization expert. Describe this SketchUp 3D model export in detail for generating a photorealistic render. Include: building form, materials (concrete, wood, glass, metal, brick, etc.), style, floors, roof, windows, landscape, camera angle. Be factual. Single dense paragraph.'}]}]})});
+    const d=await r.json();if(d.error)throw new Error(d.error.message);
+    document.getElementById('description').value=d.content[0].text;S.description=d.content[0].text;
+    st('analyzeStatus','Hotovo',0);
+  }catch(e){st('analyzeStatus',e.message,1);}
+  document.getElementById('analyzeBtn').disabled=false;
+}
 function st(id,msg,err){const el=document.getElementById(id);el.textContent=msg;el.className='st '+(err?'er':'ld');if(!err&&msg==='Hotovo')setTimeout(()=>{el.textContent='';},2000);}
 
-// Prompt (English)
-document.getElementById('generateBtn').addEventListener('click',genPrompt);
-function genPrompt(){const d=document.getElementById('description').value.trim();if(!d){document.getElementById('promptOutput').value='Nejdřív vyplň popis scény.';return;}
-const T={dawn:'early dawn light, soft pink and blue sky',morning:'bright morning sun, crisp shadows, blue sky',midday:'direct midday sun, strong overhead light, minimal shadows','golden-hour':'warm golden hour, long soft shadows, amber tones',sunset:'dramatic sunset, orange and purple sky, warm reflections',dusk:'blue hour dusk, ambient twilight, interior lights glowing',night:'night scene, building lit from within, dark sky'};
-const W={clear:'clear sky','partly-cloudy':'partly cloudy, scattered clouds',overcast:'overcast, soft diffused light',rainy:'rain, wet reflections, puddles',foggy:'fog, atmospheric haze',snowy:'snow on ground and roofs, winter'};
-const mat=S.material<25?'Freely interpret materials.':S.material<50?'Keep general palette, allow enhancement.':S.material<75?'Faithfully match materials, textures, colors.':'Exactly replicate all materials. No deviation.';
-const ang=S.angle<25?'Adjust angle freely.':S.angle<50?'Similar direction, minor adjustments OK.':S.angle<75?'Closely match camera angle and FOV.':'CRITICAL: EXACT same camera position, angle, FOV. Every wall/edge at same position. No reframing.';
-const vg=S.vegetation<15?'No vegetation.':S.vegetation<40?'Minimal, sparse vegetation.':S.vegetation<65?'Moderate trees, shrubs, ground cover.':'Lush vegetation, mature trees, dense planting.';
-const pp=S.people<15?'No people.':S.people<40?'One or two people for scale.':S.people<65?'Several people using the space.':'Busy scene with many people.';
-const wv=document.getElementById('windowView').value.trim(),isI=S.sceneType==='interior';
-document.getElementById('promptOutput').value=[`Transform the attached SketchUp model screenshot into a photorealistic ${S.sceneType} architectural photograph.`,'',`Scene: ${d}`,'','LIGHTING:',`- ${T[S.timeOfDay]}`,`- ${W[S.weather]}`,isI?'- Interior: ambient window light + artificial sources, warm spill, soft shadows.':'- Exterior: natural sky illumination, ambient occlusion, accurate shadows.','','MATERIALS:',`- ${mat}`,'- Physically accurate: reflectivity, roughness, bump, subsurface scattering.','- Glass: reflections, transparency, green edge tint. Metal: specular highlights.','','CAMERA:',`- ${ang}`,'- 1:1 layout match. Same walls, proportions, spatial arrangement. Only upgrade materials & lighting.','- Canon EOS R5, 24mm tilt-shift, f/5.6. Correct verticals.','','CONTEXT:',`- ${vg}`,`- ${pp}`,isI?'- Realistic room context, tasteful decor.':'- Realistic sky, neighboring context, ground surface.',wv?`- WINDOWS: View of ${wv}. Natural depth, atmospheric perspective.`:'','','QUALITY:','- Indistinguishable from real photo. Architecture magazine quality.','- Global illumination, HDR, subtle atmosphere.','- Zero CG artifacts or flat shading.'].filter(Boolean).join('\n');}
+// Prompt
+document.getElementById('genBtn').addEventListener('click',genPrompt);
+function genPrompt(){
+  const d=document.getElementById('description').value.trim();
+  if(!d){document.getElementById('promptOut').value='Nejdřív vyplň popis scény.';return;}
+  const T={dawn:'early dawn light, soft pink and blue sky',morning:'bright morning sun, crisp shadows, blue sky',midday:'direct midday sun, strong overhead light',
+    'golden-hour':'warm golden hour, long soft shadows, amber tones',sunset:'dramatic sunset, orange and purple sky',dusk:'blue hour dusk, twilight, interior lights glowing',night:'night, building lit from within, dark sky'};
+  const W={clear:'clear sky','partly-cloudy':'partly cloudy, scattered clouds',overcast:'overcast, soft diffused light',rainy:'rain, wet reflections, puddles',foggy:'fog, atmospheric haze',snowy:'snow on ground and roofs'};
+  const mat=S.material<25?'Freely interpret materials.':S.material<50?'Keep general palette, allow enhancement.':S.material<75?'Faithfully match materials, textures, colors.':'Exactly replicate all materials. No deviation.';
+  const ang=S.angle<25?'Adjust angle freely.':S.angle<50?'Similar direction, minor adjustments OK.':S.angle<75?'Closely match camera angle and FOV.':'CRITICAL: EXACT same camera position, angle, FOV. Every wall/edge at same position. No reframing.';
+  const vg=S.vegetation<15?'No vegetation.':S.vegetation<40?'Minimal vegetation.':S.vegetation<65?'Moderate trees, shrubs, ground cover.':'Lush vegetation, mature trees, dense planting.';
+  const pp=S.people<15?'No people.':S.people<40?'One or two people for scale.':S.people<65?'Several people.':'Busy scene, many people.';
+  const wv=document.getElementById('windowView').value.trim(),isI=S.sceneType==='interior';
+  document.getElementById('promptOut').value=[
+    `Transform the attached SketchUp screenshot into a photorealistic ${S.sceneType} architectural photograph.`,'',`Scene: ${d}`,'',
+    'LIGHTING:',`- ${T[S.timeOfDay]}`,`- ${W[S.weather]}`,isI?'- Interior: ambient window light + artificial sources, warm spill, soft shadows.':'- Exterior: natural sky illumination, ambient occlusion, accurate shadows.','',
+    'MATERIALS:',`- ${mat}`,'- Physically accurate: reflectivity, roughness, bump, subsurface scattering.','- Glass: reflections, transparency, green edge tint. Metal: specular highlights.','',
+    'CAMERA:',`- ${ang}`,'- 1:1 layout match. Same walls, proportions. Only upgrade materials & lighting.','- Canon EOS R5, 24mm tilt-shift, f/5.6. Correct verticals.','',
+    'CONTEXT:',`- ${vg}`,`- ${pp}`,isI?'- Realistic room context, tasteful decor.':'- Realistic sky, neighboring context, ground surface.',
+    wv?`- WINDOWS: View of ${wv}. Natural depth, atmospheric perspective.`:'','',
+    'QUALITY:','- Indistinguishable from real photo. Architecture magazine quality.','- Global illumination, HDR, subtle atmosphere.','- Zero CG artifacts or flat shading.'
+  ].filter(Boolean).join('\n');
+}
 
 // Copy
-document.getElementById('copyBtn').addEventListener('click',()=>{navigator.clipboard.writeText(document.getElementById('promptOutput').value).then(()=>{const b=document.getElementById('copyBtn');b.textContent='Zkopírováno!';setTimeout(()=>b.textContent='Kopírovat',1500);});});
+document.getElementById('copyBtn').addEventListener('click',()=>{navigator.clipboard.writeText(document.getElementById('promptOut').value).then(()=>{const b=document.getElementById('copyBtn');b.textContent='Zkopírováno!';setTimeout(()=>b.textContent='Kopírovat',1500);});});
 
 // Render
 document.getElementById('renderBtn').addEventListener('click',()=>doRender(null));
-async function doRender(note){const pr=document.getElementById('promptOutput').value.trim();if(!pr||pr.startsWith('Nejdřív')){st('renderStatus','Nejdřív vygeneruj prompt',1);return;}const src=note&&V.length?V[V.length-1].imgSrc:S.imageData;if(!src){st('renderStatus','Nahraj obrázek',1);return;}const rp=note?`Edit the attached architectural render. Keep everything EXCEPT: ${note}. Same angle, composition. Only change what was requested. Photorealistic output.`:pr;st('renderStatus','Renderuji přes Nano Banana 2...',0);document.getElementById('renderBtn').disabled=true;const b=src.split(',')[1],m=src.split(';')[0].split(':')[1];
-try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{inlineData:{mimeType:m,data:b}},{text:rp}]}],generationConfig:{responseModalities:['TEXT','IMAGE']}})});const d=await r.json();if(d.error)throw new Error(d.error.message);let ok=false;for(const p of d.candidates[0].content.parts){if(p.inlineData){const is=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;const v={id:V.length+1,imgSrc:is,note:note||'Základní render',prompt:rp,cost:CPR,parentId:note&&V.length?V[V.length-1].id:null};V.push(v);updSpend();renderStrip();showRender(v);ok=true;}}st('renderStatus',ok?'':'Žádný obrázek — zkus upravit prompt',!ok);}catch(e){st('renderStatus',e.message,1);}document.getElementById('renderBtn').disabled=false;}
+document.getElementById('rerunBtn').addEventListener('click',()=>doRender(null));
+document.getElementById('refBtn').addEventListener('click',refine);
+document.getElementById('refIn').addEventListener('keydown',e=>{if(e.key==='Enter')refine();});
 
-function showRender(v){document.getElementById('renderResult').innerHTML=`<img src="${v.imgSrc}"><div class="render-meta">v${v.id} · $${v.cost.toFixed(3)} · ${(v.cost*CZK).toFixed(1)} Kč · ${v.note}</div><div class="refine-row"><input class="field" id="refIn" placeholder="Upřesnit: jiná podlaha, teplejší světlo, přidej koberec..."><button class="btn btn-fill btn-sm" style="background:#6b7a4a" onclick="refine()">Upravit</button></div><div class="btns" style="margin-top:0.5rem"><button class="btn btn-line btn-sm" onclick="dlV(${v.id})">Stáhnout</button><button class="btn btn-line btn-sm" onclick="doRender(null)">Nový od začátku</button></div>`;}
+function showLoader(on){const l=document.getElementById('loader');if(on){l.innerHTML='<div class="loader-bar"></div>';l.classList.add('on');}else{l.classList.remove('on');}}
+
+async function doRender(note){
+  const pr=document.getElementById('promptOut').value.trim();
+  if(!pr||pr.startsWith('Nejdřív')){st('renderSt','Nejdřív vygeneruj prompt',1);return;}
+  const src=note&&V.length?V[V.length-1].imgSrc:S.imageData;
+  if(!src){st('renderSt','Nahraj obrázek',1);return;}
+  const rp=note?`Edit the attached architectural render. Keep everything EXCEPT: ${note}. Same angle, composition. Only change what was requested. Photorealistic output.`:pr;
+
+  st('renderSt',note?'Upravuji render...':'Generuji render...',0);
+  showLoader(true);
+  document.getElementById('renderBtn').disabled=true;
+  document.getElementById('refBtn')&&(document.getElementById('refBtn').disabled=true);
+  const b=src.split(',')[1],m=src.split(';')[0].split(':')[1];
+
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{inlineData:{mimeType:m,data:b}},{text:rp}]}],generationConfig:{responseModalities:['TEXT','IMAGE']}})
+    });
+    const d=await r.json();if(d.error)throw new Error(d.error.message);
+    let ok=false;
+    for(const p of d.candidates[0].content.parts){
+      if(p.inlineData){
+        const is=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+        const v={id:V.length+1,imgSrc:is,note:note||'Základní render',prompt:rp,cost:CPR,parentId:note&&V.length?V[V.length-1].id:null,ts:Date.now()};
+        V.push(v);saveVersions();updSpend();renderStrip();showRender(v);
+        document.getElementById('refineBox').style.display='block';
+        document.getElementById('rerunBtn').style.display='';
+        ok=true;
+      }
+    }
+    st('renderSt',ok?'':'Žádný obrázek — zkus upravit prompt',!ok);
+  }catch(e){st('renderSt',e.message,1);}
+  showLoader(false);
+  document.getElementById('renderBtn').disabled=false;
+  const rb=document.getElementById('refBtn');if(rb)rb.disabled=false;
+}
+
+function showRender(v){
+  document.getElementById('rout').innerHTML=`
+    <img src="${v.imgSrc}">
+    <div class="rmeta">v${v.id} · $${v.cost.toFixed(3)} · ${(v.cost*CZK).toFixed(1)} Kč · ${v.note}</div>
+    <div class="btns" style="margin-top:0.5rem">
+      <button class="btn btn-o btn-sm" onclick="dlV(${v.id})">Stáhnout</button>
+    </div>`;
+}
+
 function refine(){const i=document.getElementById('refIn'),n=i.value.trim();if(!n)return;i.value='';doRender(n);}
 function dlV(id){const v=V.find(x=>x.id===id);if(!v)return;const a=document.createElement('a');a.href=v.imgSrc;a.download=`marinada-v${v.id}.png`;a.click();}
 
 // Spend
-function updSpend(){const n=V.length,u=V.reduce((s,v)=>s+v.cost,0),c=u*CZK;document.getElementById('spN').textContent=n;document.getElementById('spUsd').textContent='$'+u.toFixed(2);document.getElementById('spCzk').textContent=Math.round(c)+' Kč';document.getElementById('spBody').innerHTML=V.map(v=>`<tr><td class="it">v${v.id}</td><td>${v.parentId?'Úprava (v'+v.parentId+')':'Nový'}</td><td>${v.note}</td><td class="it">$${v.cost.toFixed(3)}</td><td class="it">${(v.cost*CZK).toFixed(1)} Kč</td></tr>`).join('');}
+function updSpend(){
+  const n=V.length,u=V.reduce((s,v)=>s+v.cost,0),c=u*CZK;
+  document.getElementById('spN').textContent=n;
+  document.getElementById('spU').textContent='$'+u.toFixed(2);
+  document.getElementById('spK').textContent=Math.round(c)+' Kč';
+  document.getElementById('spB').innerHTML=V.length?V.map(v=>`<tr><td class="it">v${v.id}</td><td>${v.parentId?'Úprava (v'+v.parentId+')':'Nový'}</td><td>${v.note}</td><td class="it">$${v.cost.toFixed(3)}</td><td class="it">${(v.cost*CZK).toFixed(1)} Kč</td></tr>`).join(''):'<tr><td colspan="5" style="color:var(--text-light);text-align:center;padding:2rem;">Zatím žádné rendery</td></tr>';
+}
 
 // History
-function renderStrip(){const p=document.getElementById('histPanel'),s=document.getElementById('vStrip');if(!V.length){p.style.display='none';return;}p.style.display='block';s.innerHTML=V.map(v=>{const cl=cmpSel[0]===v.id?'ca':cmpSel[1]===v.id?'cb':'';return`<div class="vc ${cl}" onclick="vClick(${v.id})" title="${v.note}"><img src="${v.imgSrc}"><div class="vc-info"><div class="vc-id">v${v.id}${v.parentId?' ← v'+v.parentId:''}</div><div class="vc-note">${v.note}</div><div class="vc-cost">$${v.cost.toFixed(3)} · ${(v.cost*CZK).toFixed(1)} Kč</div></div></div>`;}).join('');}
+function renderStrip(){
+  const p=document.getElementById('histP'),s=document.getElementById('vStr');
+  if(!V.length){p.style.display='none';return;}p.style.display='block';
+  s.innerHTML=V.map(v=>{const cl=cmpSel[0]===v.id?'ca':cmpSel[1]===v.id?'cb':'';
+    return`<div class="vc ${cl}" onclick="vClick(${v.id})" title="${v.note}"><img src="${v.imgSrc}"><div class="vc-i"><div class="vi">v${v.id}${v.parentId?' ← v'+v.parentId:''}</div><div class="vn">${v.note}</div><div class="vp">${(v.cost*CZK).toFixed(1)} Kč</div></div></div>`;
+  }).join('');
+}
 
-function vClick(id){if(!cmpSel.length)cmpSel=[id];else if(cmpSel.length===1){if(cmpSel[0]===id){const v=V.find(x=>x.id===id);if(v)showRender(v);cmpSel=[];document.getElementById('cmpView').classList.remove('on');}else{cmpSel.push(id);showCmp();}}else{cmpSel=[id];document.getElementById('cmpView').classList.remove('on');}renderStrip();}
-function showCmp(){const a=V.find(v=>v.id===cmpSel[0]),b=V.find(v=>v.id===cmpSel[1]);if(!a||!b)return;document.getElementById('cmpA').src=a.imgSrc;document.getElementById('cmpB').src=b.imgSrc;document.getElementById('cmpLA').textContent=`v${a.id} — ${a.note}`;document.getElementById('cmpLB').textContent=`v${b.id} — ${b.note}`;document.getElementById('cmpView').classList.add('on');}
-function clearCmp(){cmpSel=[];document.getElementById('cmpView').classList.remove('on');renderStrip();}
+function vClick(id){
+  if(!cmpSel.length)cmpSel=[id];
+  else if(cmpSel.length===1){if(cmpSel[0]===id){const v=V.find(x=>x.id===id);if(v)showRender(v);cmpSel=[];document.getElementById('cmpV').classList.remove('on');}else{cmpSel.push(id);showCmp();}}
+  else{cmpSel=[id];document.getElementById('cmpV').classList.remove('on');}
+  renderStrip();
+}
+function showCmp(){const a=V.find(v=>v.id===cmpSel[0]),b=V.find(v=>v.id===cmpSel[1]);if(!a||!b)return;document.getElementById('cA').src=a.imgSrc;document.getElementById('cB').src=b.imgSrc;document.getElementById('cLA').textContent=`v${a.id} — ${a.note}`;document.getElementById('cLB').textContent=`v${b.id} — ${b.note}`;document.getElementById('cmpV').classList.add('on');}
+function clearCmp(){cmpSel=[];document.getElementById('cmpV').classList.remove('on');renderStrip();}
 </script>
 </body>
 </html>
