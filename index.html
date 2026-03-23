@@ -21,7 +21,9 @@ body{font-family:var(--sans);background:var(--cream);color:var(--text);min-heigh
 /* Lock */
 #lock{position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;z-index:100;}
 .lk-wrap{text-align:center;width:280px;}
-.lk-logo{font-family:var(--grotesk);font-size:2rem;font-weight:700;color:var(--text);letter-spacing:-0.03em;text-transform:lowercase;margin-bottom:2.5rem;}
+.lk-logo{text-align:center;margin-bottom:2rem;}
+.lk-logo img{width:80px;height:auto;margin-bottom:0.75rem;display:block;margin-left:auto;margin-right:auto;}
+.lk-logo-text{font-family:var(--grotesk);font-size:2rem;font-weight:700;color:var(--text);letter-spacing:-0.03em;text-transform:lowercase;}
 .lk-in{width:100%;padding:0.65rem 0;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--serif);font-size:1.1rem;text-align:center;outline:none;letter-spacing:0.1em;}
 .lk-in::placeholder{color:var(--text-light);letter-spacing:0;font-size:0.9rem;}
 .lk-in:focus{border-color:var(--olive);}
@@ -32,7 +34,9 @@ body{font-family:var(--sans);background:var(--cream);color:var(--text);min-heigh
 #app{display:none;}
 .shell{max-width:1280px;margin:0 auto;padding:0 2.5rem;}
 header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 0;border-bottom:1px solid var(--border);}
-.hdr-name{font-family:var(--grotesk);font-size:1.05rem;font-weight:700;color:var(--text);letter-spacing:-0.03em;text-transform:lowercase;cursor:pointer;}
+.hdr-left{display:flex;align-items:center;gap:0.5rem;cursor:pointer;}
+.hdr-left img{width:28px;height:auto;}
+.hdr-name{font-family:var(--grotesk);font-size:1.05rem;font-weight:700;color:var(--text);letter-spacing:-0.03em;text-transform:lowercase;}
 nav{display:flex;gap:1.75rem;}
 nav a{font-size:0.8rem;color:var(--text-dim);text-decoration:none;cursor:pointer;font-weight:500;letter-spacing:0.02em;transition:color 0.15s;}
 nav a:hover,nav a.on{color:var(--text);}
@@ -172,7 +176,10 @@ input.fi{resize:none;}
 
 <div id="lock">
   <div class="lk-wrap">
-    <div class="lk-logo">marinada</div>
+    <div class="lk-logo">
+      <img src="olive.png" alt="marinada">
+      <div class="lk-logo-text">marinada</div>
+    </div>
     <input type="password" class="lk-in" id="pwdIn" placeholder="heslo" autofocus>
     <button class="lk-btn" id="unlockBtn">Vstoupit</button>
     <div class="lk-err" id="lockErr"></div>
@@ -182,7 +189,10 @@ input.fi{resize:none;}
 <div id="app">
 <div class="shell">
   <header>
-    <span class="hdr-name" onclick="goSessions()">marinada</span>
+    <div class="hdr-left" onclick="goSessions()">
+      <img src="olive.png" alt="">
+      <span class="hdr-name">marinada</span>
+    </div>
     <nav>
       <a class="on" data-nav="studio" onclick="goSessions()">Studio</a>
       <a data-nav="spend" onclick="showView('spend')">Výdaje</a>
@@ -238,8 +248,11 @@ input.fi{resize:none;}
           <div class="st" id="analyzeStatus"></div>
         </div>
         <div class="fg">
-          <div class="fl">Popis scény</div>
-          <textarea class="fi" id="description" rows="5" placeholder="Vyplní se automaticky, nebo napiš ručně..."></textarea>
+          <div class="fl" style="cursor:pointer" onclick="toggleDesc()">Popis scény <span class="v" id="descToggle">zobrazit ▾</span></div>
+          <div id="descWrap" style="display:none">
+            <textarea class="fi" id="description" rows="5" placeholder="Vyplní se automaticky, nebo napiš ručně..."></textarea>
+          </div>
+          <div id="descPreview" style="font-size:0.78rem;color:var(--text-dim);line-height:1.4;max-height:2.8em;overflow:hidden;text-overflow:ellipsis;"></div>
         </div>
         <div class="step-nav">
           <button class="btn btn-o" onclick="goStep(0)">← Zpět</button>
@@ -306,11 +319,15 @@ input.fi{resize:none;}
         <div class="duo">
           <div>
             <div class="fg">
-              <div class="fl">Prompt</div>
-              <textarea class="fi fi-mono" id="promptOut" readonly></textarea>
-              <div class="btns" style="margin-top:0.5rem">
-                <button class="btn btn-f" id="genBtn">Vygenerovat prompt</button>
-                <button class="btn btn-o" id="copyBtn">Kopírovat</button>
+              <div class="fl" style="cursor:pointer" onclick="togglePrompt()">
+                Prompt <span class="v" id="promptToggle">zobrazit ▾</span>
+              </div>
+              <div id="promptWrap" style="display:none">
+                <textarea class="fi fi-mono" id="promptOut" readonly></textarea>
+                <div class="btns" style="margin-top:0.5rem">
+                  <button class="btn btn-f" id="genBtn">Vygenerovat prompt</button>
+                  <button class="btn btn-o" id="copyBtn">Kopírovat</button>
+                </div>
               </div>
             </div>
           </div>
@@ -585,14 +602,14 @@ async function analyze(){
   const fname=ST.fileName||'unnamed';
   try{sta('Hledám v cache...',0);
     const c=await sbGet(`/rest/v1/analyses?filename=eq.${encodeURIComponent(fname)}&select=description&limit=1`);
-    if(c&&c.length){document.getElementById('description').value=c[0].description;ST.description=c[0].description;sta('Načteno z cache (zdarma)',0);document.getElementById('analyzeBtn').disabled=false;return;}
+    if(c&&c.length){document.getElementById('description').value=c[0].description;ST.description=c[0].description;updDescPreview();sta('Načteno z cache (zdarma)',0);document.getElementById('analyzeBtn').disabled=false;return;}
   }catch{}
   sta('Analyzuji scénu...',0);
   const {b64:b,mime:m}=await toB64(ST.imageData);
   try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AK,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:m,data:b}},{type:'text',text:'You are an architectural visualization expert. Describe this SketchUp 3D model export in detail for generating a photorealistic render. Include: building form, materials, style, floors, roof, windows, landscape, camera angle. Be factual. Single dense paragraph.'}]}]})});
     const d=await r.json();if(d.error)throw new Error(d.error.message);
-    const desc=d.content[0].text;document.getElementById('description').value=desc;ST.description=desc;
+    const desc=d.content[0].text;document.getElementById('description').value=desc;ST.description=desc;updDescPreview();
     sbPost('/rest/v1/analyses',{filename:fname,description:desc}).catch(()=>{});
     // Track analysis cost
     if(curScene)sbPost('/rest/v1/renders',{version:0,scene_id:curScene.id,note:'Analýza scény (Claude)',cost:ANALYSIS_COST,image_path:'none'},{'Prefer':'return=minimal'}).catch(()=>{});
@@ -726,6 +743,25 @@ async function updStyleRefUI(){
   if(!r?.length){clearStyleRef();return;}
   status.textContent='v'+r[0].version;
   box.innerHTML=`<div class="style-ref-preview"><img src="${r[0].image_path}"><div class="style-ref-info"><strong>v${r[0].version}</strong> — ${r[0].note||''}<br>Nové rendery budou vizuálně odpovídat tomuto stylu.<div class="btns" style="margin-top:0.4rem"><button class="btn btn-o btn-sm" onclick="clearStyleRef()">Zrušit</button></div></div></div>`;
+}
+
+// --- Description toggle ---
+function toggleDesc(){
+  const w=document.getElementById('descWrap'),t=document.getElementById('descToggle'),p=document.getElementById('descPreview');
+  if(w.style.display==='none'){w.style.display='';t.textContent='skrýt ▴';p.style.display='none';}
+  else{w.style.display='none';t.textContent='zobrazit ▾';updDescPreview();}
+}
+function updDescPreview(){
+  const p=document.getElementById('descPreview'),d=document.getElementById('description').value;
+  if(d){p.textContent=d.substring(0,120)+(d.length>120?'…':'');p.style.display='';}
+  else p.style.display='none';
+}
+
+// --- Prompt toggle ---
+function togglePrompt(){
+  const w=document.getElementById('promptWrap'),t=document.getElementById('promptToggle');
+  if(w.style.display==='none'){w.style.display='';t.textContent='skrýt ▴';}
+  else{w.style.display='none';t.textContent='zobrazit ▾';}
 }
 
 // --- Sub-tabs ---
