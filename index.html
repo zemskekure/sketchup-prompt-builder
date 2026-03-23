@@ -398,11 +398,13 @@ async function toB64(src){
 }
 
 // --- Lock ---
-async function unlock(){const p=document.getElementById('pwdIn').value;if(!p)return;document.getElementById('lockErr').textContent='';
-  try{AK=await dec(EA,p);GK=await dec(EG,p);document.getElementById('lock').style.display='none';document.getElementById('app').style.display='block';goSessions();}
+async function unlock(pwd){const p=pwd||document.getElementById('pwdIn').value;if(!p)return;document.getElementById('lockErr').textContent='';
+  try{AK=await dec(EA,p);GK=await dec(EG,p);localStorage.setItem('marinada_pwd',p);document.getElementById('lock').style.display='none';document.getElementById('app').style.display='block';goSessions();}
   catch{document.getElementById('lockErr').textContent='Špatné heslo';document.getElementById('pwdIn').value='';document.getElementById('pwdIn').focus();}}
-document.getElementById('unlockBtn').addEventListener('click',unlock);
+document.getElementById('unlockBtn').addEventListener('click',()=>unlock());
 document.getElementById('pwdIn').addEventListener('keydown',e=>{if(e.key==='Enter')unlock();});
+// Auto-unlock from saved password
+(async()=>{const saved=localStorage.getItem('marinada_pwd');if(saved)await unlock(saved);})();
 
 // --- Navigation ---
 function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));document.getElementById('v-'+id).classList.add('on');
