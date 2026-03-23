@@ -434,7 +434,7 @@ async function goSessions(){showView('sessions');setCrumb([{label:'Projekty'}]);
   const el=document.getElementById('sessionCards');
   el.innerHTML=`<div class="card card-new" onclick="createSession()">+ Nový projekt</div>`+
     (rows||[]).map(s=>{
-      const allRenders=(s.scenes||[]).flatMap(sc=>(sc.renders||[]));
+      const allRenders=(s.scenes||[]).flatMap(sc=>(sc.renders||[])).filter(r=>r.image_path&&r.image_path.startsWith('http'));
       const latest=allRenders.sort((a,b)=>b.id-a.id)[0];
       const img=latest?`<img class="card-img" src="${latest.image_path}">`:`<div class="card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:0.8rem;">Žádné rendery</div>`;
       return`<div class="card">
@@ -489,7 +489,7 @@ async function goSession(id){
   const el=document.getElementById('sceneCards');
   el.innerHTML=`<div class="card card-new" onclick="createScene()">+ Nová scéna</div>`+
     (scenes||[]).map(sc=>{
-      const last=(sc.renders||[]).sort((a,b)=>b.version-a.version)[0];
+      const last=(sc.renders||[]).filter(r=>r.image_path&&r.image_path.startsWith('http')).sort((a,b)=>b.version-a.version)[0];
       const img=last?`<img class="card-img" src="${last.image_path}">`:`<div class="card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:0.8rem;">Žádný render</div>`;
       return`<div class="card">
         <div onclick="goScene(${sc.id})" style="cursor:pointer">${img}
