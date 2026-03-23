@@ -354,7 +354,10 @@ input.fi{resize:none;}
 <script>
 const EA='YrwsDbSwfHgAGSqPK5Vq8zJH3ubVNOBpBkoFPwHA/zcS3U6Cq1StskfgLiftypXBdNDh5f9440fXqEJMdtZlFMMZkhdf/kIzbvO2YJJeOfYRPdN71YX4OQ9A3nUBbJYOdbCZmpeRJJd9xLUbCf5y/z8I9GhRByMS1kCf1qrzpslG/XxQOJhOPF0KhhFs8q5fSWtrW+os5tI=';
 const EG='MzyQzn3RfMCVJOMSbfchNtHCe+QxwuVxp/k8Eyda10iGmeQfeydEGq93VsTWgY048QHh3b9z6FG0dsGMRjQlux3V/yWfVkKJ96Qep1Ds0CAOoAQ=';
-const CPR=0.067,CZK=21.2,LS_KEY='marinada_versions';
+const CPR=0.067,CZK=21.2;
+const SB_URL='https://vlbisbnvwfvvjbveihdf.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYmlzYm52d2Z2dmpidmVpaGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNzQ0MDYsImV4cCI6MjA4OTg1MDQwNn0.QjE8GFLVMpPA1NCb7sf54l1ZJyTlgRhX0qeEPNHXCnM';
+const SB_BUCKET='marinada';
 let AK='',GK='';
 
 async function dec(e,p){const r=Uint8Array.from(atob(e),c=>c.charCodeAt(0)),s=r.slice(0,16),iv=r.slice(16,28),tg=r.slice(28,44),ct=r.slice(44);const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);const k=await crypto.subtle.deriveKey({name:'PBKDF2',salt:s,iterations:100000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);const c=new Uint8Array(ct.length+tg.length);c.set(ct);c.set(tg,ct.length);return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv},k,c));}
@@ -371,9 +374,66 @@ document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',()=>{do
 const S={imageData:null,description:'',sceneType:'exterior',timeOfDay:'midday',weather:'clear',material:75,angle:80,vegetation:50,people:30,floor:'low'};
 let V=[],cmpSel=[],styleRefId=null;
 
-// LocalStorage
-function saveVersions(){try{localStorage.setItem(LS_KEY,JSON.stringify(V));}catch(e){console.warn('Storage full, removing oldest');V.shift();saveVersions();}}
-function loadVersions(){try{const d=localStorage.getItem(LS_KEY);if(d){V=JSON.parse(d);updSpend();renderStrip();if(V.length){showRender(V[V.length-1]);document.getElementById('refineBox').style.display='block';document.getElementById('rerunBtn').style.display='';}}const sr=localStorage.getItem('marinada_styleRef');if(sr){styleRefId=+sr;updStyleRefUI();}}catch{}}
+// --- Supabase helpers ---
+function sbHeaders(){return {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};}
+
+async function uploadImage(dataUrl,filename){
+  const b64=dataUrl.split(',')[1];
+  const mime=dataUrl.split(';')[0].split(':')[1];
+  const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+  const r=await fetch(`${SB_URL}/storage/v1/object/${SB_BUCKET}/${filename}`,{
+    method:'POST',headers:{...sbHeaders(),'Content-Type':mime},body:bytes
+  });
+  if(!r.ok){
+    // Try upsert if file exists
+    const r2=await fetch(`${SB_URL}/storage/v1/object/${SB_BUCKET}/${filename}`,{
+      method:'PUT',headers:{...sbHeaders(),'Content-Type':mime},body:bytes
+    });
+    if(!r2.ok)throw new Error('Upload failed');
+  }
+  return `${SB_URL}/storage/v1/object/public/${SB_BUCKET}/${filename}`;
+}
+
+async function saveVersion(v){
+  // Upload image to storage
+  const fname=`render-v${v.id}-${Date.now()}.png`;
+  const publicUrl=await uploadImage(v.imgSrc,fname);
+  // Save metadata to DB
+  const row={version:v.id,note:v.note,prompt:v.prompt,cost:v.cost,parent_id:v.parentId||null,image_path:publicUrl};
+  const r=await fetch(`${SB_URL}/rest/v1/renders`,{method:'POST',headers:{...sbHeaders(),'Prefer':'return=representation'},body:JSON.stringify(row)});
+  if(!r.ok)console.warn('DB save failed:',await r.text());
+  // Update local V entry with public URL
+  v.imgSrc=publicUrl;
+  v.dbId=(await r.json())?.[0]?.id;
+}
+
+async function loadVersions(){
+  try{
+    // Load from Supabase DB
+    const r=await fetch(`${SB_URL}/rest/v1/renders?select=*&order=version.asc`,{headers:sbHeaders()});
+    if(!r.ok)throw new Error('Load failed');
+    const rows=await r.json();
+    V=rows.map(row=>({
+      id:row.version,
+      imgSrc:row.image_path,
+      note:row.note||'',
+      prompt:row.prompt||'',
+      cost:parseFloat(row.cost)||CPR,
+      parentId:row.parent_id,
+      ts:new Date(row.created_at).getTime(),
+      dbId:row.id
+    }));
+    updSpend();renderStrip();
+    if(V.length){
+      showRender(V[V.length-1]);
+      document.getElementById('refineBox').style.display='block';
+      document.getElementById('rerunBtn').style.display='';
+    }
+    // Style ref from localStorage (lightweight, no need for DB)
+    const sr=localStorage.getItem('marinada_styleRef');
+    if(sr){styleRefId=+sr;updStyleRefUI();}
+  }catch(e){console.warn('Supabase load error:',e);}
+}
 
 // Upload
 const uz=document.getElementById('uploadZone'),fi=document.getElementById('fileInput');
@@ -472,10 +532,10 @@ async function doRender(note){
   // Build parts: style ref image first (if set and not a refinement), then source image, then prompt
   const parts=[];
   if(styleRef&&!note){
-    const sb=styleRef.imgSrc.split(',')[1],sm=styleRef.imgSrc.split(';')[0].split(':')[1];
+    const {b64:sb,mime:sm}=await toB64Parts(styleRef.imgSrc);
     parts.push({inlineData:{mimeType:sm,data:sb}});
   }
-  const b=src.split(',')[1],m=src.split(';')[0].split(':')[1];
+  const {b64:b,mime:m}=await toB64Parts(src);
   parts.push({inlineData:{mimeType:m,data:b}});
   parts.push({text:rp});
 
@@ -490,7 +550,9 @@ async function doRender(note){
       if(p.inlineData){
         const is=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
         const v={id:V.length+1,imgSrc:is,note:note||'Základní render',prompt:rp,cost:CPR,parentId:note&&V.length?V[V.length-1].id:null,ts:Date.now()};
-        V.push(v);saveVersions();updSpend();renderStrip();showRender(v);
+        V.push(v);
+        saveVersion(v).catch(e=>console.warn('Save error:',e));
+        updSpend();renderStrip();showRender(v);
         document.getElementById('refineBox').style.display='block';
         document.getElementById('rerunBtn').style.display='';
         ok=true;
@@ -549,14 +611,25 @@ function updStyleRefUI(){
 function refine(){const i=document.getElementById('refIn'),n=i.value.trim();if(!n)return;i.value='';doRender(n);}
 function dlV(id){const v=V.find(x=>x.id===id);if(!v)return;const a=document.createElement('a');a.href=v.imgSrc;a.download=`marinada-v${v.id}.png`;a.click();}
 
+// Convert URL or dataURL to base64 parts
+async function toB64Parts(src){
+  if(src.startsWith('data:')){
+    return {b64:src.split(',')[1],mime:src.split(';')[0].split(':')[1]};
+  }
+  // Fetch from URL (Supabase public URL)
+  const r=await fetch(src);
+  const blob=await r.blob();
+  return new Promise(res=>{const rd=new FileReader();rd.onload=()=>{const d=rd.result;res({b64:d.split(',')[1],mime:d.split(';')[0].split(':')[1]});};rd.readAsDataURL(blob);});
+}
+
 async function renderHiRes(id){
   const v=V.find(x=>x.id===id);if(!v)return;
   const btn=document.getElementById('hiresBtn'+id);
   if(btn){btn.disabled=true;btn.textContent='Generuji 4K...';}
   st('hiresSt','Generuji 4K verzi (~$0.15 / 3,2 Kč)...',0);
 
-  const b=v.imgSrc.split(',')[1],m=v.imgSrc.split(';')[0].split(':')[1];
   try{
+    const {b64:b,mime:m}=await toB64Parts(v.imgSrc);
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -573,9 +646,10 @@ async function renderHiRes(id){
       if(p.inlineData){
         const hiSrc=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
         const a=document.createElement('a');a.href=hiSrc;a.download=`marinada-v${v.id}-4k.png`;a.click();
-        // track cost
         const hv={id:V.length+1,imgSrc:hiSrc,note:'4K verze v'+v.id,prompt:'4K upscale',cost:0.151,parentId:v.id,ts:Date.now()};
-        V.push(hv);saveVersions();updSpend();renderStrip();
+        V.push(hv);
+        saveVersion(hv).catch(e=>console.warn('4K save error:',e));
+        updSpend();renderStrip();
         ok=true;
       }
     }
