@@ -15,6 +15,7 @@ const state = {
   curSession: null,
   curScene: null,
   renders: [],
+  iterateFromId: null, // which version to iterate from (null = latest)
   dirty: false, // track unsaved changes
   settings: {imageData:null,fileName:'',description:'',sceneHint:'',sceneType:'exterior',timeOfDay:'midday',weather:'clear',material:75,angle:80,vegetation:50,people:30,floor:'low',aspect:'auto'},
 };
@@ -391,16 +392,25 @@ const render = {
     if(!pr||pr.startsWith('Nejdřív')){render.stR('Nejdřív vygeneruj prompt',1);return;}
     const sourceImg=state.settings.imageData;
     if(!sourceImg){render.stR('Nahraj obrázek',1);return;}
-    const lastRender=state.renders.length?state.renders[state.renders.length-1]:null;
+    // Determine which version to iterate from
+    const baseId=state.iterateFromId;
+    const baseRender=baseId?state.renders.find(x=>x.id===baseId):state.renders[state.renders.length-1]||null;
     const sRef=state.curSession?.style_ref_render_id?state.renders.find(x=>x.dbId===state.curSession.style_ref_render_id)||await styleRef.load():null;
 
     // Build prompt: always use full prompt as base, add edits on top
     let rp;
     if(note){
-      // Collect all previous edit notes for context
-      const history=state.renders.filter(v=>v.note&&v.note!=='Základní render').map(v=>v.note);
-      const allEdits=[...history,note];
-      rp=pr+`\n\nADDITIONAL EDITS (apply all of these to the render):\n${allEdits.map((e,i)=>`${i+1}. ${e}`).join('\n')}\n\nIMPORTANT: Generate a FRESH render from the SketchUp source image with ALL the above edits applied. Do not degrade quality.`;
+      // Build edit chain: walk from base version back through parentId to collect all edits
+      const editChain=[];
+      if(baseRender){
+        let cur=baseRender;
+        while(cur){
+          if(cur.note&&cur.note!=='Základní render')editChain.unshift(cur.note);
+          cur=cur.parentId?state.renders.find(x=>x.dbId===cur.parentId):null;
+        }
+      }
+      editChain.push(note);
+      rp=pr+`\n\nADDITIONAL EDITS (apply all of these to the render):\n${editChain.map((e,i)=>`${i+1}. ${e}`).join('\n')}\n\nIMPORTANT: Generate a FRESH render from the SketchUp source image with ALL the above edits applied. Do not degrade quality.`;
     } else if(sRef){
       rp=pr+'\n\nSTYLE REFERENCE:\nFirst image = style reference. Match its EXACT rendering style. Second image = new SketchUp view to render in that style.';
     } else {
@@ -415,10 +425,10 @@ const render = {
       if(sRef&&!note){const d=await sb.toB64(sRef.imgSrc);parts.push({inlineData:{mimeType:d.mime,data:d.b64}});}
     }catch(e){console.warn('Style ref fetch failed:',e);}
     try{
-      // For iterations: send source image + last render as reference
+      // For iterations: send base render as reference + source image
       // For initial: just source image
-      if(note&&lastRender){
-        const refD=await sb.toB64(lastRender.imgSrc);
+      if(note&&baseRender){
+        const refD=await sb.toB64(baseRender.imgSrc);
         parts.push({inlineData:{mimeType:refD.mime,data:refD.b64}});
       }
       const{b64:b,mime:m}=await sb.toB64(sourceImg);parts.push({inlineData:{mimeType:m,data:b}});
@@ -436,13 +446,13 @@ const render = {
       for(const p of d.candidates[0].content.parts){if(p.inlineData){
         const is=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
         const ver=state.renders.length+1;
-        const v={id:ver,imgSrc:is,note:note||'Základní render',prompt:rp,cost:CPR,parentId:note&&state.renders.length?state.renders[state.renders.length-1].dbId:null};
+        const v={id:ver,imgSrc:is,note:note||'Základní render',prompt:rp,cost:CPR,parentId:note&&baseRender?baseRender.dbId:null};
         const fname=`render-s${state.curScene.id}-v${ver}-${Date.now()}.png`;
         const url=await sb.uploadImg(is,fname);
         const row={version:ver,scene_id:state.curScene.id,note:v.note,prompt:rp,cost:CPR,parent_id:v.parentId,image_path:url};
         const saved=await sb.post('/rest/v1/renders',row,{'Prefer':'return=representation'});
         v.imgSrc=url;v.dbId=saved?.[0]?.id;
-        state.renders.push(v);iter.renderStrip();ui.showRender(v);$('refineBox').style.display='block';$('reRenderBtn').style.display='';$('reRenderHint').style.display='';$('toIterBtn').style.display='';ui.updIterCount();ok=true;
+        state.renders.push(v);state.iterateFromId=v.id;iter.renderStrip();ui.showRender(v);$('refineBox').style.display='block';$('reRenderBtn').style.display='';$('reRenderHint').style.display='';$('toIterBtn').style.display='';$('refIn').placeholder=`Iteruji z v${v.id} — popiš změny...`;ui.updIterCount();ok=true;
       }}
       render.stR(ok?'':'Žádný obrázek',!ok);
     }catch(e){render.stR(e.message,1);}
@@ -548,7 +558,14 @@ const iter = {
         <button class="btn btn-o btn-sm" style="color:var(--red)" onclick="iter.remove(${v.id},${v.dbId})">Smazat</button>
       </div></div></div>`;
   },
-  loadToRender(id){const v=state.renders.find(x=>x.id===id);if(!v)return;ui.showRender(v);$('refineBox').style.display='block';scene.goStep(3);},
+  loadToRender(id){
+    const v=state.renders.find(x=>x.id===id);if(!v)return;
+    state.iterateFromId=v.id;
+    ui.showRender(v);
+    $('refineBox').style.display='block';
+    $('refIn').placeholder=`Iteruji z v${v.id} — popiš změny...`;
+    scene.goStep(3);
+  },
   async remove(verId,dbId){
     if(!confirm('Smazat tento render?'))return;
     if(dbId)await sb.del(`/rest/v1/renders?id=eq.${dbId}`);
