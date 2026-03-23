@@ -1,284 +1,238 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cihla — SketchUp to Reality</title>
+<title>marinada</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #08080c;
-    --surface: #111118;
-    --surface2: #18181f;
-    --border: #232330;
-    --border-hover: #35354a;
-    --text: #d4d4e0;
-    --text-dim: #7a7a90;
-    --text-bright: #f0f0ff;
-    --accent: #6366f1;
-    --accent-dim: #4f46e5;
-    --accent-glow: rgba(99,102,241,0.15);
-    --green: #22c55e;
-    --green-dim: #16a34a;
-    --green-glow: rgba(34,197,94,0.12);
-    --orange: #f59e0b;
-    --purple: #a78bfa;
-    --red: #f43f5e;
-    --radius: 10px;
-    --font: 'DM Sans', -apple-system, sans-serif;
-    --mono: 'JetBrains Mono', monospace;
+    --cream: #f4f1ea;
+    --white: #faf8f4;
+    --olive: #5c6442;
+    --olive-light: #7a8259;
+    --olive-pale: #e8e6d8;
+    --olive-bg: rgba(92,100,66,0.06);
+    --brown: #8a7d6b;
+    --text: #2c2c28;
+    --text-dim: #8a8578;
+    --text-light: #b0a99c;
+    --border: #ddd8cc;
+    --border-light: #e8e4da;
+    --red: #c44;
+    --serif: 'EB Garamond', Georgia, serif;
+    --sans: 'Inter', -apple-system, sans-serif;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+  body { font-family: var(--sans); background: var(--cream); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
-  /* Lock */
+  /* --- Lock --- */
   #lockScreen {
-    position: fixed; inset: 0; background: var(--bg);
-    display: flex; align-items: center; justify-content: center; z-index: 1000;
+    position: fixed; inset: 0; background: var(--cream);
+    display: flex; align-items: center; justify-content: center; z-index: 100;
   }
-  .lock-box { text-align: center; width: 300px; }
-  .lock-logo {
-    font-size: 2.5rem; font-weight: 700; color: var(--text-bright);
-    margin-bottom: 0.25rem;
-  }
-  .lock-sub { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 2rem; }
+  .lock-wrap { text-align: center; width: 280px; }
+  .lock-logo-area { margin-bottom: 2.5rem; }
+  .lock-logo-area svg { width: 48px; height: 48px; margin-bottom: 0.75rem; }
+  .lock-name { font-family: var(--serif); font-size: 1.6rem; font-weight: 400; color: var(--text); letter-spacing: -0.01em; }
   .lock-input {
-    width: 100%; padding: 0.75rem 1rem; background: var(--surface);
-    border: 1px solid var(--border); border-radius: var(--radius);
-    color: var(--text-bright); font-family: var(--mono); font-size: 1rem;
-    text-align: center; letter-spacing: 0.15em;
-    outline: none; transition: border-color 0.2s;
+    width: 100%; padding: 0.65rem 0; background: transparent;
+    border: none; border-bottom: 1px solid var(--border);
+    color: var(--text); font-family: var(--serif); font-size: 1.1rem;
+    text-align: center; outline: none; letter-spacing: 0.1em;
   }
-  .lock-input:focus { border-color: var(--accent); }
-  .lock-input::placeholder { color: var(--text-dim); letter-spacing: 0; font-family: var(--font); }
-  .lock-btn {
-    width: 100%; margin-top: 0.75rem; padding: 0.7rem;
-    background: var(--accent); color: #fff; border: none;
-    border-radius: var(--radius); font-family: var(--font);
-    font-size: 0.9rem; font-weight: 600; cursor: pointer;
-    transition: background 0.2s;
+  .lock-input::placeholder { color: var(--text-light); letter-spacing: 0; font-size: 0.9rem; }
+  .lock-input:focus { border-color: var(--olive); }
+  .lock-enter {
+    display: inline-block; margin-top: 1.5rem; padding: 0.5rem 2rem;
+    background: var(--olive); color: var(--cream); border: none;
+    font-family: var(--sans); font-size: 0.8rem; font-weight: 500;
+    letter-spacing: 0.05em; cursor: pointer; transition: background 0.2s;
   }
-  .lock-btn:hover { background: var(--accent-dim); }
-  .lock-error { color: var(--red); font-size: 0.8rem; margin-top: 0.5rem; min-height: 1.2em; }
+  .lock-enter:hover { background: var(--olive-light); }
+  .lock-err { color: var(--red); font-size: 0.8rem; margin-top: 0.75rem; min-height: 1em; }
 
-  #appContent { display: none; }
+  #app { display: none; }
 
-  /* Shell */
-  .shell {
-    max-width: 1440px; margin: 0 auto; padding: 1.25rem 2rem;
-  }
-  .topbar {
+  /* --- Shell --- */
+  .shell { max-width: 1200px; margin: 0 auto; padding: 0 2.5rem; }
+
+  /* --- Header --- */
+  header {
     display: flex; align-items: center; justify-content: space-between;
-    padding-bottom: 1.25rem; border-bottom: 1px solid var(--border);
-    margin-bottom: 1.5rem;
+    padding: 1.25rem 0; border-bottom: 1px solid var(--border);
   }
-  .topbar-left { display: flex; align-items: center; gap: 1rem; }
-  .logo { font-size: 1.3rem; font-weight: 700; color: var(--text-bright); }
-  .logo-brick { color: var(--accent); }
-  .topbar-tag {
-    font-size: 0.7rem; padding: 0.2rem 0.5rem;
-    background: var(--accent-glow); color: var(--accent);
-    border-radius: 4px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.05em;
+  .hdr-left { display: flex; align-items: center; gap: 0.6rem; }
+  .hdr-left svg { width: 28px; height: 28px; }
+  .hdr-name { font-family: var(--serif); font-size: 1.15rem; font-weight: 400; color: var(--text); }
+  nav { display: flex; gap: 1.75rem; }
+  nav a {
+    font-size: 0.8rem; color: var(--text-dim); text-decoration: none;
+    cursor: pointer; transition: color 0.15s; font-weight: 500;
+    letter-spacing: 0.02em;
   }
-  .topbar-right { display: flex; align-items: center; gap: 1.5rem; }
-  .tab-switcher { display: flex; gap: 0.25rem; background: var(--surface); border-radius: 8px; padding: 3px; }
-  .tab-btn {
-    padding: 0.4rem 0.8rem; border: none; background: transparent;
-    color: var(--text-dim); font-family: var(--font); font-size: 0.8rem;
-    font-weight: 500; border-radius: 6px; cursor: pointer; transition: all 0.2s;
-  }
-  .tab-btn.active { background: var(--accent); color: #fff; }
-  .tab-btn:hover:not(.active) { color: var(--text); }
+  nav a:hover, nav a.active { color: var(--text); }
 
-  /* Tabs */
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
+  /* --- Sections --- */
+  .view { display: none; padding: 2.5rem 0 4rem; }
+  .view.active { display: block; }
 
-  /* Grid */
-  .grid {
-    display: grid; grid-template-columns: 380px 1fr;
-    gap: 1.5rem; align-items: start;
+  .section-title {
+    font-family: var(--serif); font-size: 1.6rem; font-weight: 400;
+    color: var(--text); margin-bottom: 0.3rem;
+  }
+  .section-sub {
+    font-size: 0.8rem; color: var(--text-dim); margin-bottom: 2rem;
+    max-width: 480px; line-height: 1.5;
   }
 
-  /* Card */
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 1.25rem;
+  /* --- Studio layout --- */
+  .studio-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 2.5rem; align-items: start;
   }
-  .card + .card { margin-top: 1rem; }
-  .card-title {
+  .studio-col { min-width: 0; }
+
+  /* --- Fieldset --- */
+  .fieldset { margin-bottom: 2rem; }
+  .fieldset-label {
     font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--text-dim); margin-bottom: 0.75rem; font-weight: 600;
+    color: var(--text-dim); font-weight: 500; margin-bottom: 0.6rem;
+    display: flex; justify-content: space-between; align-items: baseline;
   }
+  .fieldset-label .val { font-family: var(--serif); font-size: 0.8rem; text-transform: none; letter-spacing: 0; color: var(--olive); }
 
-  /* Upload */
-  .drop-zone {
-    border: 1.5px dashed var(--border); border-radius: 10px;
-    padding: 1.5rem; text-align: center; cursor: pointer;
-    transition: all 0.2s; min-height: 160px;
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; overflow: hidden; margin-bottom: 0.75rem;
-    background: var(--surface2);
+  /* --- Upload --- */
+  .drop {
+    background: var(--white); border: 1px solid var(--border);
+    padding: 2rem; text-align: center; cursor: pointer;
+    min-height: 180px; display: flex; align-items: center;
+    justify-content: center; flex-direction: column; transition: border-color 0.2s;
+    margin-bottom: 0.75rem;
   }
-  .drop-zone:hover { border-color: var(--accent); background: var(--accent-glow); }
-  .drop-zone.has-image { padding: 0; border-style: solid; border-color: var(--border); background: var(--surface2); }
-  .drop-zone img { max-width: 100%; max-height: 280px; border-radius: 8px; }
-  .drop-zone input { display: none; }
-  .drop-hint { color: var(--text-dim); font-size: 0.85rem; }
-  .drop-hint strong { color: var(--accent); }
+  .drop:hover { border-color: var(--olive); }
+  .drop.has-img { padding: 0; }
+  .drop img { max-width: 100%; max-height: 300px; display: block; }
+  .drop input { display: none; }
+  .drop-hint { font-size: 0.85rem; color: var(--text-light); }
+  .drop-hint em { font-family: var(--serif); color: var(--olive); font-style: italic; }
 
-  /* Buttons */
-  .btn {
-    padding: 0.5rem 0.9rem; border: none; border-radius: 8px;
-    font-family: var(--font); font-size: 0.8rem; font-weight: 600;
-    cursor: pointer; transition: all 0.15s; display: inline-flex;
-    align-items: center; gap: 0.4rem;
+  /* --- Textarea / Input --- */
+  .field {
+    width: 100%; padding: 0.55rem 0.7rem; background: var(--white);
+    border: 1px solid var(--border); color: var(--text);
+    font-family: var(--sans); font-size: 0.85rem; outline: none;
+    transition: border-color 0.2s; resize: vertical;
   }
-  .btn-accent { background: var(--accent); color: #fff; }
-  .btn-accent:hover { background: var(--accent-dim); }
-  .btn-accent:disabled { background: #2a2a40; color: #555; cursor: not-allowed; }
-  .btn-ghost { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border); }
-  .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
-  .btn-green { background: var(--green); color: #fff; }
-  .btn-green:hover { background: var(--green-dim); }
-  .btn-green:disabled { background: #1a2a1a; color: #555; cursor: not-allowed; }
-  .btn-sm { padding: 0.35rem 0.6rem; font-size: 0.75rem; }
-  .btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .field:focus { border-color: var(--olive); }
+  .field::placeholder { color: var(--text-light); }
+  .field-mono {
+    font-family: 'Courier New', monospace; font-size: 0.78rem;
+    line-height: 1.55; min-height: 180px; background: var(--white);
+  }
+  input.field { resize: none; }
 
-  /* Textarea / Input */
-  .input-area {
-    width: 100%; padding: 0.6rem 0.75rem; background: var(--surface2);
-    border: 1px solid var(--border); border-radius: 8px;
-    color: var(--text); font-family: var(--font); font-size: 0.85rem;
-    resize: vertical; outline: none; transition: border-color 0.2s;
-  }
-  .input-area:focus { border-color: var(--accent); }
-  .input-area::placeholder { color: var(--text-dim); }
-  input.input-area { resize: none; }
-
-  /* Controls */
-  .ctrl { margin-bottom: 1rem; }
-  .ctrl-label {
-    font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.4rem;
-    font-weight: 500; display: flex; justify-content: space-between;
-  }
-  .ctrl-label span { color: var(--accent); font-family: var(--mono); font-size: 0.7rem; }
-  .pill-group { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+  /* --- Pills --- */
+  .pills { display: flex; gap: 0.35rem; flex-wrap: wrap; }
   .pill {
-    padding: 0.3rem 0.65rem; background: var(--surface2);
-    border: 1px solid var(--border); border-radius: 6px;
-    font-size: 0.75rem; color: var(--text-dim);
-    cursor: pointer; transition: all 0.15s; font-family: var(--font);
+    padding: 0.3rem 0.6rem; background: transparent;
+    border: 1px solid var(--border); font-size: 0.75rem;
+    color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+    font-family: var(--sans);
   }
-  .pill:hover { border-color: var(--border-hover); color: var(--text); }
-  .pill.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
-  .slider-track { display: flex; align-items: center; gap: 0.5rem; }
-  .slider-track input[type="range"] {
-    flex: 1; accent-color: var(--accent); height: 3px;
-    -webkit-appearance: none; background: var(--border); border-radius: 2px;
-  }
-  .slider-track input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 14px; height: 14px;
-    background: var(--accent); border-radius: 50%; cursor: pointer;
-  }
-  .slider-edge { font-size: 0.65rem; color: var(--text-dim); min-width: 2.5rem; }
-  .slider-edge:last-child { text-align: right; }
+  .pill:hover { border-color: var(--olive); color: var(--text); }
+  .pill.on { background: var(--olive); border-color: var(--olive); color: var(--cream); }
 
-  /* Prompt box */
-  .prompt-box {
-    width: 100%; min-height: 150px; padding: 0.6rem 0.75rem;
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text); font-family: var(--mono);
-    font-size: 0.78rem; resize: vertical; outline: none;
-    line-height: 1.5;
+  /* --- Slider --- */
+  .slide { display: flex; align-items: center; gap: 0.5rem; }
+  .slide input[type="range"] {
+    flex: 1; -webkit-appearance: none; height: 1px;
+    background: var(--border); outline: none;
   }
+  .slide input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 12px; height: 12px;
+    background: var(--olive); border-radius: 50%; cursor: pointer;
+  }
+  .slide-edge { font-size: 0.65rem; color: var(--text-light); min-width: 2rem; }
+  .slide-edge:last-child { text-align: right; }
 
-  /* Status */
-  .status { font-size: 0.8rem; padding: 0.3rem 0; min-height: 1.4em; }
-  .status.loading { color: var(--accent); }
-  .status.error { color: var(--red); }
+  /* --- Buttons --- */
+  .btn {
+    padding: 0.5rem 1rem; border: none; font-family: var(--sans);
+    font-size: 0.78rem; font-weight: 500; cursor: pointer;
+    transition: all 0.15s; letter-spacing: 0.02em;
+  }
+  .btn-fill { background: var(--olive); color: var(--cream); }
+  .btn-fill:hover { background: var(--olive-light); }
+  .btn-fill:disabled { background: var(--olive-pale); color: var(--text-light); cursor: default; }
+  .btn-line { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+  .btn-line:hover { border-color: var(--olive); color: var(--text); }
+  .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.72rem; }
+  .btns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
-  /* Render result */
-  #renderResult { margin-top: 1rem; }
-  #renderResult img {
-    max-width: 100%; border-radius: 10px;
-    border: 1px solid var(--border);
-  }
-  .render-meta {
-    margin-top: 0.4rem; font-size: 0.75rem; color: var(--text-dim);
-    font-family: var(--mono);
-  }
-  .refine-row { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+  /* --- Status --- */
+  .st { font-size: 0.78rem; min-height: 1.3em; margin-top: 0.3rem; }
+  .st.ld { color: var(--olive); }
+  .st.er { color: var(--red); }
+
+  /* --- Render output --- */
+  .render-out { margin-top: 1.5rem; }
+  .render-out img { max-width: 100%; border: 1px solid var(--border); display: block; }
+  .render-meta { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.4rem; font-family: var(--serif); font-style: italic; }
+  .refine-row { display: flex; gap: 0.4rem; margin-top: 0.75rem; }
   .refine-row input { flex: 1; }
 
-  /* Version history */
-  .history { margin-top: 1.5rem; }
-  .version-strip {
-    display: flex; gap: 0.75rem; overflow-x: auto;
-    padding-bottom: 0.5rem;
+  /* --- History --- */
+  .hist { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+  .hist-strip { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem; }
+  .vc {
+    flex-shrink: 0; width: 160px; border: 1px solid var(--border);
+    background: var(--white); cursor: pointer; transition: border-color 0.2s;
   }
-  .v-card {
-    flex-shrink: 0; width: 170px; background: var(--surface2);
-    border: 2px solid var(--border); border-radius: 10px;
-    overflow: hidden; cursor: pointer; transition: border-color 0.2s;
-  }
-  .v-card:hover { border-color: var(--border-hover); }
-  .v-card.cmp-a { border-color: var(--orange); }
-  .v-card.cmp-b { border-color: var(--purple); }
-  .v-card img { width: 100%; height: 110px; object-fit: cover; }
-  .v-meta { padding: 0.4rem 0.5rem; font-size: 0.7rem; }
-  .v-meta .v-id { font-weight: 600; color: var(--text); }
-  .v-meta .v-note { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .v-meta .v-cost { color: var(--accent); font-family: var(--mono); margin-top: 0.15rem; }
+  .vc:hover { border-color: var(--olive); }
+  .vc.ca { border-color: var(--brown); border-width: 2px; }
+  .vc.cb { border-color: var(--olive); border-width: 2px; }
+  .vc img { width: 100%; height: 100px; object-fit: cover; display: block; }
+  .vc-info { padding: 0.4rem 0.5rem; font-size: 0.7rem; }
+  .vc-info .vc-id { font-weight: 500; color: var(--text); }
+  .vc-info .vc-note { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vc-info .vc-cost { color: var(--olive); font-family: var(--serif); font-style: italic; }
 
-  /* Compare */
-  .compare { display: none; margin-top: 1rem; }
-  .compare.active { display: block; }
-  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .compare-pane {
-    background: var(--surface2); border-radius: 10px;
-    overflow: hidden; border: 2px solid var(--border);
-  }
-  .compare-pane img { width: 100%; display: block; }
-  .compare-pane-label { padding: 0.4rem 0.6rem; font-size: 0.75rem; color: var(--text-dim); text-align: center; }
-  .compare-pane:first-child { border-color: var(--orange); }
-  .compare-pane:last-child { border-color: var(--purple); }
+  .cmp { display: none; margin-top: 1.25rem; }
+  .cmp.on { display: block; }
+  .cmp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .cmp-pane { border: 1px solid var(--border); background: var(--white); }
+  .cmp-pane img { width: 100%; display: block; }
+  .cmp-pane-lbl { padding: 0.4rem 0.5rem; font-size: 0.72rem; color: var(--text-dim); text-align: center; font-family: var(--serif); font-style: italic; }
+  .cmp-pane:first-child { border-color: var(--brown); }
+  .cmp-pane:last-child { border-color: var(--olive); }
 
-  /* Spendings tab */
-  .spend-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-  .spend-stat {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 1.25rem; text-align: center;
+  /* --- Spendings --- */
+  .spend-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
+  .spend-card {
+    background: var(--white); border: 1px solid var(--border);
+    padding: 1.5rem; text-align: center;
   }
-  .spend-stat .stat-val {
-    font-size: 1.8rem; font-weight: 700; color: var(--text-bright);
-    font-family: var(--mono);
-  }
-  .spend-stat .stat-label { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.3rem; }
-  .spend-stat .stat-sub { font-size: 0.8rem; color: var(--accent); font-family: var(--mono); margin-top: 0.15rem; }
-  .spend-table {
-    width: 100%; border-collapse: collapse; font-size: 0.8rem;
-  }
-  .spend-table th {
-    text-align: left; padding: 0.6rem 0.75rem;
-    color: var(--text-dim); font-weight: 600; font-size: 0.7rem;
-    text-transform: uppercase; letter-spacing: 0.05em;
-    border-bottom: 1px solid var(--border);
-  }
-  .spend-table td {
-    padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border);
-    color: var(--text);
-  }
-  .spend-table tr:last-child td { border-bottom: none; }
-  .spend-table .mono { font-family: var(--mono); }
+  .spend-val { font-family: var(--serif); font-size: 2rem; font-weight: 400; color: var(--text); }
+  .spend-lbl { font-size: 0.72rem; color: var(--text-dim); margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .spend-sub { font-size: 0.75rem; color: var(--olive); font-family: var(--serif); font-style: italic; margin-top: 0.15rem; }
 
-  @media (max-width: 900px) {
-    .grid { grid-template-columns: 1fr; }
-    .shell { padding: 1rem; }
-    .spend-grid { grid-template-columns: 1fr; }
-    .compare-grid { grid-template-columns: 1fr; }
+  .log-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .log-table th {
+    text-align: left; padding: 0.6rem 0.75rem; font-weight: 500;
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-dim); border-bottom: 1px solid var(--border);
+  }
+  .log-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border-light); color: var(--text); }
+  .log-table tr:last-child td { border-bottom: none; }
+  .log-table .it { font-family: var(--serif); font-style: italic; }
+
+  @media (max-width: 820px) {
+    .studio-grid { grid-template-columns: 1fr; }
+    .shell { padding: 0 1.25rem; }
+    .spend-cards { grid-template-columns: 1fr; }
+    .cmp-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -286,448 +240,291 @@
 
 <!-- Lock -->
 <div id="lockScreen">
-  <div class="lock-box">
-    <div class="lock-logo">Cihla<span style="color:var(--accent)">.</span></div>
-    <div class="lock-sub">SketchUp to reality, one click at a time</div>
-    <input type="password" class="lock-input" id="passwordInput" placeholder="password" autofocus>
-    <button class="lock-btn" id="unlockBtn">Unlock</button>
-    <div class="lock-error" id="lockError"></div>
+  <div class="lock-wrap">
+    <div class="lock-logo-area">
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="18" y="20" width="28" height="32" rx="3" stroke="#5c6442" stroke-width="2" fill="none"/>
+        <path d="M22 20 V14 a10 10 0 0 1 20 0 V20" stroke="#5c6442" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="32" cy="32" rx="6" ry="8" fill="#5c6442" opacity="0.15"/>
+        <path d="M30 28 c0-4 2-8 2-12" stroke="#7a8259" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M34 28 c0-3 -1-7 1-11" stroke="#7a8259" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M28 30 c-2-2-4-5-3-9" stroke="#7a8259" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.6"/>
+        <path d="M36 30 c2-2 3-6 2-9" stroke="#7a8259" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.6"/>
+        <path d="M24 44 Q28 40 32 44 Q36 48 40 44" stroke="#5c6442" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/>
+        <circle cx="32" cy="38" r="1.5" fill="#5c6442" opacity="0.3"/>
+        <circle cx="28" cy="41" r="1" fill="#5c6442" opacity="0.2"/>
+        <circle cx="36" cy="40" r="1.2" fill="#5c6442" opacity="0.25"/>
+      </svg>
+      <div class="lock-name">marinada</div>
+    </div>
+    <input type="password" class="lock-input" id="pwdIn" placeholder="heslo" autofocus>
+    <button class="lock-enter" id="unlockBtn">Vstoupit</button>
+    <div class="lock-err" id="lockErr"></div>
   </div>
 </div>
 
 <!-- App -->
-<div id="appContent">
+<div id="app">
 <div class="shell">
-  <div class="topbar">
-    <div class="topbar-left">
-      <div class="logo"><span class="logo-brick">Cihla</span><span style="color:var(--text-dim)">.</span></div>
-      <div class="topbar-tag">Nano Banana 2</div>
+  <header>
+    <div class="hdr-left">
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="18" y="20" width="28" height="32" rx="3" stroke="#5c6442" stroke-width="2" fill="none"/>
+        <path d="M22 20 V14 a10 10 0 0 1 20 0 V20" stroke="#5c6442" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="32" cy="32" rx="6" ry="8" fill="#5c6442" opacity="0.15"/>
+        <path d="M30 28 c0-4 2-8 2-12" stroke="#7a8259" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M34 28 c0-3 -1-7 1-11" stroke="#7a8259" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <circle cx="32" cy="38" r="1.5" fill="#5c6442" opacity="0.3"/>
+        <circle cx="28" cy="41" r="1" fill="#5c6442" opacity="0.2"/>
+        <circle cx="36" cy="40" r="1.2" fill="#5c6442" opacity="0.25"/>
+      </svg>
+      <span class="hdr-name">marinada</span>
     </div>
-    <div class="topbar-right">
-      <div class="tab-switcher">
-        <button class="tab-btn active" data-tab="studio">Studio</button>
-        <button class="tab-btn" data-tab="spendings">Spendings</button>
-      </div>
-    </div>
-  </div>
+    <nav>
+      <a class="active" data-view="studio">Studio</a>
+      <a data-view="spend">Výdaje</a>
+    </nav>
+  </header>
 
-  <!-- STUDIO TAB -->
-  <div class="tab-content active" id="tab-studio">
-    <div class="grid">
-      <!-- LEFT COL -->
-      <div>
-        <div class="card">
-          <div class="card-title">Source Image</div>
-          <div class="drop-zone" id="uploadZone">
-            <span class="drop-hint" id="uploadHint"><strong>Drop</strong> your SketchUp export here<br>or click to browse</span>
+  <!-- STUDIO -->
+  <div class="view active" id="v-studio">
+    <div class="section-title">Nový render</div>
+    <div class="section-sub">Nahraj export ze SketchUp, uprav nastavení a nech AI vytvořit fotorealistickou vizualizaci.</div>
+
+    <div class="studio-grid">
+      <div class="studio-col">
+
+        <div class="fieldset">
+          <div class="fieldset-label">Zdrojový obrázek</div>
+          <div class="drop" id="uploadZone">
+            <span class="drop-hint" id="uploadHint"><em>Přetáhni</em> sem obrázek nebo klikni</span>
             <input type="file" id="fileInput" accept="image/*">
           </div>
-          <button class="btn btn-accent" id="analyzeBtn" disabled style="width:100%">Analyze with Claude</button>
-          <div class="status" id="analyzeStatus"></div>
+          <button class="btn btn-fill" id="analyzeBtn" disabled style="width:100%">Analyzovat scénu</button>
+          <div class="st" id="analyzeStatus"></div>
         </div>
 
-        <div class="card">
-          <div class="card-title">Scene Description</div>
-          <textarea class="input-area" id="description" rows="5" placeholder="What Claude sees in your image... or describe manually"></textarea>
+        <div class="fieldset">
+          <div class="fieldset-label">Popis scény</div>
+          <textarea class="field" id="description" rows="5" placeholder="Co je na obrázku — vyplní se automaticky, nebo napiš ručně..."></textarea>
         </div>
 
-        <div class="card">
-          <div class="card-title">Settings</div>
-
-          <div class="ctrl">
-            <div class="ctrl-label">Scene</div>
-            <div class="pill-group" id="sceneType">
-              <div class="pill active" data-val="exterior">Exterior</div>
-              <div class="pill" data-val="interior">Interior</div>
-              <div class="pill" data-val="aerial">Aerial</div>
-              <div class="pill" data-val="street-level">Street</div>
-            </div>
+        <div class="fieldset">
+          <div class="fieldset-label">Typ scény</div>
+          <div class="pills" id="sceneType">
+            <div class="pill on" data-val="exterior">Exteriér</div>
+            <div class="pill" data-val="interior">Interiér</div>
+            <div class="pill" data-val="aerial">Z výšky</div>
+            <div class="pill" data-val="street-level">Z ulice</div>
           </div>
+        </div>
 
-          <div class="ctrl">
-            <div class="ctrl-label">Time of Day</div>
-            <div class="pill-group" id="timeOfDay">
-              <div class="pill" data-val="dawn">Dawn</div>
-              <div class="pill" data-val="morning">Morning</div>
-              <div class="pill active" data-val="midday">Midday</div>
-              <div class="pill" data-val="golden-hour">Golden hr</div>
-              <div class="pill" data-val="sunset">Sunset</div>
-              <div class="pill" data-val="dusk">Dusk</div>
-              <div class="pill" data-val="night">Night</div>
-            </div>
+        <div class="fieldset">
+          <div class="fieldset-label">Denní doba</div>
+          <div class="pills" id="timeOfDay">
+            <div class="pill" data-val="dawn">Úsvit</div>
+            <div class="pill" data-val="morning">Ráno</div>
+            <div class="pill on" data-val="midday">Poledne</div>
+            <div class="pill" data-val="golden-hour">Zlatá hodinka</div>
+            <div class="pill" data-val="sunset">Západ</div>
+            <div class="pill" data-val="dusk">Soumrak</div>
+            <div class="pill" data-val="night">Noc</div>
           </div>
+        </div>
 
-          <div class="ctrl">
-            <div class="ctrl-label">Weather</div>
-            <div class="pill-group" id="weather">
-              <div class="pill active" data-val="clear">Clear</div>
-              <div class="pill" data-val="partly-cloudy">Cloudy</div>
-              <div class="pill" data-val="overcast">Overcast</div>
-              <div class="pill" data-val="rainy">Rain</div>
-              <div class="pill" data-val="foggy">Fog</div>
-              <div class="pill" data-val="snowy">Snow</div>
-            </div>
+        <div class="fieldset">
+          <div class="fieldset-label">Počasí</div>
+          <div class="pills" id="weather">
+            <div class="pill on" data-val="clear">Jasno</div>
+            <div class="pill" data-val="partly-cloudy">Polojasno</div>
+            <div class="pill" data-val="overcast">Zataženo</div>
+            <div class="pill" data-val="rainy">Déšť</div>
+            <div class="pill" data-val="foggy">Mlha</div>
+            <div class="pill" data-val="snowy">Sníh</div>
           </div>
+        </div>
 
-          <div class="ctrl">
-            <div class="ctrl-label">Material Fidelity <span id="matLabel">High</span></div>
-            <div class="slider-track">
-              <span class="slider-edge">Loose</span>
-              <input type="range" id="materialSlider" min="0" max="100" value="75">
-              <span class="slider-edge">Exact</span>
-            </div>
+        <div class="fieldset">
+          <div class="fieldset-label">Věrnost materiálů <span class="val" id="matLabel">Vysoká</span></div>
+          <div class="slide">
+            <span class="slide-edge">Volně</span>
+            <input type="range" id="materialSlider" min="0" max="100" value="75">
+            <span class="slide-edge">Přesně</span>
           </div>
+        </div>
 
-          <div class="ctrl">
-            <div class="ctrl-label">Angle Consistency <span id="angleLabel">High</span></div>
-            <div class="slider-track">
-              <span class="slider-edge">Loose</span>
-              <input type="range" id="angleSlider" min="0" max="100" value="80">
-              <span class="slider-edge">Exact</span>
-            </div>
+        <div class="fieldset">
+          <div class="fieldset-label">Konzistence úhlu <span class="val" id="angleLabel">Vysoká</span></div>
+          <div class="slide">
+            <span class="slide-edge">Volně</span>
+            <input type="range" id="angleSlider" min="0" max="100" value="80">
+            <span class="slide-edge">Přesně</span>
           </div>
+        </div>
 
-          <div class="ctrl">
-            <div class="ctrl-label">Window View</div>
-            <input class="input-area" id="windowView" placeholder="Prague rooftops, park, courtyard...">
+        <div class="fieldset">
+          <div class="fieldset-label">Výhled z oken</div>
+          <input class="field" id="windowView" placeholder="Např. pražské Staré Město, park, vnitroblok...">
+        </div>
+
+        <div class="fieldset">
+          <div class="fieldset-label">Zeleň <span class="val" id="vegLabel">50 %</span></div>
+          <div class="slide">
+            <span class="slide-edge">Žádná</span>
+            <input type="range" id="vegSlider" min="0" max="100" value="50">
+            <span class="slide-edge">Bujná</span>
           </div>
+        </div>
 
-          <div class="ctrl">
-            <div class="ctrl-label">Vegetation <span id="vegLabel">50%</span></div>
-            <div class="slider-track">
-              <span class="slider-edge">None</span>
-              <input type="range" id="vegSlider" min="0" max="100" value="50">
-              <span class="slider-edge">Lush</span>
-            </div>
-          </div>
-
-          <div class="ctrl">
-            <div class="ctrl-label">People <span id="pplLabel">30%</span></div>
-            <div class="slider-track">
-              <span class="slider-edge">Empty</span>
-              <input type="range" id="peopleSlider" min="0" max="100" value="30">
-              <span class="slider-edge">Busy</span>
-            </div>
+        <div class="fieldset">
+          <div class="fieldset-label">Lidé <span class="val" id="pplLabel">30 %</span></div>
+          <div class="slide">
+            <span class="slide-edge">Prázdno</span>
+            <input type="range" id="peopleSlider" min="0" max="100" value="30">
+            <span class="slide-edge">Rušno</span>
           </div>
         </div>
       </div>
 
-      <!-- RIGHT COL -->
-      <div>
-        <div class="card">
-          <div class="card-title">Prompt</div>
-          <textarea class="prompt-box" id="promptOutput" readonly placeholder="Adjust settings, then hit Generate..."></textarea>
-          <div class="btn-row" style="margin-top:0.75rem">
-            <button class="btn btn-accent" id="generateBtn">Generate Prompt</button>
-            <button class="btn btn-ghost" id="copyBtn">Copy</button>
-            <button class="btn btn-green" id="renderBtn">Render</button>
+      <div class="studio-col">
+        <div class="fieldset">
+          <div class="fieldset-label">Prompt</div>
+          <textarea class="field field-mono" id="promptOutput" readonly placeholder="Nastav parametry a klikni na Vygenerovat..."></textarea>
+          <div class="btns" style="margin-top:0.6rem">
+            <button class="btn btn-fill" id="generateBtn">Vygenerovat prompt</button>
+            <button class="btn btn-line" id="copyBtn">Kopírovat</button>
+            <button class="btn btn-fill" id="renderBtn" style="background:#6b7a4a">Renderovat</button>
           </div>
-          <div class="status" id="renderStatus"></div>
-          <div id="renderResult"></div>
+          <div class="st" id="renderStatus"></div>
         </div>
 
-        <div class="history card" id="historyPanel" style="display:none">
-          <div class="card-title">Versions <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dim)">— click one to load, two to compare</span></div>
-          <div class="version-strip" id="versionStrip"></div>
-          <div class="compare" id="compareView">
-            <div class="compare-grid">
-              <div class="compare-pane"><img id="cmpImgA"><div class="compare-pane-label" id="cmpLblA"></div></div>
-              <div class="compare-pane"><img id="cmpImgB"><div class="compare-pane-label" id="cmpLblB"></div></div>
+        <div class="render-out" id="renderResult"></div>
+
+        <div class="hist" id="histPanel" style="display:none">
+          <div class="fieldset-label">Verze <span class="val" style="font-weight:400">— klikni na jednu pro výběr, dvě pro porovnání</span></div>
+          <div class="hist-strip" id="vStrip"></div>
+          <div class="cmp" id="cmpView">
+            <div class="cmp-grid">
+              <div class="cmp-pane"><img id="cmpA"><div class="cmp-pane-lbl" id="cmpLA"></div></div>
+              <div class="cmp-pane"><img id="cmpB"><div class="cmp-pane-lbl" id="cmpLB"></div></div>
             </div>
-            <div class="btn-row" style="margin-top:0.5rem"><button class="btn btn-ghost btn-sm" onclick="clearCompare()">Clear</button></div>
+            <div class="btns" style="margin-top:0.5rem"><button class="btn btn-line btn-sm" onclick="clearCmp()">Zavřít</button></div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- SPENDINGS TAB -->
-  <div class="tab-content" id="tab-spendings">
-    <div class="spend-grid">
-      <div class="spend-stat">
-        <div class="stat-val" id="spTotalRenders">0</div>
-        <div class="stat-label">Total Renders</div>
+  <!-- SPENDINGS -->
+  <div class="view" id="v-spend">
+    <div class="section-title">Výdaje</div>
+    <div class="section-sub">Přehled nákladů na generování renderů.</div>
+
+    <div class="spend-cards">
+      <div class="spend-card">
+        <div class="spend-val" id="spN">0</div>
+        <div class="spend-lbl">Renderů celkem</div>
       </div>
-      <div class="spend-stat">
-        <div class="stat-val" id="spTotalUsd">$0.00</div>
-        <div class="stat-label">Total Spent (USD)</div>
+      <div class="spend-card">
+        <div class="spend-val" id="spUsd">$0.00</div>
+        <div class="spend-lbl">Celkem (USD)</div>
       </div>
-      <div class="spend-stat">
-        <div class="stat-val" id="spTotalCzk">0 Kc</div>
-        <div class="stat-label">Total Spent (CZK)</div>
-        <div class="stat-sub">1 USD = 21.2 CZK</div>
+      <div class="spend-card">
+        <div class="spend-val" id="spCzk">0 Kč</div>
+        <div class="spend-lbl">Celkem (CZK)</div>
+        <div class="spend-sub">1 USD ≈ 21,2 Kč</div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-title">Render Log</div>
-      <table class="spend-table">
-        <thead><tr><th>#</th><th>Type</th><th>Note</th><th>USD</th><th>CZK</th></tr></thead>
-        <tbody id="spTableBody">
-          <tr><td colspan="5" style="color:var(--text-dim);text-align:center;padding:2rem;">No renders yet</td></tr>
-        </tbody>
-      </table>
-    </div>
+
+    <div class="fieldset-label">Historie renderů</div>
+    <table class="log-table">
+      <thead><tr><th>#</th><th>Typ</th><th>Poznámka</th><th>USD</th><th>CZK</th></tr></thead>
+      <tbody id="spBody"><tr><td colspan="5" style="color:var(--text-light);text-align:center;padding:2rem;">Zatím žádné rendery</td></tr></tbody>
+    </table>
   </div>
 
 </div>
 </div>
 
 <script>
-// --- Config ---
-const ENC_ANTHROPIC = 'YrwsDbSwfHgAGSqPK5Vq8zJH3ubVNOBpBkoFPwHA/zcS3U6Cq1StskfgLiftypXBdNDh5f9440fXqEJMdtZlFMMZkhdf/kIzbvO2YJJeOfYRPdN71YX4OQ9A3nUBbJYOdbCZmpeRJJd9xLUbCf5y/z8I9GhRByMS1kCf1qrzpslG/XxQOJhOPF0KhhFs8q5fSWtrW+os5tI=';
-const ENC_GEMINI = 'MzyQzn3RfMCVJOMSbfchNtHCe+QxwuVxp/k8Eyda10iGmeQfeydEGq93VsTWgY048QHh3b9z6FG0dsGMRjQlux3V/yWfVkKJ96Qep1Ds0CAOoAQ=';
-const COST_PER_RENDER = 0.067;
-const CZK_RATE = 21.2;
+const ENC_A='YrwsDbSwfHgAGSqPK5Vq8zJH3ubVNOBpBkoFPwHA/zcS3U6Cq1StskfgLiftypXBdNDh5f9440fXqEJMdtZlFMMZkhdf/kIzbvO2YJJeOfYRPdN71YX4OQ9A3nUBbJYOdbCZmpeRJJd9xLUbCf5y/z8I9GhRByMS1kCf1qrzpslG/XxQOJhOPF0KhhFs8q5fSWtrW+os5tI=';
+const ENC_G='MzyQzn3RfMCVJOMSbfchNtHCe+QxwuVxp/k8Eyda10iGmeQfeydEGq93VsTWgY048QHh3b9z6FG0dsGMRjQlux3V/yWfVkKJ96Qep1Ds0CAOoAQ=';
+const CPR=0.067,CZK=21.2;
+let AK='',GK='';
 
-let ANTHROPIC_KEY = '', GEMINI_KEY = '';
+async function dec(e,p){const r=Uint8Array.from(atob(e),c=>c.charCodeAt(0)),s=r.slice(0,16),iv=r.slice(16,28),tg=r.slice(28,44),ct=r.slice(44);const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);const k=await crypto.subtle.deriveKey({name:'PBKDF2',salt:s,iterations:100000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);const c=new Uint8Array(ct.length+tg.length);c.set(ct);c.set(tg,ct.length);return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv},k,c));}
 
-// --- Decrypt ---
-async function decrypt(encB64, password) {
-  const raw = Uint8Array.from(atob(encB64), c => c.charCodeAt(0));
-  const salt = raw.slice(0, 16), iv = raw.slice(16, 28), tag = raw.slice(28, 44), ct = raw.slice(44);
-  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-  const combined = new Uint8Array(ct.length + tag.length);
-  combined.set(ct); combined.set(tag, ct.length);
-  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, combined));
-}
+// Lock
+async function unlock(){const p=document.getElementById('pwdIn').value;if(!p)return;document.getElementById('lockErr').textContent='';try{AK=await dec(ENC_A,p);GK=await dec(ENC_G,p);document.getElementById('lockScreen').style.display='none';document.getElementById('app').style.display='block';}catch{document.getElementById('lockErr').textContent='Špatné heslo';document.getElementById('pwdIn').value='';document.getElementById('pwdIn').focus();}}
+document.getElementById('unlockBtn').addEventListener('click',unlock);
+document.getElementById('pwdIn').addEventListener('keydown',e=>{if(e.key==='Enter')unlock();});
 
-// --- Lock ---
-async function tryUnlock() {
-  const pwd = document.getElementById('passwordInput').value;
-  if (!pwd) return;
-  document.getElementById('lockError').textContent = '';
-  try {
-    ANTHROPIC_KEY = await decrypt(ENC_ANTHROPIC, pwd);
-    GEMINI_KEY = await decrypt(ENC_GEMINI, pwd);
-    document.getElementById('lockScreen').style.display = 'none';
-    document.getElementById('appContent').style.display = 'block';
-  } catch {
-    document.getElementById('lockError').textContent = 'Wrong password';
-    document.getElementById('passwordInput').value = '';
-    document.getElementById('passwordInput').focus();
-  }
-}
-document.getElementById('unlockBtn').addEventListener('click', tryUnlock);
-document.getElementById('passwordInput').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+// Nav
+document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));a.classList.add('active');document.getElementById('v-'+a.dataset.view).classList.add('active');}));
 
-// --- Tabs ---
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-  });
-});
+// State
+const S={imageData:null,description:'',sceneType:'exterior',timeOfDay:'midday',weather:'clear',material:75,angle:80,vegetation:50,people:30};
+const V=[];let cmpSel=[];
 
-// --- State ---
-const state = { imageData: null, description: '', sceneType: 'exterior', timeOfDay: 'midday', weather: 'clear', material: 75, angle: 80, vegetation: 50, people: 30 };
-const versions = [];
-let compareSelection = [];
+// Upload
+const uz=document.getElementById('uploadZone'),fi=document.getElementById('fileInput');
+uz.addEventListener('click',()=>fi.click());
+uz.addEventListener('dragover',e=>{e.preventDefault();uz.style.borderColor='var(--olive)';});
+uz.addEventListener('dragleave',()=>{uz.style.borderColor='';});
+uz.addEventListener('drop',e=>{e.preventDefault();uz.style.borderColor='';if(e.dataTransfer.files.length)loadFile(e.dataTransfer.files[0]);});
+fi.addEventListener('change',()=>{if(fi.files.length)loadFile(fi.files[0]);});
+function loadFile(f){if(!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=e=>{S.imageData=e.target.result;uz.classList.add('has-img');document.getElementById('uploadHint').style.display='none';const old=uz.querySelector('img');if(old)old.remove();const img=document.createElement('img');img.src=S.imageData;uz.appendChild(img);document.getElementById('analyzeBtn').disabled=false;};r.readAsDataURL(f);}
 
-// --- Upload ---
-const uploadZone = document.getElementById('uploadZone');
-const fileInput = document.getElementById('fileInput');
-uploadZone.addEventListener('click', () => fileInput.click());
-uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = 'var(--accent)'; });
-uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
-uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.style.borderColor = ''; if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
-fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+// Toggles
+function tog(id,key){document.getElementById(id).addEventListener('click',e=>{const p=e.target.closest('[data-val]');if(!p)return;p.parentElement.querySelectorAll('[data-val]').forEach(x=>x.classList.remove('on'));p.classList.add('on');S[key]=p.dataset.val;});}
+tog('sceneType','sceneType');tog('timeOfDay','timeOfDay');tog('weather','weather');
 
-function handleFile(file) {
-  if (!file.type.startsWith('image/')) return;
-  const r = new FileReader();
-  r.onload = e => {
-    state.imageData = e.target.result;
-    uploadZone.classList.add('has-image');
-    document.getElementById('uploadHint').style.display = 'none';
-    const old = uploadZone.querySelector('img'); if (old) old.remove();
-    const img = document.createElement('img'); img.src = state.imageData; uploadZone.appendChild(img);
-    document.getElementById('analyzeBtn').disabled = false;
-  };
-  r.readAsDataURL(file);
-}
+// Sliders
+function sL(v){return v<25?'Nízká':v<50?'Střední':v<75?'Vysoká':'Maximální';}
+document.getElementById('materialSlider').addEventListener('input',e=>{S.material=+e.target.value;document.getElementById('matLabel').textContent=sL(S.material);});
+document.getElementById('angleSlider').addEventListener('input',e=>{S.angle=+e.target.value;document.getElementById('angleLabel').textContent=sL(S.angle);});
+document.getElementById('vegSlider').addEventListener('input',e=>{S.vegetation=+e.target.value;document.getElementById('vegLabel').textContent=e.target.value+' %';});
+document.getElementById('peopleSlider').addEventListener('input',e=>{S.people=+e.target.value;document.getElementById('pplLabel').textContent=e.target.value+' %';});
+document.getElementById('description').addEventListener('input',e=>{S.description=e.target.value;});
 
-// --- Toggles ---
-function setupToggle(id, key) {
-  document.getElementById(id).addEventListener('click', e => {
-    const p = e.target.closest('[data-val]'); if (!p) return;
-    p.parentElement.querySelectorAll('[data-val]').forEach(el => el.classList.remove('active'));
-    p.classList.add('active'); state[key] = p.dataset.val;
-  });
-}
-setupToggle('timeOfDay', 'timeOfDay'); setupToggle('weather', 'weather'); setupToggle('sceneType', 'sceneType');
+// Analyze
+document.getElementById('analyzeBtn').addEventListener('click',analyze);
+async function analyze(){if(!S.imageData){st('analyzeStatus','Nejdřív nahraj obrázek',1);return;}st('analyzeStatus','Analyzuji...',0);document.getElementById('analyzeBtn').disabled=true;const b=S.imageData.split(',')[1],m=S.imageData.split(';')[0].split(':')[1];try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AK,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:m,data:b}},{type:'text',text:'You are an architectural visualization expert. Describe this SketchUp 3D model export in detail for the purpose of generating a photorealistic render. Include: building form and massing, materials visible (concrete, wood, glass, metal, brick, etc.), architectural style, number of floors, roof type, window types, any landscape or context visible, camera angle and perspective. Be factual and precise. Do not add anything not visible in the image. Output a single dense paragraph.'}]}]})});const d=await r.json();if(d.error)throw new Error(d.error.message);document.getElementById('description').value=d.content[0].text;S.description=d.content[0].text;st('analyzeStatus','Hotovo',0);}catch(e){st('analyzeStatus',e.message,1);}document.getElementById('analyzeBtn').disabled=false;}
+function st(id,msg,err){const el=document.getElementById(id);el.textContent=msg;el.className='st '+(err?'er':'ld');if(!err&&msg==='Hotovo')setTimeout(()=>{el.textContent='';},2000);}
 
-// --- Sliders ---
-function sLabel(v) { return v < 25 ? 'Low' : v < 50 ? 'Med' : v < 75 ? 'High' : 'Max'; }
-document.getElementById('materialSlider').addEventListener('input', e => { state.material = +e.target.value; document.getElementById('matLabel').textContent = sLabel(state.material); });
-document.getElementById('angleSlider').addEventListener('input', e => { state.angle = +e.target.value; document.getElementById('angleLabel').textContent = sLabel(state.angle); });
-document.getElementById('vegSlider').addEventListener('input', e => { state.vegetation = +e.target.value; document.getElementById('vegLabel').textContent = e.target.value + '%'; });
-document.getElementById('peopleSlider').addEventListener('input', e => { state.people = +e.target.value; document.getElementById('pplLabel').textContent = e.target.value + '%'; });
+// Prompt (English)
+document.getElementById('generateBtn').addEventListener('click',genPrompt);
+function genPrompt(){const d=document.getElementById('description').value.trim();if(!d){document.getElementById('promptOutput').value='Nejdřív vyplň popis scény.';return;}
+const T={dawn:'early dawn light, soft pink and blue sky',morning:'bright morning sun, crisp shadows, blue sky',midday:'direct midday sun, strong overhead light, minimal shadows','golden-hour':'warm golden hour, long soft shadows, amber tones',sunset:'dramatic sunset, orange and purple sky, warm reflections',dusk:'blue hour dusk, ambient twilight, interior lights glowing',night:'night scene, building lit from within, dark sky'};
+const W={clear:'clear sky','partly-cloudy':'partly cloudy, scattered clouds',overcast:'overcast, soft diffused light',rainy:'rain, wet reflections, puddles',foggy:'fog, atmospheric haze',snowy:'snow on ground and roofs, winter'};
+const mat=S.material<25?'Freely interpret materials.':S.material<50?'Keep general palette, allow enhancement.':S.material<75?'Faithfully match materials, textures, colors.':'Exactly replicate all materials. No deviation.';
+const ang=S.angle<25?'Adjust angle freely.':S.angle<50?'Similar direction, minor adjustments OK.':S.angle<75?'Closely match camera angle and FOV.':'CRITICAL: EXACT same camera position, angle, FOV. Every wall/edge at same position. No reframing.';
+const vg=S.vegetation<15?'No vegetation.':S.vegetation<40?'Minimal, sparse vegetation.':S.vegetation<65?'Moderate trees, shrubs, ground cover.':'Lush vegetation, mature trees, dense planting.';
+const pp=S.people<15?'No people.':S.people<40?'One or two people for scale.':S.people<65?'Several people using the space.':'Busy scene with many people.';
+const wv=document.getElementById('windowView').value.trim(),isI=S.sceneType==='interior';
+document.getElementById('promptOutput').value=[`Transform the attached SketchUp model screenshot into a photorealistic ${S.sceneType} architectural photograph.`,'',`Scene: ${d}`,'','LIGHTING:',`- ${T[S.timeOfDay]}`,`- ${W[S.weather]}`,isI?'- Interior: ambient window light + artificial sources, warm spill, soft shadows.':'- Exterior: natural sky illumination, ambient occlusion, accurate shadows.','','MATERIALS:',`- ${mat}`,'- Physically accurate: reflectivity, roughness, bump, subsurface scattering.','- Glass: reflections, transparency, green edge tint. Metal: specular highlights.','','CAMERA:',`- ${ang}`,'- 1:1 layout match. Same walls, proportions, spatial arrangement. Only upgrade materials & lighting.','- Canon EOS R5, 24mm tilt-shift, f/5.6. Correct verticals.','','CONTEXT:',`- ${vg}`,`- ${pp}`,isI?'- Realistic room context, tasteful decor.':'- Realistic sky, neighboring context, ground surface.',wv?`- WINDOWS: View of ${wv}. Natural depth, atmospheric perspective.`:'','','QUALITY:','- Indistinguishable from real photo. Architecture magazine quality.','- Global illumination, HDR, subtle atmosphere.','- Zero CG artifacts or flat shading.'].filter(Boolean).join('\n');}
 
-// --- Analyze ---
-document.getElementById('analyzeBtn').addEventListener('click', analyzeImage);
-async function analyzeImage() {
-  if (!state.imageData) { showStatus('analyzeStatus', 'Upload first', true); return; }
-  showStatus('analyzeStatus', 'Analyzing with Claude...', false);
-  document.getElementById('analyzeBtn').disabled = true;
-  const b64 = state.imageData.split(',')[1], mime = state.imageData.split(';')[0].split(':')[1];
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1024, messages: [{ role: 'user', content: [
-        { type: 'image', source: { type: 'base64', media_type: mime, data: b64 } },
-        { type: 'text', text: 'You are an architectural visualization expert. Describe this SketchUp 3D model export in detail for the purpose of generating a photorealistic render. Include: building form and massing, materials visible (concrete, wood, glass, metal, brick, etc.), architectural style, number of floors, roof type, window types, any landscape or context visible, camera angle and perspective. Be factual and precise. Do not add anything not visible in the image. Output a single dense paragraph.' }
-      ]}] }),
-    });
-    const d = await r.json(); if (d.error) throw new Error(d.error.message);
-    document.getElementById('description').value = d.content[0].text; state.description = d.content[0].text;
-    showStatus('analyzeStatus', 'Done', false);
-  } catch (e) { showStatus('analyzeStatus', e.message, true); }
-  document.getElementById('analyzeBtn').disabled = false;
-}
-document.getElementById('description').addEventListener('input', e => { state.description = e.target.value; });
+// Copy
+document.getElementById('copyBtn').addEventListener('click',()=>{navigator.clipboard.writeText(document.getElementById('promptOutput').value).then(()=>{const b=document.getElementById('copyBtn');b.textContent='Zkopírováno!';setTimeout(()=>b.textContent='Kopírovat',1500);});});
 
-function showStatus(id, msg, err) {
-  const el = document.getElementById(id); el.textContent = msg; el.className = 'status ' + (err ? 'error' : 'loading');
-  if (!err && msg === 'Done') setTimeout(() => { el.textContent = ''; }, 2000);
-}
+// Render
+document.getElementById('renderBtn').addEventListener('click',()=>doRender(null));
+async function doRender(note){const pr=document.getElementById('promptOutput').value.trim();if(!pr||pr.startsWith('Nejdřív')){st('renderStatus','Nejdřív vygeneruj prompt',1);return;}const src=note&&V.length?V[V.length-1].imgSrc:S.imageData;if(!src){st('renderStatus','Nahraj obrázek',1);return;}const rp=note?`Edit the attached architectural render. Keep everything EXCEPT: ${note}. Same angle, composition. Only change what was requested. Photorealistic output.`:pr;st('renderStatus','Renderuji přes Nano Banana 2...',0);document.getElementById('renderBtn').disabled=true;const b=src.split(',')[1],m=src.split(';')[0].split(':')[1];
+try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{inlineData:{mimeType:m,data:b}},{text:rp}]}],generationConfig:{responseModalities:['TEXT','IMAGE']}})});const d=await r.json();if(d.error)throw new Error(d.error.message);let ok=false;for(const p of d.candidates[0].content.parts){if(p.inlineData){const is=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;const v={id:V.length+1,imgSrc:is,note:note||'Základní render',prompt:rp,cost:CPR,parentId:note&&V.length?V[V.length-1].id:null};V.push(v);updSpend();renderStrip();showRender(v);ok=true;}}st('renderStatus',ok?'':'Žádný obrázek — zkus upravit prompt',!ok);}catch(e){st('renderStatus',e.message,1);}document.getElementById('renderBtn').disabled=false;}
 
-// --- Prompt ---
-document.getElementById('generateBtn').addEventListener('click', generatePrompt);
-function generatePrompt() {
-  const desc = document.getElementById('description').value.trim();
-  if (!desc) { document.getElementById('promptOutput').value = 'Describe the scene first.'; return; }
-  const T = { dawn:'early dawn light, soft pink and blue sky', morning:'bright morning sun, crisp shadows, blue sky', midday:'direct midday sun, strong overhead light, minimal shadows', 'golden-hour':'warm golden hour, long soft shadows, amber tones', sunset:'dramatic sunset, orange and purple sky, warm reflections', dusk:'blue hour dusk, ambient twilight, interior lights glowing', night:'night scene, building lit from within, dark sky' };
-  const W = { clear:'clear sky', 'partly-cloudy':'partly cloudy, scattered clouds', overcast:'overcast, soft diffused light', rainy:'rain, wet reflections, puddles', foggy:'fog, atmospheric haze', snowy:'snow on ground and roofs, winter' };
-  const mat = state.material < 25 ? 'Freely interpret materials.' : state.material < 50 ? 'Keep general palette, allow enhancement.' : state.material < 75 ? 'Faithfully match materials, textures, colors.' : 'Exactly replicate all materials. No deviation.';
-  const ang = state.angle < 25 ? 'Adjust angle freely.' : state.angle < 50 ? 'Similar direction, minor adjustments OK.' : state.angle < 75 ? 'Closely match camera angle and FOV.' : 'CRITICAL: EXACT same camera position, angle, FOV. Every wall/edge at same position. No reframing.';
-  const veg = state.vegetation < 15 ? 'No vegetation.' : state.vegetation < 40 ? 'Minimal, sparse vegetation.' : state.vegetation < 65 ? 'Moderate trees, shrubs, ground cover.' : 'Lush vegetation, mature trees, dense planting.';
-  const ppl = state.people < 15 ? 'No people.' : state.people < 40 ? 'One or two people for scale.' : state.people < 65 ? 'Several people using the space.' : 'Busy scene with many people.';
-  const wv = document.getElementById('windowView').value.trim();
-  const isInt = state.sceneType === 'interior';
-  document.getElementById('promptOutput').value = [
-    `Transform the attached SketchUp model screenshot into a photorealistic ${state.sceneType} architectural photograph.`,
-    '', `Scene: ${desc}`,
-    '', 'LIGHTING:', `- ${T[state.timeOfDay]}`, `- ${W[state.weather]}`,
-    isInt ? '- Interior: ambient window light + artificial sources, warm spill, soft shadows.' : '- Exterior: natural sky illumination, ambient occlusion, accurate shadows.',
-    '', 'MATERIALS:', `- ${mat}`, '- Physically accurate: reflectivity, roughness, bump, subsurface scattering.', '- Glass: reflections, transparency, green edge tint. Metal: specular highlights.',
-    '', 'CAMERA:', `- ${ang}`, '- 1:1 layout match. Same walls, proportions, spatial arrangement. Only upgrade materials & lighting.', '- Canon EOS R5, 24mm tilt-shift, f/5.6. Correct verticals.',
-    '', 'CONTEXT:', `- ${veg}`, `- ${ppl}`,
-    isInt ? '- Realistic room context, tasteful decor.' : '- Realistic sky, neighboring context, ground surface.',
-    wv ? `- WINDOWS: View of ${wv}. Natural depth, atmospheric perspective.` : '',
-    '', 'QUALITY:', '- Indistinguishable from real photo. Architecture magazine quality.', '- Global illumination, HDR, subtle atmosphere.', '- Zero CG artifacts or flat shading.',
-  ].filter(Boolean).join('\n');
-}
+function showRender(v){document.getElementById('renderResult').innerHTML=`<img src="${v.imgSrc}"><div class="render-meta">v${v.id} · $${v.cost.toFixed(3)} · ${(v.cost*CZK).toFixed(1)} Kč · ${v.note}</div><div class="refine-row"><input class="field" id="refIn" placeholder="Upřesnit: jiná podlaha, teplejší světlo, přidej koberec..."><button class="btn btn-fill btn-sm" style="background:#6b7a4a" onclick="refine()">Upravit</button></div><div class="btns" style="margin-top:0.5rem"><button class="btn btn-line btn-sm" onclick="dlV(${v.id})">Stáhnout</button><button class="btn btn-line btn-sm" onclick="doRender(null)">Nový od začátku</button></div>`;}
+function refine(){const i=document.getElementById('refIn'),n=i.value.trim();if(!n)return;i.value='';doRender(n);}
+function dlV(id){const v=V.find(x=>x.id===id);if(!v)return;const a=document.createElement('a');a.href=v.imgSrc;a.download=`marinada-v${v.id}.png`;a.click();}
 
-// --- Copy ---
-document.getElementById('copyBtn').addEventListener('click', () => {
-  navigator.clipboard.writeText(document.getElementById('promptOutput').value).then(() => {
-    const b = document.getElementById('copyBtn'); b.textContent = 'Copied!'; setTimeout(() => b.textContent = 'Copy', 1500);
-  });
-});
+// Spend
+function updSpend(){const n=V.length,u=V.reduce((s,v)=>s+v.cost,0),c=u*CZK;document.getElementById('spN').textContent=n;document.getElementById('spUsd').textContent='$'+u.toFixed(2);document.getElementById('spCzk').textContent=Math.round(c)+' Kč';document.getElementById('spBody').innerHTML=V.map(v=>`<tr><td class="it">v${v.id}</td><td>${v.parentId?'Úprava (v'+v.parentId+')':'Nový'}</td><td>${v.note}</td><td class="it">$${v.cost.toFixed(3)}</td><td class="it">${(v.cost*CZK).toFixed(1)} Kč</td></tr>`).join('');}
 
-// --- Render ---
-document.getElementById('renderBtn').addEventListener('click', () => doRender(null));
+// History
+function renderStrip(){const p=document.getElementById('histPanel'),s=document.getElementById('vStrip');if(!V.length){p.style.display='none';return;}p.style.display='block';s.innerHTML=V.map(v=>{const cl=cmpSel[0]===v.id?'ca':cmpSel[1]===v.id?'cb':'';return`<div class="vc ${cl}" onclick="vClick(${v.id})" title="${v.note}"><img src="${v.imgSrc}"><div class="vc-info"><div class="vc-id">v${v.id}${v.parentId?' ← v'+v.parentId:''}</div><div class="vc-note">${v.note}</div><div class="vc-cost">$${v.cost.toFixed(3)} · ${(v.cost*CZK).toFixed(1)} Kč</div></div></div>`;}).join('');}
 
-async function doRender(note) {
-  const prompt = document.getElementById('promptOutput').value.trim();
-  if (!prompt || prompt === 'Describe the scene first.') { showStatus('renderStatus', 'Generate a prompt first', true); return; }
-  const src = note && versions.length ? versions[versions.length - 1].imgSrc : state.imageData;
-  if (!src) { showStatus('renderStatus', 'Upload an image first', true); return; }
-  const rPrompt = note ? `Edit the attached architectural render. Keep everything EXCEPT: ${note}. Same angle, composition. Only change what was requested. Photorealistic output.` : prompt;
-  showStatus('renderStatus', 'Rendering with Nano Banana 2...', false);
-  document.getElementById('renderBtn').disabled = true;
-  const b64 = src.split(',')[1], mime = src.split(';')[0].split(':')[1];
-  try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GEMINI_KEY}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ inlineData: { mimeType: mime, data: b64 } }, { text: rPrompt }] }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } })
-    });
-    const d = await r.json(); if (d.error) throw new Error(d.error.message);
-    let ok = false;
-    for (const p of d.candidates[0].content.parts) {
-      if (p.inlineData) {
-        const imgSrc = `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
-        const v = { id: versions.length + 1, imgSrc, note: note || 'Initial render', prompt: rPrompt, cost: COST_PER_RENDER, parentId: note && versions.length ? versions[versions.length - 1].id : null };
-        versions.push(v); updateSpend(); renderStrip(); showRender(v); ok = true;
-      }
-    }
-    showStatus('renderStatus', ok ? '' : 'No image returned', !ok);
-  } catch (e) { showStatus('renderStatus', e.message, true); }
-  document.getElementById('renderBtn').disabled = false;
-}
-
-function showRender(v) {
-  document.getElementById('renderResult').innerHTML = `
-    <img src="${v.imgSrc}">
-    <div class="render-meta">v${v.id} · $${v.cost.toFixed(3)} · ${(v.cost * CZK_RATE).toFixed(1)} Kc · ${v.note}</div>
-    <div class="refine-row">
-      <input class="input-area" id="refineInput" placeholder="Refine: change floor to oak, warmer light, add plants...">
-      <button class="btn btn-green btn-sm" onclick="refineRender()">Refine</button>
-    </div>
-    <div class="btn-row" style="margin-top:0.5rem">
-      <button class="btn btn-ghost btn-sm" onclick="dlVersion(${v.id})">Download</button>
-      <button class="btn btn-ghost btn-sm" onclick="doRender(null)">New from scratch</button>
-    </div>`;
-}
-
-function refineRender() { const i = document.getElementById('refineInput'); const n = i.value.trim(); if (!n) return; i.value = ''; doRender(n); }
-function dlVersion(id) { const v = versions.find(x => x.id === id); if (!v) return; const a = document.createElement('a'); a.href = v.imgSrc; a.download = `cihla-v${v.id}.png`; a.click(); }
-
-// --- Spendings ---
-function updateSpend() {
-  const n = versions.length, usd = versions.reduce((s, v) => s + v.cost, 0), czk = usd * CZK_RATE;
-  document.getElementById('spTotalRenders').textContent = n;
-  document.getElementById('spTotalUsd').textContent = '$' + usd.toFixed(2);
-  document.getElementById('spTotalCzk').textContent = Math.round(czk) + ' Kc';
-  document.getElementById('spTableBody').innerHTML = versions.map(v => `
-    <tr>
-      <td class="mono">v${v.id}</td>
-      <td>${v.parentId ? 'Refine (v' + v.parentId + ')' : 'Initial'}</td>
-      <td>${v.note}</td>
-      <td class="mono">$${v.cost.toFixed(3)}</td>
-      <td class="mono">${(v.cost * CZK_RATE).toFixed(1)} Kc</td>
-    </tr>`).join('');
-}
-
-// --- Version strip ---
-function renderStrip() {
-  const panel = document.getElementById('historyPanel'), strip = document.getElementById('versionStrip');
-  if (!versions.length) { panel.style.display = 'none'; return; }
-  panel.style.display = 'block';
-  strip.innerHTML = versions.map(v => {
-    const cls = compareSelection[0] === v.id ? 'cmp-a' : compareSelection[1] === v.id ? 'cmp-b' : '';
-    return `<div class="v-card ${cls}" onclick="onVClick(${v.id})" title="${v.note}">
-      <img src="${v.imgSrc}"><div class="v-meta">
-        <div class="v-id">v${v.id}${v.parentId ? ' ← v' + v.parentId : ''}</div>
-        <div class="v-note">${v.note}</div>
-        <div class="v-cost">$${v.cost.toFixed(3)} · ${(v.cost * CZK_RATE).toFixed(1)} Kc</div>
-      </div></div>`;
-  }).join('');
-}
-
-function onVClick(id) {
-  if (!compareSelection.length) { compareSelection = [id]; }
-  else if (compareSelection.length === 1) {
-    if (compareSelection[0] === id) { const v = versions.find(x => x.id === id); if (v) showRender(v); compareSelection = []; document.getElementById('compareView').classList.remove('active'); }
-    else { compareSelection.push(id); showCmp(); }
-  } else { compareSelection = [id]; document.getElementById('compareView').classList.remove('active'); }
-  renderStrip();
-}
-
-function showCmp() {
-  const a = versions.find(v => v.id === compareSelection[0]), b = versions.find(v => v.id === compareSelection[1]);
-  if (!a || !b) return;
-  document.getElementById('cmpImgA').src = a.imgSrc; document.getElementById('cmpImgB').src = b.imgSrc;
-  document.getElementById('cmpLblA').textContent = `v${a.id} — ${a.note}`;
-  document.getElementById('cmpLblB').textContent = `v${b.id} — ${b.note}`;
-  document.getElementById('compareView').classList.add('active');
-}
-
-function clearCompare() { compareSelection = []; document.getElementById('compareView').classList.remove('active'); renderStrip(); }
+function vClick(id){if(!cmpSel.length)cmpSel=[id];else if(cmpSel.length===1){if(cmpSel[0]===id){const v=V.find(x=>x.id===id);if(v)showRender(v);cmpSel=[];document.getElementById('cmpView').classList.remove('on');}else{cmpSel.push(id);showCmp();}}else{cmpSel=[id];document.getElementById('cmpView').classList.remove('on');}renderStrip();}
+function showCmp(){const a=V.find(v=>v.id===cmpSel[0]),b=V.find(v=>v.id===cmpSel[1]);if(!a||!b)return;document.getElementById('cmpA').src=a.imgSrc;document.getElementById('cmpB').src=b.imgSrc;document.getElementById('cmpLA').textContent=`v${a.id} — ${a.note}`;document.getElementById('cmpLB').textContent=`v${b.id} — ${b.note}`;document.getElementById('cmpView').classList.add('on');}
+function clearCmp(){cmpSel=[];document.getElementById('cmpView').classList.remove('on');renderStrip();}
 </script>
 </body>
 </html>
