@@ -34,8 +34,7 @@
   }
   .lock-wrap { text-align: center; width: 280px; }
   .lock-logo-area { margin-bottom: 2.5rem; }
-  .lock-logo-area svg { width: 48px; height: 48px; margin-bottom: 0.75rem; }
-  .lock-name { font-family: var(--serif); font-size: 1.6rem; font-weight: 400; color: var(--text); letter-spacing: -0.01em; }
+  .lock-name { font-family: Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 2rem; font-weight: 700; color: var(--text); letter-spacing: -0.03em; text-transform: lowercase; }
   .lock-input {
     width: 100%; padding: 0.65rem 0; background: transparent;
     border: none; border-bottom: 1px solid var(--border);
@@ -64,8 +63,7 @@
     padding: 1.25rem 0; border-bottom: 1px solid var(--border);
   }
   .hdr-left { display: flex; align-items: center; gap: 0.6rem; }
-  .hdr-left svg { width: 28px; height: 28px; }
-  .hdr-name { font-family: var(--serif); font-size: 1.15rem; font-weight: 400; color: var(--text); }
+  .hdr-name { font-family: Helvetica Neue, Helvetica, Arial, sans-serif; font-size: 1.05rem; font-weight: 700; color: var(--text); letter-spacing: -0.03em; text-transform: lowercase; }
   nav { display: flex; gap: 1.75rem; }
   nav a {
     font-size: 0.8rem; color: var(--text-dim); text-decoration: none;
@@ -242,19 +240,6 @@
 <div id="lockScreen">
   <div class="lock-wrap">
     <div class="lock-logo-area">
-      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="18" y="20" width="28" height="32" rx="3" stroke="#5c6442" stroke-width="2" fill="none"/>
-        <path d="M22 20 V14 a10 10 0 0 1 20 0 V20" stroke="#5c6442" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <ellipse cx="32" cy="32" rx="6" ry="8" fill="#5c6442" opacity="0.15"/>
-        <path d="M30 28 c0-4 2-8 2-12" stroke="#7a8259" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <path d="M34 28 c0-3 -1-7 1-11" stroke="#7a8259" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <path d="M28 30 c-2-2-4-5-3-9" stroke="#7a8259" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.6"/>
-        <path d="M36 30 c2-2 3-6 2-9" stroke="#7a8259" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.6"/>
-        <path d="M24 44 Q28 40 32 44 Q36 48 40 44" stroke="#5c6442" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/>
-        <circle cx="32" cy="38" r="1.5" fill="#5c6442" opacity="0.3"/>
-        <circle cx="28" cy="41" r="1" fill="#5c6442" opacity="0.2"/>
-        <circle cx="36" cy="40" r="1.2" fill="#5c6442" opacity="0.25"/>
-      </svg>
       <div class="lock-name">marinada</div>
     </div>
     <input type="password" class="lock-input" id="pwdIn" placeholder="heslo" autofocus>
@@ -268,16 +253,6 @@
 <div class="shell">
   <header>
     <div class="hdr-left">
-      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="18" y="20" width="28" height="32" rx="3" stroke="#5c6442" stroke-width="2" fill="none"/>
-        <path d="M22 20 V14 a10 10 0 0 1 20 0 V20" stroke="#5c6442" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <ellipse cx="32" cy="32" rx="6" ry="8" fill="#5c6442" opacity="0.15"/>
-        <path d="M30 28 c0-4 2-8 2-12" stroke="#7a8259" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <path d="M34 28 c0-3 -1-7 1-11" stroke="#7a8259" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <circle cx="32" cy="38" r="1.5" fill="#5c6442" opacity="0.3"/>
-        <circle cx="28" cy="41" r="1" fill="#5c6442" opacity="0.2"/>
-        <circle cx="36" cy="40" r="1.2" fill="#5c6442" opacity="0.25"/>
-      </svg>
       <span class="hdr-name">marinada</span>
     </div>
     <nav>
