@@ -444,10 +444,11 @@ function toast(msg,ms){const t=$('toast');t.textContent=msg;t.style.display='blo
    ============================================================ */
 async function decrypt(enc,pwd){
   const r=Uint8Array.from(atob(enc),c=>c.charCodeAt(0));
+  const salt=r.slice(0,16),iv=r.slice(16,28),tag=r.slice(28,44),ct=r.slice(44);
   const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pwd),'PBKDF2',false,['deriveKey']);
-  const k=await crypto.subtle.deriveKey({name:'PBKDF2',salt:r.slice(0,16),iterations:100000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
-  const ct=new Uint8Array(r.length-28);ct.set(r.slice(44));ct.set(r.slice(28,44),r.length-72);
-  return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:r.slice(16,28)},k,ct));
+  const k=await crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:100000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+  const combined=new Uint8Array(ct.length+tag.length);combined.set(ct);combined.set(tag,ct.length);
+  return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv},k,combined));
 }
 
 /* ============================================================
