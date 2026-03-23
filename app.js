@@ -375,7 +375,7 @@ $('refIn').addEventListener('keydown',e=>{if(e.key==='Enter'){const n=$('refIn')
 
 let loadTimer=null;
 const render = {
-  showLoader(on){const l=$('loader');if(on){l.innerHTML='<div class="loader-bar"></div>';l.classList.add('on');}else{l.classList.remove('on');if(loadTimer){clearInterval(loadTimer);loadTimer=null;}}},
+  showLoader(on){const l=$('loader');if(on){l.innerHTML='<div class="loader-dots"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div><div class="loader-track"><div class="loader-bar"></div></div><div class="loader-msg" id="loaderMsg"></div>';l.classList.add('on');}else{l.classList.remove('on');if(loadTimer){clearInterval(loadTimer);loadTimer=null;}}},
   startMsgs(note){
     const S=state.settings;
     const msgs=['Připravuji scénu...','Analyzuji geometrii...','Nastavuji osvětlení — '+({dawn:'úsvit',morning:'ranní slunce',midday:'polední světlo','golden-hour':'zlatá hodinka',sunset:'západ slunce',dusk:'soumrak',night:'noční scéna'}[S.timeOfDay]||'denní světlo')+'...','Počítám odrazy...','Generuji textury...','Aplikuji globální iluminaci...','Renderuji stíny...','Ladím barvy...','Přidávám atmosféru...','Finalizuji...'];
@@ -386,7 +386,10 @@ const render = {
     let i=0;render.stR(msgs[0],0);
     loadTimer=setInterval(()=>{i++;if(i<msgs.length)render.stR(msgs[i],0);},2500);
   },
-  stR(msg,err){const el=$('renderSt');el.textContent=msg;el.className='st '+(err?'er':'ld');},
+  stR(msg,err){
+    const el=$('renderSt');el.textContent=err?msg:'';el.className='st '+(err?'er':'ld');
+    const lm=$('loaderMsg');if(lm&&!err)lm.textContent=msg;
+  },
   async run(note){
     const pr=$('promptOut').value.trim();
     if(!pr||pr.startsWith('Nejdřív')){render.stR('Nejdřív vygeneruj prompt',1);return;}
