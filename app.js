@@ -226,7 +226,8 @@ const scene = {
     curStep=n;
     document.querySelectorAll('.step-content').forEach(el=>el.classList.remove('on'));
     $('sc-'+STEPS[n].id).classList.add('on');
-    $('stepsBar').innerHTML=STEPS.map((s,i)=>`<div class="step ${i<n?'done':''} ${i===n?'active':''}" onclick="${i<=curStep?'scene.goStep('+i+')':''}">${i+1}. ${s.label}</div>`).join('');
+    const maxStep=state.renders.length?5:curStep;
+    $('stepsBar').innerHTML=STEPS.map((s,i)=>`<div class="step ${i<n?'done':''} ${i===n?'active':''}" style="${i<=maxStep?'cursor:pointer':'cursor:default;opacity:0.4'}" onclick="${i<=maxStep?'scene.goStep('+i+')':''}">${i+1}. ${s.label}</div>`).join('');
     if(n===3)prompt_gen.generate();
     if(n===4)iter.renderDetail();
     if(n===5)output.render();
