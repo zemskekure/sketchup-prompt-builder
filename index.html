@@ -912,10 +912,15 @@ function selectIter(id){
 
 async function deleteRender(verId,dbId){
   if(!confirm('Smazat tento render?'))return;
-  if(dbId)await fetch(`${SB}/rest/v1/renders?id=eq.${dbId}`,{method:'DELETE',headers:hdr()});
+  try{
+    if(dbId&&dbId!=='undefined'){
+      const r=await fetch(`${SB}/rest/v1/renders?id=eq.${dbId}`,{method:'DELETE',headers:hdr()});
+      if(!r.ok)console.warn('Delete failed:',await r.text());
+    }
+  }catch(e){console.warn('Delete error:',e);}
   sceneRenders=sceneRenders.filter(x=>x.id!==verId);
   renderStrip();updIterCount();
-  if(sceneRenders.length)selectIter(sceneRenders[sceneRenders.length-1].id);
+  if(sceneRenders.length){selectIter(sceneRenders[sceneRenders.length-1].id);}
   else{document.getElementById('iterDetail').innerHTML='';document.getElementById('iterEmpty').style.display='';}
 }
 
