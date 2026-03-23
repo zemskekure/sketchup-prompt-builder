@@ -614,4 +614,3 @@ document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='c'){e.preventDefault();const v=$('promptOut').value;if(v)navigator.clipboard.writeText(v).then(()=>toast('Prompt zkopírován'));}
   if(e.key==='Enter'&&curStep===3){e.preventDefault();render.run(null);}
 });
-</script>
