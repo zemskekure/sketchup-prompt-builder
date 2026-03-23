@@ -414,19 +414,23 @@ function setCrumb(parts){document.getElementById('crumb').innerHTML=parts.map((p
 
 // --- SESSIONS ---
 async function goSessions(){showView('sessions');setCrumb([{label:'Projekty'}]);
-  const rows=await sbGet('/rest/v1/sessions?select=*,scenes(id,renders(id))&order=created_at.desc');
+  const rows=await sbGet('/rest/v1/sessions?select=*,scenes(id,renders(id,image_path,version))&order=created_at.desc');
   const el=document.getElementById('sessionCards');
   el.innerHTML=`<div class="card card-new" onclick="createSession()">+ Nový projekt</div>`+
     (rows||[]).map(s=>{
-      const totalRenders=(s.scenes||[]).reduce((n,sc)=>(sc.renders||[]).length+n,0);
+      const allRenders=(s.scenes||[]).flatMap(sc=>(sc.renders||[]));
+      const latest=allRenders.sort((a,b)=>b.id-a.id)[0];
+      const img=latest?`<img class="card-img" src="${latest.image_path}">`:`<div class="card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:0.8rem;">Žádné rendery</div>`;
       return`<div class="card">
-        <div class="card-body" onclick="goSession(${s.id})" style="cursor:pointer">
-          <div class="card-name">${s.name}</div>
-          <div class="card-meta">${(s.scenes||[]).length} scén · ${totalRenders} renderů</div>
+        <div onclick="goSession(${s.id})" style="cursor:pointer">${img}
+          <div class="card-body">
+            <div class="card-name">${s.name}</div>
+            <div class="card-meta">${(s.scenes||[]).length} scén · ${allRenders.length} renderů</div>
+          </div>
         </div>
         <div class="card-actions" style="padding:0 0.75rem 0.6rem">
           <button class="btn btn-o" style="font-size:0.65rem;padding:0.2rem 0.4rem" onclick="event.stopPropagation();renameSession(${s.id},'${s.name.replace(/'/g,"\\'")}')">Přejmenovat</button>
-          <button class="btn btn-o" style="font-size:0.65rem;padding:0.2rem 0.4rem" onclick="event.stopPropagation();downloadSessionZip(${s.id},'${s.name.replace(/'/g,"\\'")}')">Stáhnout ZIP</button>
+          <button class="btn btn-o" style="font-size:0.65rem;padding:0.2rem 0.4rem" onclick="event.stopPropagation();downloadSessionZip(${s.id},'${s.name.replace(/'/g,"\\'")}')">ZIP</button>
           <button class="btn btn-o" style="font-size:0.65rem;padding:0.2rem 0.4rem;color:var(--red)" onclick="event.stopPropagation();deleteSession(${s.id},'${s.name.replace(/'/g,"\\'")}')">Smazat</button>
         </div>
       </div>`}).join('');
@@ -743,26 +747,50 @@ function updIterCount(){
 // --- Version strip (in Iterace tab) ---
 function renderStrip(){
   const s=document.getElementById('vStr');
-  s.innerHTML=sceneRenders.map(v=>`<div class="vc" onclick="selectIter(${v.id})">
+  // Source SketchUp image as first card
+  const srcImg=curScene?.source_image_path||ST.imageData;
+  const srcCard=srcImg?`<div class="vc" onclick="selectIter(0)" style="opacity:0.85">
+    <img src="${srcImg}"><div class="vc-i"><div class="vi" style="color:var(--olive)">Zdroj</div><div class="vn">SketchUp export</div><div class="vp">—</div></div></div>`:'';
+  s.innerHTML=srcCard+sceneRenders.map(v=>`<div class="vc" onclick="selectIter(${v.id})">
     <img src="${v.imgSrc}"><div class="vc-i"><div class="vi">v${v.id}</div><div class="vn">${v.note}</div><div class="vp">${(v.cost*CZK).toFixed(1)} Kč</div></div></div>`).join('');
 }
 
 function renderIterDetail(){
   const el=document.getElementById('iterDetail');
   const empty=document.getElementById('iterEmpty');
-  if(!sceneRenders.length){empty.style.display='';el.innerHTML='';return;}
+  if(!sceneRenders.length&&!curScene?.source_image_path){empty.style.display='';el.innerHTML='';return;}
   empty.style.display='none';
   renderStrip();
-  // Show last render detail by default
-  selectIter(sceneRenders[sceneRenders.length-1].id);
+  // Show last render detail by default, or source if no renders
+  if(sceneRenders.length)selectIter(sceneRenders[sceneRenders.length-1].id);
+  else selectIter(0);
 }
 
 function selectIter(id){
-  const v=sceneRenders.find(x=>x.id===id);if(!v)return;
   // Highlight in strip
   document.querySelectorAll('#vStr .vc').forEach(c=>c.style.borderColor='');
   const cards=document.querySelectorAll('#vStr .vc');
-  const idx=sceneRenders.findIndex(x=>x.id===id);
+
+  // Source image (id=0)
+  if(id===0){
+    if(cards[0])cards[0].style.borderColor='var(--olive)';
+    const srcImg=curScene?.source_image_path||ST.imageData;
+    if(!srcImg)return;
+    document.getElementById('iterDetail').innerHTML=`
+      <div class="duo" style="margin-top:1rem;">
+        <div><img src="${srcImg}" style="max-width:100%;border:1px solid var(--border);display:block;"></div>
+        <div>
+          <div style="font-family:var(--serif);font-size:1.1rem;margin-bottom:0.5rem;">Zdrojový obrázek</div>
+          <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.3rem;">Původní export ze SketchUp</div>
+          <div style="font-size:0.75rem;color:var(--text-light);margin-bottom:1rem;font-family:var(--serif);font-style:italic;">Vstup pro AI rendering</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const v=sceneRenders.find(x=>x.id===id);if(!v)return;
+  // +1 offset for source card
+  const idx=sceneRenders.findIndex(x=>x.id===id)+1;
   if(cards[idx])cards[idx].style.borderColor='var(--olive)';
 
   document.getElementById('iterDetail').innerHTML=`
