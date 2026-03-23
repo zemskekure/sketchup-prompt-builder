@@ -209,6 +209,17 @@ input.fi{resize:none;}
 .zip-progress{position:fixed;bottom:2rem;right:2rem;background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:0.85rem 1.1rem;font-size:0.82rem;color:var(--text-dim);z-index:200;display:none;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.1);}
 
 /* Master Marinada */
+.master-btn{
+  padding:0.75rem 2rem;font-size:0.95rem;font-weight:700;font-family:var(--serif);font-style:italic;
+  background:linear-gradient(135deg,#5c6442,#8a7d3a,#6b7a4a);background-size:200% 200%;
+  color:var(--cream);border:none;border-radius:var(--r-lg);cursor:pointer;
+  box-shadow:0 4px 16px rgba(92,100,66,0.3);transition:all 0.3s;letter-spacing:0.02em;
+  animation:juiceShift 3s ease infinite;
+}
+.master-btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 8px 28px rgba(92,100,66,0.4);}
+.master-btn:active{transform:scale(0.98);}
+.master-btn:disabled{opacity:0.5;transform:none;box-shadow:none;animation:none;cursor:default;}
+@keyframes juiceShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 .mattr{display:flex;align-items:center;padding:0.6rem 0;border-bottom:1px solid var(--border-light);}
 .mattr:last-child{border:none;}
 .mattr-name{flex:1;font-size:0.82rem;font-weight:500;color:var(--text);}

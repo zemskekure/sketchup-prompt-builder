@@ -35,7 +35,7 @@
       <nav>
         <a class="on" data-nav="studio" onclick="nav.goSessions()">Studio</a>
         <a data-nav="spend" onclick="nav.showView('spend');spend.load()">Výdaje</a>
-      <a data-nav="master" onclick="nav.showView('master');master.init()">Master</a>
+      <a data-nav="master" onclick="nav.showView('master');master.init()" style="font-style:italic;font-family:var(--serif);">Master Marinada</a>
       </nav>
       <a onclick="logout()" style="font-size:0.8rem;color:var(--text-light);cursor:pointer;text-decoration:none;border-left:1px solid var(--border);padding-left:1rem;font-weight:500;letter-spacing:0.02em;transition:color 0.15s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-light)'">Odhlásit</a>
     </div>
@@ -276,7 +276,7 @@
         <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.3rem;">Geometrie a úhel pohledu se použije z tohoto zdroje</div>
       </div>
       <div class="btns" style="margin-top:1.5rem;">
-        <button class="btn btn-r" onclick="master.generate()" id="masterGenBtn">Vytvořit Master Marinadu</button>
+        <button class="btn master-btn" onclick="master.generate()" id="masterGenBtn">Vytvořit Master Marinadu</button>
       </div>
       <div class="loader" id="masterLoader"><div class="loader-bar"></div></div>
       <div class="st" id="masterSt"></div>
