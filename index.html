@@ -31,11 +31,13 @@
       <img src="olive.png" alt="">
       <span class="hdr-name">marinada</span>
     </div>
-    <nav>
-      <a class="on" data-nav="studio" onclick="nav.goSessions()">Studio</a>
-      <a data-nav="spend" onclick="nav.showView('spend');spend.load()">Výdaje</a>
-      <a onclick="logout()" style="color:var(--text-light);font-size:0.72rem;">Odhlásit</a>
-    </nav>
+    <div style="display:flex;align-items:center;gap:1.75rem;">
+      <nav>
+        <a class="on" data-nav="studio" onclick="nav.goSessions()">Studio</a>
+        <a data-nav="spend" onclick="nav.showView('spend');spend.load()">Výdaje</a>
+      </nav>
+      <a onclick="logout()" style="font-size:0.68rem;color:var(--text-light);cursor:pointer;text-decoration:none;border-left:1px solid var(--border);padding-left:1rem;">Odhlásit</a>
+    </div>
   </header>
   <div class="crumb" id="crumb"></div>
 
