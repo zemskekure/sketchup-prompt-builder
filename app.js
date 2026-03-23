@@ -181,7 +181,7 @@ const scenes = {
 /* ============================================================
    SCENE STUDIO
    ============================================================ */
-const STEPS=[{id:'upload',label:'Obrázek'},{id:'analyze',label:'Analýza'},{id:'settings',label:'Nastavení'},{id:'render',label:'Render'}];
+const STEPS=[{id:'upload',label:'Obrázek'},{id:'analyze',label:'Analýza'},{id:'settings',label:'Nastavení'},{id:'render',label:'Render'},{id:'iter',label:'Iterace'},{id:'export',label:'Export'}];
 let curStep=0;
 
 const scene = {
@@ -214,7 +214,7 @@ const scene = {
     if(sc.description){S.description=sc.description;$('description').value=S.description;ui.updDescPreview();}
     if(sc.settings){const s=sc.settings;Object.assign(S,s);ui.restoreSettings(s);if(s.sceneHint)$('sceneHint').value=s.sceneHint;}
 
-    if(state.renders.length){scene.goStep(3);iter.renderStrip();ui.showRender(state.renders[state.renders.length-1]);$('refineBox').style.display='block';$('reRenderBtn').style.display='';ui.updIterCount();}
+    if(state.renders.length){scene.goStep(3);iter.renderStrip();ui.showRender(state.renders[state.renders.length-1]);$('refineBox').style.display='block';$('reRenderBtn').style.display='';$('reRenderHint').style.display='';$('toIterBtn').style.display='';ui.updIterCount();}
     else if(sc.description)scene.goStep(2);
     else if(sc.source_image_path)scene.goStep(1);
     else scene.goStep(0);
@@ -228,6 +228,8 @@ const scene = {
     $('sc-'+STEPS[n].id).classList.add('on');
     $('stepsBar').innerHTML=STEPS.map((s,i)=>`<div class="step ${i<n?'done':''} ${i===n?'active':''}" onclick="${i<=curStep?'scene.goStep('+i+')':''}">${i+1}. ${s.label}</div>`).join('');
     if(n===3)prompt_gen.generate();
+    if(n===4)iter.renderDetail();
+    if(n===5)output.render();
   },
   async saveState(){
     if(!state.curScene)return;
@@ -257,11 +259,7 @@ const ui = {
   updDescPreview(){const p=$('descPreview'),d=$('description').value;if(d){p.textContent=d.substring(0,120)+(d.length>120?'…':'');p.style.display='';}else p.style.display='none';},
   toggleDesc(){const w=$('descWrap'),t=$('descToggle');if(w.style.display==='none'){w.style.display='';t.textContent='skrýt ▴';$('descPreview').style.display='none';}else{w.style.display='none';t.textContent='zobrazit ▾';ui.updDescPreview();}},
   togglePrompt(){const w=$('promptWrap'),t=$('promptToggle');if(w.style.display==='none'){w.style.display='';t.textContent='skrýt ▴';}else{w.style.display='none';t.textContent='zobrazit ▾';}},
-  showSub(which){
-    ['render','iter','output'].forEach(t=>{$('sub-'+t).style.display=t===which?'':'none';$('sub'+t[0].toUpperCase()+t.slice(1)).className='btn btn-sm '+(t===which?'btn-f':'btn-o');});
-    if(which==='iter')iter.renderDetail();
-    if(which==='output')output.render();
-  },
+  showSub(){},// legacy — now handled by steps
   updIterCount(){const el=$('iterCount');if(el)el.textContent=state.renders.length?`(${state.renders.length})`:'';},
   showRender(v){
     const has4k=v.url4k&&validUrl(v.url4k);
@@ -423,7 +421,7 @@ const render = {
         const row={version:ver,scene_id:state.curScene.id,note:v.note,prompt:rp,cost:CPR,parent_id:v.parentId,image_path:url};
         const saved=await sb.post('/rest/v1/renders',row,{'Prefer':'return=representation'});
         v.imgSrc=url;v.dbId=saved?.[0]?.id;
-        state.renders.push(v);iter.renderStrip();ui.showRender(v);$('refineBox').style.display='block';$('reRenderBtn').style.display='';ui.updIterCount();ok=true;
+        state.renders.push(v);iter.renderStrip();ui.showRender(v);$('refineBox').style.display='block';$('reRenderBtn').style.display='';$('reRenderHint').style.display='';$('toIterBtn').style.display='';ui.updIterCount();ok=true;
       }}
       render.stR(ok?'':'Žádný obrázek',!ok);
     }catch(e){render.stR(e.message,1);}
@@ -529,7 +527,7 @@ const iter = {
         <button class="btn btn-o btn-sm" style="color:var(--red)" onclick="iter.remove(${v.id},${v.dbId})">Smazat</button>
       </div></div></div>`;
   },
-  loadToRender(id){const v=state.renders.find(x=>x.id===id);if(!v)return;ui.showRender(v);$('refineBox').style.display='block';ui.showSub('render');},
+  loadToRender(id){const v=state.renders.find(x=>x.id===id);if(!v)return;ui.showRender(v);$('refineBox').style.display='block';scene.goStep(3);},
   async remove(verId,dbId){
     if(!confirm('Smazat tento render?'))return;
     if(dbId)await sb.del(`/rest/v1/renders?id=eq.${dbId}`);
