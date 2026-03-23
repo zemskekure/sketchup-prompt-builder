@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root {
+:root{
   --cream:#f4f1ea;--white:#faf8f4;--olive:#5c6442;--olive-light:#7a8259;
   --olive-pale:#e8e6d8;--brown:#8a7d6b;--text:#2c2c28;--text-dim:#8a8578;
   --text-light:#b0a99c;--border:#ddd8cc;--border-light:#e8e4da;--red:#c44;
@@ -30,56 +30,63 @@ body{font-family:var(--sans);background:var(--cream);color:var(--text);min-heigh
 
 #app{display:none;}
 .shell{max-width:1280px;margin:0 auto;padding:0 2.5rem;}
-
-/* Header */
 header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 0;border-bottom:1px solid var(--border);}
-.hdr-name{font-family:var(--grotesk);font-size:1.05rem;font-weight:700;color:var(--text);letter-spacing:-0.03em;text-transform:lowercase;}
+.hdr-name{font-family:var(--grotesk);font-size:1.05rem;font-weight:700;color:var(--text);letter-spacing:-0.03em;text-transform:lowercase;cursor:pointer;}
 nav{display:flex;gap:1.75rem;}
 nav a{font-size:0.8rem;color:var(--text-dim);text-decoration:none;cursor:pointer;font-weight:500;letter-spacing:0.02em;transition:color 0.15s;}
 nav a:hover,nav a.on{color:var(--text);}
 
-.view{display:none;padding:2rem 0 4rem;}
+/* Breadcrumb */
+.crumb{padding:0.75rem 0;font-size:0.8rem;color:var(--text-dim);}
+.crumb span{cursor:pointer;transition:color 0.15s;}
+.crumb span:hover{color:var(--text);}
+.crumb .sep{margin:0 0.4rem;color:var(--border);}
+.crumb .cur{color:var(--text);font-weight:500;}
+
+/* Views */
+.view{display:none;padding:1.5rem 0 4rem;}
 .view.on{display:block;}
 .sec-title{font-family:var(--serif);font-size:1.6rem;font-weight:400;color:var(--text);margin-bottom:0.3rem;}
-.sec-sub{font-size:0.8rem;color:var(--text-dim);margin-bottom:2rem;max-width:480px;line-height:1.5;}
+.sec-sub{font-size:0.8rem;color:var(--text-dim);margin-bottom:2rem;max-width:520px;line-height:1.5;}
 
-/* --- Source row: image left, settings right --- */
-.source-row{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem;align-items:start;}
+/* Cards grid */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.25rem;}
+.card{background:var(--white);border:1px solid var(--border);cursor:pointer;transition:border-color 0.2s;overflow:hidden;}
+.card:hover{border-color:var(--olive);}
+.card-img{width:100%;height:140px;object-fit:cover;display:block;background:var(--olive-pale);}
+.card-body{padding:0.75rem;}
+.card-name{font-family:var(--serif);font-size:1rem;color:var(--text);margin-bottom:0.2rem;}
+.card-meta{font-size:0.7rem;color:var(--text-dim);}
+.card-new{display:flex;align-items:center;justify-content:center;min-height:200px;border:1.5px dashed var(--border);background:transparent;color:var(--text-dim);font-size:0.85rem;}
+.card-new:hover{border-color:var(--olive);color:var(--olive);}
 
-/* --- Output row: prompt left, render right --- */
-.output-row{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;}
+/* Steps */
+.steps{display:flex;gap:0.5rem;margin-bottom:2rem;}
+.step{padding:0.4rem 0.8rem;font-size:0.75rem;font-weight:500;color:var(--text-light);border-bottom:2px solid transparent;cursor:pointer;transition:all 0.15s;}
+.step.done{color:var(--olive);border-color:var(--olive-pale);}
+.step.active{color:var(--text);border-color:var(--olive);}
+.step-content{display:none;}
+.step-content.on{display:block;}
+.step-nav{display:flex;gap:0.5rem;margin-top:1.5rem;}
 
+/* Form elements */
 .fl{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);font-weight:500;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:baseline;}
 .fl .v{font-family:var(--serif);font-size:0.8rem;text-transform:none;letter-spacing:0;color:var(--olive);}
 .fg{margin-bottom:1rem;}
-
-/* Upload */
-.drop{background:var(--white);border:1px solid var(--border);padding:2rem;text-align:center;cursor:pointer;min-height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:border-color 0.2s;margin-bottom:0.75rem;}
-.drop:hover{border-color:var(--olive);}
-.drop.has{padding:0;border-style:solid;}
-.drop img{max-width:100%;max-height:300px;display:block;}
-.drop input{display:none;}
-.drop-hint{font-size:0.85rem;color:var(--text-light);}
-.drop-hint em{font-family:var(--serif);color:var(--olive);font-style:italic;}
-
-/* Fields */
 .fi{width:100%;padding:0.55rem 0.7rem;background:var(--white);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:0.85rem;outline:none;transition:border-color 0.2s;resize:vertical;}
 .fi:focus{border-color:var(--olive);}
 .fi::placeholder{color:var(--text-light);}
-.fi-mono{font-family:'Courier New',monospace;font-size:0.78rem;line-height:1.55;min-height:180px;background:var(--white);}
+.fi-mono{font-family:'Courier New',monospace;font-size:0.78rem;line-height:1.55;min-height:160px;}
 input.fi{resize:none;}
-
 .pills{display:flex;gap:0.3rem;flex-wrap:wrap;}
 .pill{padding:0.3rem 0.6rem;background:transparent;border:1px solid var(--border);font-size:0.75rem;color:var(--text-dim);cursor:pointer;transition:all 0.15s;font-family:var(--sans);}
 .pill:hover{border-color:var(--olive);color:var(--text);}
 .pill.on{background:var(--olive);border-color:var(--olive);color:var(--cream);}
-
 .sl{display:flex;align-items:center;gap:0.5rem;}
 .sl input[type="range"]{flex:1;-webkit-appearance:none;height:1px;background:var(--border);outline:none;}
 .sl input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--olive);border-radius:50%;cursor:pointer;}
 .sl-e{font-size:0.65rem;color:var(--text-light);min-width:2rem;}
 .sl-e:last-child{text-align:right;}
-
 .btn{padding:0.5rem 1rem;border:none;font-family:var(--sans);font-size:0.78rem;font-weight:500;cursor:pointer;transition:all 0.15s;letter-spacing:0.02em;}
 .btn-f{background:var(--olive);color:var(--cream);}
 .btn-f:hover{background:var(--olive-light);}
@@ -91,58 +98,50 @@ input.fi{resize:none;}
 .btn-r:disabled{background:var(--olive-pale);color:var(--text-light);cursor:default;}
 .btn-sm{padding:0.35rem 0.7rem;font-size:0.72rem;}
 .btns{display:flex;gap:0.4rem;flex-wrap:wrap;}
-
 .st{font-size:0.78rem;min-height:1.3em;margin-top:0.3rem;}
 .st.ld{color:var(--olive);}
 .st.er{color:var(--red);}
-
-/* Loading bar */
 .loader{height:2px;background:var(--border);margin-top:0.5rem;border-radius:1px;overflow:hidden;display:none;}
 .loader.on{display:block;}
-.loader-bar{height:100%;width:0;background:var(--olive);animation:load 12s ease-out forwards;}
-@keyframes load{0%{width:0}30%{width:45%}60%{width:70%}80%{width:85%}100%{width:95%}}
+.loader-bar{height:100%;width:0;background:var(--olive);animation:load 20s ease-out forwards;}
+@keyframes load{0%{width:0}30%{width:40%}60%{width:65%}80%{width:80%}100%{width:95%}}
+
+/* Drop zone */
+.drop{background:var(--white);border:1px solid var(--border);padding:2rem;text-align:center;cursor:pointer;min-height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:border-color 0.2s;margin-bottom:0.75rem;}
+.drop:hover{border-color:var(--olive);}
+.drop.has{padding:0;}
+.drop img{max-width:100%;max-height:300px;display:block;}
+.drop input{display:none;}
+.drop-hint{font-size:0.85rem;color:var(--text-light);}
+.drop-hint em{font-family:var(--serif);color:var(--olive);font-style:italic;}
+
+/* Two-col layout */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;}
 
 /* Render output */
-.rout{margin-top:1.5rem;}
 .rout img{max-width:100%;border:1px solid var(--border);display:block;}
 .rmeta{font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem;font-family:var(--serif);font-style:italic;}
-
-/* Refine — prominent */
 .refine-box{margin-top:1rem;padding:1rem;background:var(--white);border:1px solid var(--border);}
-.refine-box .fl{margin-bottom:0.4rem;}
 .refine-row{display:flex;gap:0.4rem;}
 .refine-row input{flex:1;}
 
-/* History */
-.hist{margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);}
+/* Version strip */
+.hist{margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border);}
 .hist-strip{display:flex;gap:0.75rem;overflow-x:auto;padding-bottom:0.5rem;}
-.vc{flex-shrink:0;width:150px;border:1px solid var(--border);background:var(--white);cursor:pointer;transition:border-color 0.2s;}
+.vc{flex-shrink:0;width:140px;border:1px solid var(--border);background:var(--white);cursor:pointer;transition:border-color 0.2s;}
 .vc:hover{border-color:var(--olive);}
-.vc.ca{border-color:var(--brown);border-width:2px;}
-.vc.cb{border-color:var(--olive);border-width:2px;}
-.vc img{width:100%;height:95px;object-fit:cover;display:block;}
-.vc-i{padding:0.35rem 0.45rem;font-size:0.68rem;}
+.vc img{width:100%;height:85px;object-fit:cover;display:block;}
+.vc-i{padding:0.3rem 0.4rem;font-size:0.65rem;}
 .vc-i .vi{font-weight:500;color:var(--text);}
 .vc-i .vn{color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .vc-i .vp{color:var(--olive);font-family:var(--serif);font-style:italic;}
 
-.cmp{display:none;margin-top:1rem;}
-.cmp.on{display:block;}
-.cmp-g{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
-.cmp-p{border:1px solid var(--border);background:var(--white);}
-.cmp-p img{width:100%;display:block;}
-.cmp-pl{padding:0.4rem 0.5rem;font-size:0.72rem;color:var(--text-dim);text-align:center;font-family:var(--serif);font-style:italic;}
-.cmp-p:first-child{border-color:var(--brown);}
-.cmp-p:last-child{border-color:var(--olive);}
-
 /* Style ref */
-.style-ref{margin-top:1rem;padding:1rem;background:var(--olive-pale);border:1px solid var(--border);}
-.style-ref .fl{margin-bottom:0.4rem;}
+.style-ref{margin-bottom:1.5rem;padding:1rem;background:var(--olive-pale);border:1px solid var(--border);}
 .style-ref-preview{display:flex;align-items:flex-start;gap:0.75rem;}
-.style-ref-preview img{width:100px;height:70px;object-fit:cover;border:1px solid var(--border);}
-.style-ref-info{font-size:0.75rem;color:var(--text-dim);line-height:1.4;}
+.style-ref-preview img{width:80px;height:55px;object-fit:cover;border:1px solid var(--border);}
+.style-ref-info{font-size:0.72rem;color:var(--text-dim);line-height:1.4;}
 .style-ref-info strong{color:var(--text);font-weight:500;}
-.style-ref-empty{font-size:0.75rem;color:var(--text-dim);line-height:1.5;}
 
 /* Spendings */
 .sp-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:2.5rem;}
@@ -156,12 +155,7 @@ input.fi{resize:none;}
 .ltab tr:last-child td{border-bottom:none;}
 .ltab .it{font-family:var(--serif);font-style:italic;}
 
-@media(max-width:900px){
-  .source-row,.output-row{grid-template-columns:1fr;}
-  .shell{padding:0 1.25rem;}
-  .sp-cards{grid-template-columns:1fr;}
-  .cmp-g{grid-template-columns:1fr;}
-}
+@media(max-width:900px){.duo,.cards{grid-template-columns:1fr;}.shell{padding:0 1.25rem;}.sp-cards{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -178,157 +172,150 @@ input.fi{resize:none;}
 <div id="app">
 <div class="shell">
   <header>
-    <span class="hdr-name">marinada</span>
+    <span class="hdr-name" onclick="goSessions()">marinada</span>
     <nav>
-      <a class="on" data-view="studio">Studio</a>
-      <a data-view="spend">Výdaje</a>
+      <a class="on" data-nav="studio" onclick="goSessions()">Studio</a>
+      <a data-nav="spend" onclick="showView('spend')">Výdaje</a>
     </nav>
   </header>
+  <div class="crumb" id="crumb"></div>
 
-  <!-- STUDIO -->
-  <div class="view on" id="v-studio">
-    <div class="sec-title">Nový render</div>
-    <div class="sec-sub">Nahraj export ze SketchUp, uprav nastavení a nech AI vytvořit fotorealistickou vizualizaci.</div>
+  <!-- SESSIONS LIST -->
+  <div class="view on" id="v-sessions">
+    <div class="sec-title">Projekty</div>
+    <div class="sec-sub">Každý projekt je jedna zakázka nebo prostor. Uvnitř najdeš jednotlivé scény a jejich rendery.</div>
+    <div class="cards" id="sessionCards"></div>
+  </div>
 
-    <!-- Source: image left, settings right -->
-    <div class="source-row">
-      <div>
+  <!-- SESSION DETAIL (scenes list) -->
+  <div class="view" id="v-session">
+    <div class="sec-title" id="sessionTitle"></div>
+    <div class="sec-sub">Scény tohoto projektu. Referenční styl se sdílí napříč scénami.</div>
+    <div class="style-ref" id="styleRefBox">
+      <div class="fl">Referenční styl <span class="v" id="styleRefStatus">žádný</span></div>
+      <div id="styleRefContent"><div style="font-size:0.72rem;color:var(--text-dim);">Vyrenderuj první scénu a nastav ji jako referenční styl — další scény se renderují ve stejném vizuálním stylu.</div></div>
+    </div>
+    <div class="cards" id="sceneCards"></div>
+  </div>
+
+  <!-- SCENE STUDIO (step by step) -->
+  <div class="view" id="v-scene">
+    <div class="sec-title" id="sceneTitle"></div>
+    <div class="steps" id="stepsBar"></div>
+
+    <!-- Step 1: Upload -->
+    <div class="step-content" id="sc-upload">
+      <div style="max-width:500px">
         <div class="fg">
           <div class="fl">Zdrojový obrázek</div>
           <div class="drop" id="uploadZone">
             <span class="drop-hint" id="uploadHint"><em>Přetáhni</em> sem obrázek nebo klikni</span>
             <input type="file" id="fileInput" accept="image/*">
           </div>
-          <button class="btn btn-f" id="analyzeBtn" disabled style="width:100%">Analyzovat scénu</button>
+        </div>
+        <div class="step-nav"><button class="btn btn-f" id="toAnalyzeBtn" disabled>Pokračovat →</button></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Analyze -->
+    <div class="step-content" id="sc-analyze">
+      <div style="max-width:600px">
+        <div class="fg">
+          <button class="btn btn-f" id="analyzeBtn" style="width:100%">Analyzovat scénu</button>
           <div class="st" id="analyzeStatus"></div>
         </div>
         <div class="fg">
           <div class="fl">Popis scény</div>
-          <textarea class="fi" id="description" rows="4" placeholder="Vyplní se automaticky, nebo napiš ručně..."></textarea>
+          <textarea class="fi" id="description" rows="5" placeholder="Vyplní se automaticky, nebo napiš ručně..."></textarea>
         </div>
-      </div>
-
-      <div>
-        <div class="fg">
-          <div class="fl">Typ scény</div>
-          <div class="pills" id="sceneType">
-            <div class="pill on" data-val="exterior">Exteriér</div>
-            <div class="pill" data-val="interior">Interiér</div>
-            <div class="pill" data-val="aerial">Z výšky</div>
-            <div class="pill" data-val="street-level">Z ulice</div>
-          </div>
-        </div>
-        <div class="fg">
-          <div class="fl">Denní doba</div>
-          <div class="pills" id="timeOfDay">
-            <div class="pill" data-val="dawn">Úsvit</div>
-            <div class="pill" data-val="morning">Ráno</div>
-            <div class="pill on" data-val="midday">Poledne</div>
-            <div class="pill" data-val="golden-hour">Zlatá hod.</div>
-            <div class="pill" data-val="sunset">Západ</div>
-            <div class="pill" data-val="dusk">Soumrak</div>
-            <div class="pill" data-val="night">Noc</div>
-          </div>
-        </div>
-        <div class="fg">
-          <div class="fl">Počasí</div>
-          <div class="pills" id="weather">
-            <div class="pill on" data-val="clear">Jasno</div>
-            <div class="pill" data-val="partly-cloudy">Polojasno</div>
-            <div class="pill" data-val="overcast">Zataženo</div>
-            <div class="pill" data-val="rainy">Déšť</div>
-            <div class="pill" data-val="foggy">Mlha</div>
-            <div class="pill" data-val="snowy">Sníh</div>
-          </div>
-        </div>
-        <div class="fg">
-          <div class="fl">Věrnost materiálů <span class="v" id="matL">Vysoká</span></div>
-          <div class="sl"><span class="sl-e">Volně</span><input type="range" id="matS" min="0" max="100" value="75"><span class="sl-e">Přesně</span></div>
-        </div>
-        <div class="fg">
-          <div class="fl">Konzistence úhlu <span class="v" id="angL">Vysoká</span></div>
-          <div class="sl"><span class="sl-e">Volně</span><input type="range" id="angS" min="0" max="100" value="80"><span class="sl-e">Přesně</span></div>
-        </div>
-        <div class="fg">
-          <div class="fl">Patro</div>
-          <div class="pills" id="floorLevel">
-            <div class="pill" data-val="ground">Přízemí</div>
-            <div class="pill on" data-val="low">1.–2. NP</div>
-            <div class="pill" data-val="mid">3.–5. NP</div>
-            <div class="pill" data-val="high">6.+ NP</div>
-            <div class="pill" data-val="penthouse">Střešní</div>
-          </div>
-        </div>
-        <div class="fg">
-          <div class="fl">Výhled z oken</div>
-          <input class="fi" id="windowView" placeholder="Pražské Staré Město, park, vnitroblok...">
-        </div>
-        <div class="fg">
-          <div class="fl">Zeleň <span class="v" id="vegL">50 %</span></div>
-          <div class="sl"><span class="sl-e">Žádná</span><input type="range" id="vegS" min="0" max="100" value="50"><span class="sl-e">Bujná</span></div>
-        </div>
-        <div class="fg">
-          <div class="fl">Lidé <span class="v" id="pplL">30 %</span></div>
-          <div class="sl"><span class="sl-e">Prázdno</span><input type="range" id="pplS" min="0" max="100" value="30"><span class="sl-e">Rušno</span></div>
+        <div class="step-nav">
+          <button class="btn btn-o" onclick="goStep(0)">← Zpět</button>
+          <button class="btn btn-f" id="toSettingsBtn">Pokračovat →</button>
         </div>
       </div>
     </div>
 
-    <!-- Output: prompt left, render right -->
-    <div class="output-row">
-      <div>
-        <div class="fg">
-          <div class="fl">Prompt</div>
-          <textarea class="fi fi-mono" id="promptOut" readonly placeholder="Nastav parametry a klikni na Vygenerovat..."></textarea>
-          <div class="btns" style="margin-top:0.6rem">
-            <button class="btn btn-f" id="genBtn">Vygenerovat prompt</button>
-            <button class="btn btn-o" id="copyBtn">Kopírovat</button>
-          </div>
+    <!-- Step 3: Settings -->
+    <div class="step-content" id="sc-settings">
+      <div class="duo">
+        <div>
+          <div class="fg"><div class="fl">Typ scény</div>
+            <div class="pills" id="sceneType">
+              <div class="pill on" data-val="exterior">Exteriér</div><div class="pill" data-val="interior">Interiér</div>
+              <div class="pill" data-val="aerial">Z výšky</div><div class="pill" data-val="street-level">Z ulice</div>
+            </div></div>
+          <div class="fg"><div class="fl">Denní doba</div>
+            <div class="pills" id="timeOfDay">
+              <div class="pill" data-val="dawn">Úsvit</div><div class="pill" data-val="morning">Ráno</div>
+              <div class="pill on" data-val="midday">Poledne</div><div class="pill" data-val="golden-hour">Zlatá hod.</div>
+              <div class="pill" data-val="sunset">Západ</div><div class="pill" data-val="dusk">Soumrak</div><div class="pill" data-val="night">Noc</div>
+            </div></div>
+          <div class="fg"><div class="fl">Počasí</div>
+            <div class="pills" id="weather">
+              <div class="pill on" data-val="clear">Jasno</div><div class="pill" data-val="partly-cloudy">Polojasno</div>
+              <div class="pill" data-val="overcast">Zataženo</div><div class="pill" data-val="rainy">Déšť</div>
+              <div class="pill" data-val="foggy">Mlha</div><div class="pill" data-val="snowy">Sníh</div>
+            </div></div>
+          <div class="fg"><div class="fl">Patro</div>
+            <div class="pills" id="floorLevel">
+              <div class="pill" data-val="ground">Přízemí</div><div class="pill on" data-val="low">1.–2. NP</div>
+              <div class="pill" data-val="mid">3.–5. NP</div><div class="pill" data-val="high">6.+ NP</div><div class="pill" data-val="penthouse">Střešní</div>
+            </div></div>
+        </div>
+        <div>
+          <div class="fg"><div class="fl">Věrnost materiálů <span class="v" id="matL">Vysoká</span></div>
+            <div class="sl"><span class="sl-e">Volně</span><input type="range" id="matS" min="0" max="100" value="75"><span class="sl-e">Přesně</span></div></div>
+          <div class="fg"><div class="fl">Konzistence úhlu <span class="v" id="angL">Vysoká</span></div>
+            <div class="sl"><span class="sl-e">Volně</span><input type="range" id="angS" min="0" max="100" value="80"><span class="sl-e">Přesně</span></div></div>
+          <div class="fg"><div class="fl">Výhled z oken</div><input class="fi" id="windowView" placeholder="Pražské Staré Město, park, vnitroblok..."></div>
+          <div class="fg"><div class="fl">Zeleň <span class="v" id="vegL">50 %</span></div>
+            <div class="sl"><span class="sl-e">Žádná</span><input type="range" id="vegS" min="0" max="100" value="50"><span class="sl-e">Bujná</span></div></div>
+          <div class="fg"><div class="fl">Lidé <span class="v" id="pplL">30 %</span></div>
+            <div class="sl"><span class="sl-e">Prázdno</span><input type="range" id="pplS" min="0" max="100" value="30"><span class="sl-e">Rušno</span></div></div>
         </div>
       </div>
-      <div>
-        <div class="fg">
-          <div class="fl">Render</div>
+      <div class="step-nav">
+        <button class="btn btn-o" onclick="goStep(1)">← Zpět</button>
+        <button class="btn btn-f" onclick="goStep(3)">Pokračovat →</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Render -->
+    <div class="step-content" id="sc-render">
+      <div class="duo">
+        <div>
+          <div class="fg">
+            <div class="fl">Prompt</div>
+            <textarea class="fi fi-mono" id="promptOut" readonly></textarea>
+            <div class="btns" style="margin-top:0.5rem">
+              <button class="btn btn-f" id="genBtn">Vygenerovat prompt</button>
+              <button class="btn btn-o" id="copyBtn">Kopírovat</button>
+            </div>
+          </div>
+        </div>
+        <div>
           <div class="btns">
             <button class="btn btn-r" id="renderBtn">Renderovat</button>
-            <button class="btn btn-o btn-sm" id="rerunBtn" style="display:none">Znovu od začátku</button>
           </div>
           <div class="loader" id="loader"><div class="loader-bar"></div></div>
           <div class="st" id="renderSt"></div>
-        </div>
-
-        <!-- Style reference -->
-        <div class="style-ref" id="styleRefBox">
-          <div class="fl">Referenční styl <span class="v" id="styleRefStatus">žádný</span></div>
-          <div id="styleRefContent">
-            <div class="style-ref-empty">Zatím žádný render. Až vygeneruješ první render, můžeš ho nastavit jako referenční styl — další obrázky ze SketchUp se pak renderují ve stejném vizuálním stylu.</div>
-          </div>
-        </div>
-
-        <div class="rout" id="rout"></div>
-
-        <!-- Refine box — shown after first render -->
-        <div class="refine-box" id="refineBox" style="display:none">
-          <div class="fl">Upravit render</div>
-          <div class="refine-row">
-            <input class="fi" id="refIn" placeholder="Změň podlahu na dub, teplejší světlo, přidej koberec...">
-            <button class="btn btn-r btn-sm" id="refBtn">Upravit</button>
-          </div>
-          <div style="font-size:0.7rem;color:var(--text-light);margin-top:0.35rem;">Pošle předchozí render zpět do AI s tvými úpravami</div>
-        </div>
-
-        <!-- History -->
-        <div class="hist" id="histP" style="display:none">
-          <div class="fl">Verze <span class="v" style="font-weight:400">klikni jednu = výběr, dvě = porovnání</span></div>
-          <div class="hist-strip" id="vStr"></div>
-          <div class="cmp" id="cmpV">
-            <div class="cmp-g">
-              <div class="cmp-p"><img id="cA"><div class="cmp-pl" id="cLA"></div></div>
-              <div class="cmp-p"><img id="cB"><div class="cmp-pl" id="cLB"></div></div>
+          <div class="rout" id="rout"></div>
+          <div class="refine-box" id="refineBox" style="display:none">
+            <div class="fl">Upravit render</div>
+            <div class="refine-row">
+              <input class="fi" id="refIn" placeholder="Změň podlahu na dub, teplejší světlo...">
+              <button class="btn btn-r btn-sm" id="refBtn">Upravit</button>
             </div>
-            <div class="btns" style="margin-top:0.5rem"><button class="btn btn-o btn-sm" onclick="clearCmp()">Zavřít</button></div>
+            <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.3rem;">Pošle předchozí render zpět do AI s úpravami</div>
+          </div>
+          <div class="hist" id="histP" style="display:none">
+            <div class="fl">Verze</div>
+            <div class="hist-strip" id="vStr"></div>
           </div>
         </div>
+      </div>
+      <div class="step-nav" style="margin-top:1.5rem">
+        <button class="btn btn-o" onclick="goStep(2)">← Nastavení</button>
       </div>
     </div>
   </div>
@@ -343,9 +330,8 @@ input.fi{resize:none;}
       <div class="sp-c"><div class="sp-v" id="spK">0 Kč</div><div class="sp-l">Celkem (CZK)</div><div class="sp-s">1 USD ≈ 21,2 Kč</div></div>
     </div>
     <div class="fl">Historie renderů</div>
-    <table class="ltab">
-      <thead><tr><th>#</th><th>Typ</th><th>Poznámka</th><th>USD</th><th>CZK</th></tr></thead>
-      <tbody id="spB"><tr><td colspan="5" style="color:var(--text-light);text-align:center;padding:2rem;">Zatím žádné rendery</td></tr></tbody>
+    <table class="ltab"><thead><tr><th>#</th><th>Projekt</th><th>Scéna</th><th>Poznámka</th><th>USD</th><th>CZK</th></tr></thead>
+      <tbody id="spB"><tr><td colspan="6" style="color:var(--text-light);text-align:center;padding:2rem;">Zatím žádné rendery</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -355,357 +341,303 @@ input.fi{resize:none;}
 const EA='YrwsDbSwfHgAGSqPK5Vq8zJH3ubVNOBpBkoFPwHA/zcS3U6Cq1StskfgLiftypXBdNDh5f9440fXqEJMdtZlFMMZkhdf/kIzbvO2YJJeOfYRPdN71YX4OQ9A3nUBbJYOdbCZmpeRJJd9xLUbCf5y/z8I9GhRByMS1kCf1qrzpslG/XxQOJhOPF0KhhFs8q5fSWtrW+os5tI=';
 const EG='MzyQzn3RfMCVJOMSbfchNtHCe+QxwuVxp/k8Eyda10iGmeQfeydEGq93VsTWgY048QHh3b9z6FG0dsGMRjQlux3V/yWfVkKJ96Qep1Ds0CAOoAQ=';
 const CPR=0.067,CZK=21.2;
-const SB_URL='https://vlbisbnvwfvvjbveihdf.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYmlzYm52d2Z2dmpidmVpaGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNzQ0MDYsImV4cCI6MjA4OTg1MDQwNn0.QjE8GFLVMpPA1NCb7sf54l1ZJyTlgRhX0qeEPNHXCnM';
-const SB_BUCKET='marinada';
+const SB='https://vlbisbnvwfvvjbveihdf.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYmlzYm52d2Z2dmpidmVpaGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNzQ0MDYsImV4cCI6MjA4OTg1MDQwNn0.QjE8GFLVMpPA1NCb7sf54l1ZJyTlgRhX0qeEPNHXCnM';
 let AK='',GK='';
 
+// Current context
+let curSession=null,curScene=null,sceneRenders=[];
+const ST={imageData:null,fileName:'',description:'',sceneType:'exterior',timeOfDay:'midday',weather:'clear',material:75,angle:80,vegetation:50,people:30,floor:'low'};
+
+// --- Crypto ---
 async function dec(e,p){const r=Uint8Array.from(atob(e),c=>c.charCodeAt(0)),s=r.slice(0,16),iv=r.slice(16,28),tg=r.slice(28,44),ct=r.slice(44);const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveKey']);const k=await crypto.subtle.deriveKey({name:'PBKDF2',salt:s,iterations:100000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);const c=new Uint8Array(ct.length+tg.length);c.set(ct);c.set(tg,ct.length);return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv},k,c));}
 
-// Lock
-async function unlock(){const p=document.getElementById('pwdIn').value;if(!p)return;document.getElementById('lockErr').textContent='';try{AK=await dec(EA,p);GK=await dec(EG,p);document.getElementById('lock').style.display='none';document.getElementById('app').style.display='block';loadVersions();}catch{document.getElementById('lockErr').textContent='Špatné heslo';document.getElementById('pwdIn').value='';document.getElementById('pwdIn').focus();}}
+// --- Supabase ---
+function hdr(extra){return{apikey:SK,Authorization:'Bearer '+SK,'Content-Type':'application/json',...extra};}
+async function sbGet(path){const r=await fetch(SB+path,{headers:hdr()});return r.json();}
+async function sbPost(path,body,extra){const r=await fetch(SB+path,{method:'POST',headers:hdr(extra||{}),body:JSON.stringify(body)});return r.json();}
+async function sbPatch(path,body){return fetch(SB+path,{method:'PATCH',headers:hdr(),body:JSON.stringify(body)});}
+async function uploadImg(dataUrl,fname){
+  const b64=dataUrl.split(',')[1],mime=dataUrl.split(';')[0].split(':')[1];
+  const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+  let r=await fetch(`${SB}/storage/v1/object/marinada/${fname}`,{method:'POST',headers:{apikey:SK,Authorization:'Bearer '+SK,'Content-Type':mime},body:bytes});
+  if(!r.ok)r=await fetch(`${SB}/storage/v1/object/marinada/${fname}`,{method:'PUT',headers:{apikey:SK,Authorization:'Bearer '+SK,'Content-Type':mime},body:bytes});
+  return `${SB}/storage/v1/object/public/marinada/${fname}`;
+}
+async function toB64(src){
+  if(src.startsWith('data:'))return{b64:src.split(',')[1],mime:src.split(';')[0].split(':')[1]};
+  const r=await fetch(src);const bl=await r.blob();
+  return new Promise(res=>{const rd=new FileReader();rd.onload=()=>{const d=rd.result;res({b64:d.split(',')[1],mime:d.split(';')[0].split(':')[1]});};rd.readAsDataURL(bl);});
+}
+
+// --- Lock ---
+async function unlock(){const p=document.getElementById('pwdIn').value;if(!p)return;document.getElementById('lockErr').textContent='';
+  try{AK=await dec(EA,p);GK=await dec(EG,p);document.getElementById('lock').style.display='none';document.getElementById('app').style.display='block';goSessions();}
+  catch{document.getElementById('lockErr').textContent='Špatné heslo';document.getElementById('pwdIn').value='';document.getElementById('pwdIn').focus();}}
 document.getElementById('unlockBtn').addEventListener('click',unlock);
 document.getElementById('pwdIn').addEventListener('keydown',e=>{if(e.key==='Enter')unlock();});
 
-// Nav
-document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('nav a').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));a.classList.add('on');document.getElementById('v-'+a.dataset.view).classList.add('on');}));
+// --- Navigation ---
+function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));document.getElementById('v-'+id).classList.add('on');
+  document.querySelectorAll('nav a').forEach(a=>{a.classList.toggle('on',a.dataset.nav===(id==='spend'?'spend':'studio'));});}
+function setCrumb(parts){document.getElementById('crumb').innerHTML=parts.map((p,i)=>i<parts.length-1?`<span onclick="${p.fn}">${p.label}</span><span class="sep">›</span>`:`<span class="cur">${p.label}</span>`).join('');}
 
-// State
-const S={imageData:null,description:'',sceneType:'exterior',timeOfDay:'midday',weather:'clear',material:75,angle:80,vegetation:50,people:30,floor:'low'};
-let V=[],cmpSel=[],styleRefId=null;
+// --- SESSIONS ---
+async function goSessions(){showView('sessions');setCrumb([{label:'Projekty'}]);
+  const rows=await sbGet('/rest/v1/sessions?select=*,scenes(id)&order=created_at.desc');
+  const el=document.getElementById('sessionCards');
+  el.innerHTML=`<div class="card card-new" onclick="createSession()">+ Nový projekt</div>`+
+    (rows||[]).map(s=>`<div class="card" onclick="goSession(${s.id})">
+      <div class="card-body"><div class="card-name">${s.name}</div>
+      <div class="card-meta">${(s.scenes||[]).length} scén</div></div></div>`).join('');
+}
+async function createSession(){const name=prompt('Název projektu:');if(!name)return;
+  const r=await sbPost('/rest/v1/sessions',{name},{'Prefer':'return=representation'});
+  if(r&&r[0])goSession(r[0].id);else goSessions();}
 
-// --- Supabase helpers ---
-function sbHeaders(){return {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};}
+// --- SESSION DETAIL ---
+async function goSession(id){
+  curSession=await sbGet(`/rest/v1/sessions?id=eq.${id}&select=*`).then(r=>r[0]);
+  if(!curSession)return goSessions();
+  showView('session');setCrumb([{label:'Projekty',fn:'goSessions()'},{label:curSession.name}]);
+  document.getElementById('sessionTitle').textContent=curSession.name;
+  updStyleRefUI();
+  const scenes=await sbGet(`/rest/v1/scenes?session_id=eq.${id}&select=*,renders(id,image_path,version)&order=created_at.desc`);
+  const el=document.getElementById('sceneCards');
+  el.innerHTML=`<div class="card card-new" onclick="createScene()">+ Nová scéna</div>`+
+    (scenes||[]).map(sc=>{
+      const last=(sc.renders||[]).sort((a,b)=>b.version-a.version)[0];
+      const img=last?`<img class="card-img" src="${last.image_path}">`:`<div class="card-img" style="display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:0.8rem;">Žádný render</div>`;
+      return`<div class="card" onclick="goScene(${sc.id})">${img}<div class="card-body"><div class="card-name">${sc.name}</div><div class="card-meta">${(sc.renders||[]).length} renderů</div></div></div>`;
+    }).join('');
+}
+async function createScene(){const name=prompt('Název scény:');if(!name||!curSession)return;
+  const r=await sbPost('/rest/v1/scenes',{session_id:curSession.id,name},{'Prefer':'return=representation'});
+  if(r&&r[0])goScene(r[0].id);else goSession(curSession.id);}
 
-async function uploadImage(dataUrl,filename){
-  const b64=dataUrl.split(',')[1];
-  const mime=dataUrl.split(';')[0].split(':')[1];
-  const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
-  const r=await fetch(`${SB_URL}/storage/v1/object/${SB_BUCKET}/${filename}`,{
-    method:'POST',headers:{...sbHeaders(),'Content-Type':mime},body:bytes
-  });
-  if(!r.ok){
-    // Try upsert if file exists
-    const r2=await fetch(`${SB_URL}/storage/v1/object/${SB_BUCKET}/${filename}`,{
-      method:'PUT',headers:{...sbHeaders(),'Content-Type':mime},body:bytes
-    });
-    if(!r2.ok)throw new Error('Upload failed');
-  }
-  return `${SB_URL}/storage/v1/object/public/${SB_BUCKET}/${filename}`;
+// --- SCENE STUDIO ---
+let curStep=0;
+const STEPS=[{id:'upload',label:'Obrázek'},{id:'analyze',label:'Analýza'},{id:'settings',label:'Nastavení'},{id:'render',label:'Render'}];
+
+async function goScene(id){
+  curScene=await sbGet(`/rest/v1/scenes?id=eq.${id}&select=*`).then(r=>r[0]);
+  if(!curScene||!curSession)return;
+  showView('scene');
+  setCrumb([{label:'Projekty',fn:'goSessions()'},{label:curSession.name,fn:`goSession(${curSession.id})`},{label:curScene.name}]);
+  document.getElementById('sceneTitle').textContent=curScene.name;
+  // Load renders for this scene
+  const rows=await sbGet(`/rest/v1/renders?scene_id=eq.${id}&select=*&order=version.asc`);
+  sceneRenders=(rows||[]).map(r=>({id:r.version,imgSrc:r.image_path,note:r.note||'',prompt:r.prompt||'',cost:parseFloat(r.cost)||CPR,parentId:r.parent_id,dbId:r.id}));
+  // Restore state from scene
+  if(curScene.source_image_path){ST.imageData=curScene.source_image_path;showUploadedImg(ST.imageData);document.getElementById('toAnalyzeBtn').disabled=false;}
+  if(curScene.description){ST.description=curScene.description;document.getElementById('description').value=ST.description;}
+  if(curScene.settings){const s=curScene.settings;Object.assign(ST,s);restoreSettings(s);}
+  // Go to appropriate step
+  if(sceneRenders.length){goStep(3);renderStrip();showRender(sceneRenders[sceneRenders.length-1]);document.getElementById('refineBox').style.display='block';}
+  else if(curScene.description)goStep(2);
+  else if(curScene.source_image_path)goStep(1);
+  else goStep(0);
 }
 
-async function saveVersion(v){
-  // Upload image to storage
-  const fname=`render-v${v.id}-${Date.now()}.png`;
-  const publicUrl=await uploadImage(v.imgSrc,fname);
-  // Save metadata to DB
-  const row={version:v.id,note:v.note,prompt:v.prompt,cost:v.cost,parent_id:v.parentId||null,image_path:publicUrl};
-  const r=await fetch(`${SB_URL}/rest/v1/renders`,{method:'POST',headers:{...sbHeaders(),'Prefer':'return=representation'},body:JSON.stringify(row)});
-  if(!r.ok)console.warn('DB save failed:',await r.text());
-  // Update local V entry with public URL
-  v.imgSrc=publicUrl;
-  v.dbId=(await r.json())?.[0]?.id;
+function goStep(n){curStep=n;
+  document.querySelectorAll('.step-content').forEach(el=>el.classList.remove('on'));
+  document.getElementById('sc-'+STEPS[n].id).classList.add('on');
+  document.getElementById('stepsBar').innerHTML=STEPS.map((s,i)=>`<div class="step ${i<n?'done':''} ${i===n?'active':''}" onclick="${i<=curStep?'goStep('+i+')':''}">${i+1}. ${s.label}</div>`).join('');
+  if(n===3)genPrompt();
 }
 
-async function loadVersions(){
-  try{
-    // Load from Supabase DB
-    const r=await fetch(`${SB_URL}/rest/v1/renders?select=*&order=version.asc`,{headers:sbHeaders()});
-    if(!r.ok)throw new Error('Load failed');
-    const rows=await r.json();
-    V=rows.map(row=>({
-      id:row.version,
-      imgSrc:row.image_path,
-      note:row.note||'',
-      prompt:row.prompt||'',
-      cost:parseFloat(row.cost)||CPR,
-      parentId:row.parent_id,
-      ts:new Date(row.created_at).getTime(),
-      dbId:row.id
-    }));
-    updSpend();renderStrip();
-    if(V.length){
-      showRender(V[V.length-1]);
-      document.getElementById('refineBox').style.display='block';
-      document.getElementById('rerunBtn').style.display='';
-    }
-    // Style ref from localStorage (lightweight, no need for DB)
-    const sr=localStorage.getItem('marinada_styleRef');
-    if(sr){styleRefId=+sr;updStyleRefUI();}
-  }catch(e){console.warn('Supabase load error:',e);}
+function showUploadedImg(src){const uz=document.getElementById('uploadZone');uz.classList.add('has');document.getElementById('uploadHint').style.display='none';const old=uz.querySelector('img');if(old)old.remove();const img=document.createElement('img');img.src=src;uz.appendChild(img);}
+function restoreSettings(s){
+  document.querySelectorAll('.pills').forEach(pg=>{const key=pg.id==='sceneType'?'sceneType':pg.id==='timeOfDay'?'timeOfDay':pg.id==='weather'?'weather':pg.id==='floorLevel'?'floor':null;
+    if(!key||!s[key])return;pg.querySelectorAll('.pill').forEach(p=>{p.classList.toggle('on',p.dataset.val===s[key]);});});
+  if(s.material!=null){document.getElementById('matS').value=s.material;document.getElementById('matL').textContent=sL(s.material);}
+  if(s.angle!=null){document.getElementById('angS').value=s.angle;document.getElementById('angL').textContent=sL(s.angle);}
+  if(s.vegetation!=null){document.getElementById('vegS').value=s.vegetation;document.getElementById('vegL').textContent=s.vegetation+' %';}
+  if(s.people!=null){document.getElementById('pplS').value=s.people;document.getElementById('pplL').textContent=s.people+' %';}
+  if(s.windowView)document.getElementById('windowView').value=s.windowView;
 }
+async function saveSceneState(){if(!curScene)return;
+  const body={description:ST.description,settings:{sceneType:ST.sceneType,timeOfDay:ST.timeOfDay,weather:ST.weather,floor:ST.floor,material:ST.material,angle:ST.angle,vegetation:ST.vegetation,people:ST.people,windowView:document.getElementById('windowView').value}};
+  if(ST.imageData&&ST.imageData.startsWith('http'))body.source_image_path=ST.imageData;
+  sbPatch(`/rest/v1/scenes?id=eq.${curScene.id}`,body).catch(e=>console.warn('Scene save:',e));}
 
-// Upload
+// --- Upload ---
 const uz=document.getElementById('uploadZone'),fi=document.getElementById('fileInput');
 uz.addEventListener('click',()=>fi.click());
 uz.addEventListener('dragover',e=>{e.preventDefault();uz.style.borderColor='var(--olive)';});
 uz.addEventListener('dragleave',()=>{uz.style.borderColor='';});
 uz.addEventListener('drop',e=>{e.preventDefault();uz.style.borderColor='';if(e.dataTransfer.files.length)loadFile(e.dataTransfer.files[0]);});
 fi.addEventListener('change',()=>{if(fi.files.length)loadFile(fi.files[0]);});
-function loadFile(f){if(!f.type.startsWith('image/'))return;S.fileName=f.name;const r=new FileReader();r.onload=e=>{S.imageData=e.target.result;uz.classList.add('has');document.getElementById('uploadHint').style.display='none';const old=uz.querySelector('img');if(old)old.remove();const img=document.createElement('img');img.src=S.imageData;uz.appendChild(img);document.getElementById('analyzeBtn').disabled=false;};r.readAsDataURL(f);}
+function loadFile(f){if(!f.type.startsWith('image/'))return;ST.fileName=f.name;const r=new FileReader();r.onload=async e=>{ST.imageData=e.target.result;showUploadedImg(ST.imageData);document.getElementById('toAnalyzeBtn').disabled=false;
+  // Upload source image to Supabase
+  if(curScene){const url=await uploadImg(ST.imageData,`source-scene-${curScene.id}-${Date.now()}.png`);ST.imageData=url;sbPatch(`/rest/v1/scenes?id=eq.${curScene.id}`,{source_image_path:url});}
+};r.readAsDataURL(f);}
+document.getElementById('toAnalyzeBtn').addEventListener('click',()=>goStep(1));
 
-// Toggles
-function tog(id,key){document.getElementById(id).addEventListener('click',e=>{const p=e.target.closest('[data-val]');if(!p)return;p.parentElement.querySelectorAll('[data-val]').forEach(x=>x.classList.remove('on'));p.classList.add('on');S[key]=p.dataset.val;});}
+// --- Toggles & sliders ---
+function tog(id,key){document.getElementById(id).addEventListener('click',e=>{const p=e.target.closest('[data-val]');if(!p)return;p.parentElement.querySelectorAll('[data-val]').forEach(x=>x.classList.remove('on'));p.classList.add('on');ST[key]=p.dataset.val;});}
 tog('sceneType','sceneType');tog('timeOfDay','timeOfDay');tog('weather','weather');tog('floorLevel','floor');
-
-// Sliders
 function sL(v){return v<25?'Nízká':v<50?'Střední':v<75?'Vysoká':'Maximální';}
-document.getElementById('matS').addEventListener('input',e=>{S.material=+e.target.value;document.getElementById('matL').textContent=sL(S.material);});
-document.getElementById('angS').addEventListener('input',e=>{S.angle=+e.target.value;document.getElementById('angL').textContent=sL(S.angle);});
-document.getElementById('vegS').addEventListener('input',e=>{S.vegetation=+e.target.value;document.getElementById('vegL').textContent=e.target.value+' %';});
-document.getElementById('pplS').addEventListener('input',e=>{S.people=+e.target.value;document.getElementById('pplL').textContent=e.target.value+' %';});
-document.getElementById('description').addEventListener('input',e=>{S.description=e.target.value;});
+document.getElementById('matS').addEventListener('input',e=>{ST.material=+e.target.value;document.getElementById('matL').textContent=sL(ST.material);});
+document.getElementById('angS').addEventListener('input',e=>{ST.angle=+e.target.value;document.getElementById('angL').textContent=sL(ST.angle);});
+document.getElementById('vegS').addEventListener('input',e=>{ST.vegetation=+e.target.value;document.getElementById('vegL').textContent=e.target.value+' %';});
+document.getElementById('pplS').addEventListener('input',e=>{ST.people=+e.target.value;document.getElementById('pplL').textContent=e.target.value+' %';});
+document.getElementById('description').addEventListener('input',e=>{ST.description=e.target.value;});
+document.getElementById('toSettingsBtn').addEventListener('click',()=>{goStep(2);saveSceneState();});
 
-// Analyze (with Supabase cache by filename)
+// --- Analyze ---
 document.getElementById('analyzeBtn').addEventListener('click',analyze);
 async function analyze(){
-  if(!S.imageData){st('analyzeStatus','Nejdřív nahraj obrázek',1);return;}
+  if(!ST.imageData){sta('Nejdřív nahraj obrázek',1);return;}
   document.getElementById('analyzeBtn').disabled=true;
-  const fname=S.fileName||'unnamed';
-
-  // Check cache first
-  try{
-    st('analyzeStatus','Hledám v cache...',0);
-    const cr=await fetch(`${SB_URL}/rest/v1/analyses?filename=eq.${encodeURIComponent(fname)}&select=description&limit=1`,{headers:sbHeaders()});
-    const cached=await cr.json();
-    if(cached&&cached.length>0){
-      document.getElementById('description').value=cached[0].description;
-      S.description=cached[0].description;
-      st('analyzeStatus','Načteno z cache (zdarma)',0);
-      document.getElementById('analyzeBtn').disabled=false;
-      return;
-    }
-  }catch(e){console.warn('Cache check failed:',e);}
-
-  // No cache — call Claude
-  st('analyzeStatus','Analyzuji scénu...',0);
-  const b=S.imageData.split(',')[1],m=S.imageData.split(';')[0].split(':')[1];
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AK,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:m,data:b}},{type:'text',text:'You are an architectural visualization expert. Describe this SketchUp 3D model export in detail for generating a photorealistic render. Include: building form, materials (concrete, wood, glass, metal, brick, etc.), style, floors, roof, windows, landscape, camera angle. Be factual. Single dense paragraph.'}]}]})});
+  // Cache check
+  const fname=ST.fileName||'unnamed';
+  try{sta('Hledám v cache...',0);
+    const c=await sbGet(`/rest/v1/analyses?filename=eq.${encodeURIComponent(fname)}&select=description&limit=1`);
+    if(c&&c.length){document.getElementById('description').value=c[0].description;ST.description=c[0].description;sta('Načteno z cache (zdarma)',0);document.getElementById('analyzeBtn').disabled=false;return;}
+  }catch{}
+  sta('Analyzuji scénu...',0);
+  const {b64:b,mime:m}=await toB64(ST.imageData);
+  try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AK,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:m,data:b}},{type:'text',text:'You are an architectural visualization expert. Describe this SketchUp 3D model export in detail for generating a photorealistic render. Include: building form, materials, style, floors, roof, windows, landscape, camera angle. Be factual. Single dense paragraph.'}]}]})});
     const d=await r.json();if(d.error)throw new Error(d.error.message);
-    const desc=d.content[0].text;
-    document.getElementById('description').value=desc;S.description=desc;
-    // Save to cache
-    fetch(`${SB_URL}/rest/v1/analyses`,{method:'POST',headers:sbHeaders(),body:JSON.stringify({filename:fname,description:desc})}).catch(e=>console.warn('Cache save failed:',e));
-    st('analyzeStatus','Hotovo (uloženo do cache)',0);
-  }catch(e){st('analyzeStatus',e.message,1);}
+    const desc=d.content[0].text;document.getElementById('description').value=desc;ST.description=desc;
+    sbPost('/rest/v1/analyses',{filename:fname,description:desc}).catch(()=>{});
+    sta('Hotovo (uloženo do cache)',0);
+  }catch(e){sta(e.message,1);}
   document.getElementById('analyzeBtn').disabled=false;
 }
-function st(id,msg,err){const el=document.getElementById(id);el.textContent=msg;el.className='st '+(err?'er':'ld');if(!err&&msg==='Hotovo')setTimeout(()=>{el.textContent='';},2000);}
+function sta(msg,err){const el=document.getElementById('analyzeStatus');el.textContent=msg;el.className='st '+(err?'er':'ld');if(!err&&(msg.startsWith('Hotovo')||msg.startsWith('Načteno')))setTimeout(()=>{el.textContent='';},2500);}
 
-// Prompt
+// --- Prompt ---
 document.getElementById('genBtn').addEventListener('click',genPrompt);
 function genPrompt(){
-  const d=document.getElementById('description').value.trim();
-  if(!d){document.getElementById('promptOut').value='Nejdřív vyplň popis scény.';return;}
-  const T={dawn:'early dawn light, soft pink and blue sky',morning:'bright morning sun, crisp shadows, blue sky',midday:'direct midday sun, strong overhead light',
-    'golden-hour':'warm golden hour, long soft shadows, amber tones',sunset:'dramatic sunset, orange and purple sky',dusk:'blue hour dusk, twilight, interior lights glowing',night:'night, building lit from within, dark sky'};
-  const W={clear:'clear sky','partly-cloudy':'partly cloudy, scattered clouds',overcast:'overcast, soft diffused light',rainy:'rain, wet reflections, puddles',foggy:'fog, atmospheric haze',snowy:'snow on ground and roofs'};
-  const mat=S.material<25?'Freely interpret materials.':S.material<50?'Keep general palette, allow enhancement.':S.material<75?'Faithfully match materials, textures, colors.':'Exactly replicate all materials. No deviation.';
-  const ang=S.angle<25?'Adjust angle freely.':S.angle<50?'Similar direction, minor adjustments OK.':S.angle<75?'Closely match camera angle and FOV.':'CRITICAL: EXACT same camera position, angle, FOV. Every wall/edge at same position. No reframing.';
-  const vg=S.vegetation<15?'No vegetation.':S.vegetation<40?'Minimal vegetation.':S.vegetation<65?'Moderate trees, shrubs, ground cover.':'Lush vegetation, mature trees, dense planting.';
-  const pp=S.people<15?'No people.':S.people<40?'One or two people for scale.':S.people<65?'Several people.':'Busy scene, many people.';
-  const wv=document.getElementById('windowView').value.trim(),isI=S.sceneType==='interior';
+  const d=document.getElementById('description').value.trim();if(!d){document.getElementById('promptOut').value='Nejdřív vyplň popis.';return;}
+  saveSceneState();
+  const T={dawn:'early dawn light, soft pink and blue sky',morning:'bright morning sun, crisp shadows',midday:'direct midday sun, strong overhead light','golden-hour':'warm golden hour, long soft shadows',sunset:'dramatic sunset, orange and purple sky',dusk:'blue hour dusk, interior lights glowing',night:'night, building lit from within, dark sky'};
+  const W={clear:'clear sky','partly-cloudy':'partly cloudy',overcast:'overcast, soft diffused light',rainy:'rain, wet reflections, puddles',foggy:'fog, atmospheric haze',snowy:'snow on ground and roofs'};
+  const mat=ST.material<25?'Freely interpret materials.':ST.material<50?'Keep general palette.':ST.material<75?'Faithfully match materials.':'Exactly replicate all materials.';
+  const ang=ST.angle<25?'Adjust angle freely.':ST.angle<50?'Similar direction.':ST.angle<75?'Closely match camera angle.':'CRITICAL: EXACT same camera position. No reframing.';
+  const vg=ST.vegetation<15?'No vegetation.':ST.vegetation<40?'Minimal vegetation.':ST.vegetation<65?'Moderate landscaping.':'Lush, dense vegetation.';
+  const pp=ST.people<15?'No people.':ST.people<40?'One or two for scale.':ST.people<65?'Several people.':'Busy scene.';
+  const wv=document.getElementById('windowView').value.trim(),isI=ST.sceneType==='interior';
+  const floorDesc={ground:'Ground floor — street-level view.',low:'1st-2nd floor — slightly elevated.',mid:'3rd-5th floor — rooftops visible.',high:'6th+ floor — panoramic city view.',penthouse:'Rooftop — wide skyline.'};
   document.getElementById('promptOut').value=[
-    `Transform the attached SketchUp screenshot into a photorealistic ${S.sceneType} architectural photograph.`,'',`Scene: ${d}`,'',
-    'LIGHTING:',`- ${T[S.timeOfDay]}`,`- ${W[S.weather]}`,isI?'- Interior: ambient window light + artificial sources, warm spill, soft shadows.':'- Exterior: natural sky illumination, ambient occlusion, accurate shadows.','',
-    'MATERIALS:',`- ${mat}`,'- Physically accurate: reflectivity, roughness, bump, subsurface scattering.','- Glass: reflections, transparency, green edge tint. Metal: specular highlights.','',
-    'CAMERA:',`- ${ang}`,'- 1:1 layout match. Same walls, proportions. Only upgrade materials & lighting.','- Canon EOS R5, 24mm tilt-shift, f/5.6. Correct verticals.','',
-    'CONTEXT:',`- ${vg}`,`- ${pp}`,isI?'- Realistic room context, tasteful decor.':'- Realistic sky, neighboring context, ground surface.',
-    wv?`- WINDOWS: View of ${wv}. ${({ground:'Ground floor perspective — street-level view, pedestrians visible, close buildings across the street.',low:'Low floor (1st-2nd) — slightly elevated, treetops at eye level, nearby buildings and street partially visible.',mid:'Mid floor (3rd-5th) — elevated urban view, rooftops of lower buildings visible, broader cityscape.',high:'High floor (6th+) — panoramic elevated view, looking over rooftops, distant horizon visible.',penthouse:'Penthouse/rooftop level — wide skyline panorama, dramatic sky, distant landmarks visible.'})[S.floor]} Natural depth, atmospheric perspective.`:'','',
-    'QUALITY:','- Indistinguishable from real photo. Architecture magazine quality.','- Global illumination, HDR, subtle atmosphere.','- Zero CG artifacts or flat shading.'
+    `Transform the attached SketchUp screenshot into a photorealistic ${ST.sceneType} architectural photograph.`,'',`Scene: ${d}`,'',
+    'LIGHTING:',`- ${T[ST.timeOfDay]}`,`- ${W[ST.weather]}`,isI?'- Interior lighting: window ambient + artificial, warm spill, soft shadows.':'- Exterior: natural sky, ambient occlusion, accurate shadows.','',
+    'MATERIALS:',`- ${mat}`,'- Physically accurate surfaces. Glass: reflections + transparency. Metal: specular highlights.','',
+    'CAMERA:',`- ${ang}`,'- 1:1 layout match. Only upgrade materials & lighting.','- Canon EOS R5, 24mm tilt-shift, f/5.6.','',
+    'CONTEXT:',`- ${vg}`,`- ${pp}`,
+    wv?`- WINDOWS: View of ${wv}. ${floorDesc[ST.floor]||''}`:'','',
+    'QUALITY:','- Indistinguishable from real photo. Magazine quality.','- Global illumination, HDR. Zero CG artifacts.'
   ].filter(Boolean).join('\n');
 }
 
-// Copy
+// --- Copy ---
 document.getElementById('copyBtn').addEventListener('click',()=>{navigator.clipboard.writeText(document.getElementById('promptOut').value).then(()=>{const b=document.getElementById('copyBtn');b.textContent='Zkopírováno!';setTimeout(()=>b.textContent='Kopírovat',1500);});});
 
-// Render
+// --- Render ---
 document.getElementById('renderBtn').addEventListener('click',()=>doRender(null));
-document.getElementById('rerunBtn').addEventListener('click',()=>doRender(null));
 document.getElementById('refBtn').addEventListener('click',refine);
 document.getElementById('refIn').addEventListener('keydown',e=>{if(e.key==='Enter')refine();});
-
-function showLoader(on){const l=document.getElementById('loader');if(on){l.innerHTML='<div class="loader-bar"></div>';l.classList.add('on');}else{l.classList.remove('on');}}
+function showLoader(on){const l=document.getElementById('loader');if(on){l.innerHTML='<div class="loader-bar"></div>';l.classList.add('on');}else l.classList.remove('on');}
 
 async function doRender(note){
   const pr=document.getElementById('promptOut').value.trim();
-  if(!pr||pr.startsWith('Nejdřív')){st('renderSt','Nejdřív vygeneruj prompt',1);return;}
-  const src=note&&V.length?V[V.length-1].imgSrc:S.imageData;
-  if(!src){st('renderSt','Nahraj obrázek',1);return;}
-
-  // Build prompt with style reference context
-  const styleRef=styleRefId?V.find(x=>x.id===styleRefId):null;
+  if(!pr||pr.startsWith('Nejdřív')){stR('Nejdřív vygeneruj prompt',1);return;}
+  const src=note&&sceneRenders.length?sceneRenders[sceneRenders.length-1].imgSrc:ST.imageData;
+  if(!src){stR('Nahraj obrázek',1);return;}
+  // Style ref from session
+  const styleRef=curSession?.style_ref_render_id?sceneRenders.find(x=>x.dbId===curSession.style_ref_render_id)||await loadStyleRef():null;
   let rp;
-  if(note){
-    rp=`Edit the attached architectural render. Keep everything EXCEPT: ${note}. Same angle, composition. Only change what was requested. Photorealistic output.`;
-  } else if(styleRef){
-    rp=pr+'\n\nSTYLE REFERENCE:\nThe first attached image is the style reference — a previously rendered view. Match its EXACT rendering style: same color grading, material treatment, lighting mood, level of photorealism, color temperature, contrast, and post-processing look. The second attached image is the new SketchUp view to render. Apply the same visual style to this new view.';
-  } else {
-    rp=pr;
-  }
-
-  st('renderSt',note?'Upravuji render...':(styleRef?'Generuji se stylem z v'+styleRef.id+'...':'Generuji render...'),0);
-  showLoader(true);
+  if(note)rp=`Edit the attached architectural render. Keep everything EXCEPT: ${note}. Same angle, composition. Photorealistic output.`;
+  else if(styleRef)rp=pr+'\n\nSTYLE REFERENCE:\nFirst image is the style reference. Match its EXACT rendering style: color grading, materials, lighting, contrast. Second image is the new SketchUp view to render in that style.';
+  else rp=pr;
+  stR(note?'Upravuji...':(styleRef?'Generuji se stylem...':'Generuji...'),0);showLoader(true);
   document.getElementById('renderBtn').disabled=true;
-  document.getElementById('refBtn')&&(document.getElementById('refBtn').disabled=true);
-
-  // Build parts: style ref image first (if set and not a refinement), then source image, then prompt
   const parts=[];
-  if(styleRef&&!note){
-    const {b64:sb,mime:sm}=await toB64Parts(styleRef.imgSrc);
-    parts.push({inlineData:{mimeType:sm,data:sb}});
-  }
-  const {b64:b,mime:m}=await toB64Parts(src);
-  parts.push({inlineData:{mimeType:m,data:b}});
-  parts.push({text:rp});
-
+  if(styleRef&&!note){const {b64:sb,mime:sm}=await toB64(styleRef.imgSrc);parts.push({inlineData:{mimeType:sm,data:sb}});}
+  const {b64:b,mime:m}=await toB64(src);parts.push({inlineData:{mimeType:m,data:b}});parts.push({text:rp});
   try{
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts}],generationConfig:{responseModalities:['TEXT','IMAGE']}})
-    });
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts}],generationConfig:{responseModalities:['TEXT','IMAGE']}})});
     const d=await r.json();if(d.error)throw new Error(d.error.message);
     let ok=false;
-    for(const p of d.candidates[0].content.parts){
-      if(p.inlineData){
-        const is=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
-        const v={id:V.length+1,imgSrc:is,note:note||'Základní render',prompt:rp,cost:CPR,parentId:note&&V.length?V[V.length-1].id:null,ts:Date.now()};
-        V.push(v);
-        saveVersion(v).catch(e=>console.warn('Save error:',e));
-        updSpend();renderStrip();showRender(v);
-        document.getElementById('refineBox').style.display='block';
-        document.getElementById('rerunBtn').style.display='';
-        ok=true;
-      }
-    }
-    st('renderSt',ok?'':'Žádný obrázek — zkus upravit prompt',!ok);
-  }catch(e){st('renderSt',e.message,1);}
-  showLoader(false);
-  document.getElementById('renderBtn').disabled=false;
-  const rb=document.getElementById('refBtn');if(rb)rb.disabled=false;
+    for(const p of d.candidates[0].content.parts){if(p.inlineData){
+      const is=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+      const ver=sceneRenders.length+1;
+      const v={id:ver,imgSrc:is,note:note||'Základní render',prompt:rp,cost:CPR,parentId:note&&sceneRenders.length?sceneRenders[sceneRenders.length-1].dbId:null};
+      // Save to Supabase
+      const fname=`render-s${curScene.id}-v${ver}-${Date.now()}.png`;
+      const url=await uploadImg(is,fname);
+      const row={version:ver,scene_id:curScene.id,note:v.note,prompt:rp,cost:CPR,parent_id:v.parentId,image_path:url};
+      const saved=await sbPost('/rest/v1/renders',row,{'Prefer':'return=representation'});
+      v.imgSrc=url;v.dbId=saved?.[0]?.id;
+      sceneRenders.push(v);renderStrip();showRender(v);document.getElementById('refineBox').style.display='block';ok=true;
+    }}
+    stR(ok?'':'Žádný obrázek',!ok);
+  }catch(e){stR(e.message,1);}
+  showLoader(false);document.getElementById('renderBtn').disabled=false;
 }
 
+async function loadStyleRef(){if(!curSession?.style_ref_render_id)return null;
+  const r=await sbGet(`/rest/v1/renders?id=eq.${curSession.style_ref_render_id}&select=*`);
+  return r?.[0]?{imgSrc:r[0].image_path,dbId:r[0].id}:null;}
+
 function showRender(v){
-  document.getElementById('rout').innerHTML=`
-    <img src="${v.imgSrc}">
+  document.getElementById('rout').innerHTML=`<img src="${v.imgSrc}">
     <div class="rmeta">v${v.id} · $${v.cost.toFixed(3)} · ${(v.cost*CZK).toFixed(1)} Kč · ${v.note}</div>
     <div class="btns" style="margin-top:0.5rem">
       <button class="btn btn-o btn-sm" onclick="dlV(${v.id})">Stáhnout</button>
-      <button class="btn btn-f btn-sm" onclick="renderHiRes(${v.id})" id="hiresBtn${v.id}">Stáhnout v 4K</button>
-      <button class="btn btn-o btn-sm" onclick="setStyleRef(${v.id})">Nastavit jako referenční styl</button>
-    </div>
-    <div class="st" id="hiresSt"></div>`;
+      <button class="btn btn-o btn-sm" onclick="setStyleRef(${v.dbId})">Referenční styl</button>
+    </div>`;
 }
-
-function setStyleRef(id){
-  styleRefId=id;
-  localStorage.setItem('marinada_styleRef',id);
-  updStyleRefUI();
-}
-function clearStyleRef(){
-  styleRefId=null;
-  localStorage.removeItem('marinada_styleRef');
-  updStyleRefUI();
-}
-function updStyleRefUI(){
-  const box=document.getElementById('styleRefContent');
-  const status=document.getElementById('styleRefStatus');
-  if(!styleRefId){
-    status.textContent='žádný';
-    box.innerHTML='<div class="style-ref-empty">Zatím žádný referenční styl. Až vygeneruješ render, klikni „Nastavit jako referenční styl" — další obrázky se pak renderují ve stejném vizuálním stylu.</div>';
-    return;
-  }
-  const v=V.find(x=>x.id===styleRefId);
-  if(!v){clearStyleRef();return;}
-  status.textContent='v'+v.id;
-  box.innerHTML=`<div class="style-ref-preview">
-    <img src="${v.imgSrc}">
-    <div class="style-ref-info">
-      <strong>v${v.id}</strong> — ${v.note}<br>
-      Všechny nové rendery budou vizuálně odpovídat tomuto stylu (barvy, světlo, materiály, nálada).
-      <div class="btns" style="margin-top:0.4rem"><button class="btn btn-o btn-sm" onclick="clearStyleRef()">Zrušit referenci</button></div>
-    </div>
-  </div>`;
-}
-
 function refine(){const i=document.getElementById('refIn'),n=i.value.trim();if(!n)return;i.value='';doRender(n);}
-function dlV(id){const v=V.find(x=>x.id===id);if(!v)return;const a=document.createElement('a');a.href=v.imgSrc;a.download=`marinada-v${v.id}.png`;a.click();}
+function dlV(id){const v=sceneRenders.find(x=>x.id===id);if(!v)return;const a=document.createElement('a');a.href=v.imgSrc;a.download=`marinada-v${v.id}.png`;a.click();}
+function stR(msg,err){const el=document.getElementById('renderSt');el.textContent=msg;el.className='st '+(err?'er':'ld');}
 
-// Convert URL or dataURL to base64 parts
-async function toB64Parts(src){
-  if(src.startsWith('data:')){
-    return {b64:src.split(',')[1],mime:src.split(';')[0].split(':')[1]};
-  }
-  // Fetch from URL (Supabase public URL)
-  const r=await fetch(src);
-  const blob=await r.blob();
-  return new Promise(res=>{const rd=new FileReader();rd.onload=()=>{const d=rd.result;res({b64:d.split(',')[1],mime:d.split(';')[0].split(':')[1]});};rd.readAsDataURL(blob);});
+// --- Style ref ---
+async function setStyleRef(dbId){if(!curSession||!dbId)return;
+  await sbPatch(`/rest/v1/sessions?id=eq.${curSession.id}`,{style_ref_render_id:dbId});
+  curSession.style_ref_render_id=dbId;updStyleRefUI();}
+async function clearStyleRef(){if(!curSession)return;
+  await sbPatch(`/rest/v1/sessions?id=eq.${curSession.id}`,{style_ref_render_id:null});
+  curSession.style_ref_render_id=null;updStyleRefUI();}
+async function updStyleRefUI(){
+  const box=document.getElementById('styleRefContent'),status=document.getElementById('styleRefStatus');
+  if(!curSession?.style_ref_render_id){status.textContent='žádný';box.innerHTML='<div style="font-size:0.72rem;color:var(--text-dim);">Vyrenderuj scénu a nastav ji jako referenční styl.</div>';return;}
+  const r=await sbGet(`/rest/v1/renders?id=eq.${curSession.style_ref_render_id}&select=image_path,note,version`);
+  if(!r?.length){clearStyleRef();return;}
+  status.textContent='v'+r[0].version;
+  box.innerHTML=`<div class="style-ref-preview"><img src="${r[0].image_path}"><div class="style-ref-info"><strong>v${r[0].version}</strong> — ${r[0].note||''}<br>Nové rendery budou vizuálně odpovídat tomuto stylu.<div class="btns" style="margin-top:0.4rem"><button class="btn btn-o btn-sm" onclick="clearStyleRef()">Zrušit</button></div></div></div>`;
 }
 
-async function renderHiRes(id){
-  const v=V.find(x=>x.id===id);if(!v)return;
-  const btn=document.getElementById('hiresBtn'+id);
-  if(btn){btn.disabled=true;btn.textContent='Generuji 4K...';}
-  st('hiresSt','Generuji 4K verzi (~$0.15 / 3,2 Kč)...',0);
-
-  try{
-    const {b64:b,mime:m}=await toB64Parts(v.imgSrc);
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{parts:[
-          {inlineData:{mimeType:m,data:b}},
-          {text:'Upscale and enhance this architectural render to maximum quality 4K resolution. Keep the EXACT same image — same composition, angle, materials, lighting, colors. Only increase resolution and enhance fine details, textures, and sharpness. Do not change anything about the scene.'}
-        ]}],
-        generationConfig:{responseModalities:['TEXT','IMAGE'],imageSize:'4096'}
-      })
-    });
-    const d=await r.json();if(d.error)throw new Error(d.error.message);
-    let ok=false;
-    for(const p of d.candidates[0].content.parts){
-      if(p.inlineData){
-        const hiSrc=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
-        const a=document.createElement('a');a.href=hiSrc;a.download=`marinada-v${v.id}-4k.png`;a.click();
-        const hv={id:V.length+1,imgSrc:hiSrc,note:'4K verze v'+v.id,prompt:'4K upscale',cost:0.151,parentId:v.id,ts:Date.now()};
-        V.push(hv);
-        saveVersion(hv).catch(e=>console.warn('4K save error:',e));
-        updSpend();renderStrip();
-        ok=true;
-      }
-    }
-    st('hiresSt',ok?'4K staženo':'Nepodařilo se',!ok);
-  }catch(e){st('hiresSt',e.message,1);}
-  if(btn){btn.disabled=false;btn.textContent='Stáhnout v 4K';}
-  setTimeout(()=>{const el=document.getElementById('hiresSt');if(el)el.textContent='';},3000);
+// --- Version strip ---
+function renderStrip(){const p=document.getElementById('histP'),s=document.getElementById('vStr');
+  if(!sceneRenders.length){p.style.display='none';return;}p.style.display='block';
+  s.innerHTML=sceneRenders.map(v=>`<div class="vc" onclick="showRender(sceneRenders.find(x=>x.id===${v.id}))">
+    <img src="${v.imgSrc}"><div class="vc-i"><div class="vi">v${v.id}</div><div class="vn">${v.note}</div><div class="vp">${(v.cost*CZK).toFixed(1)} Kč</div></div></div>`).join('');
 }
 
-// Spend
-function updSpend(){
-  const n=V.length,u=V.reduce((s,v)=>s+v.cost,0),c=u*CZK;
+// --- Spendings ---
+async function loadSpend(){
+  const rows=await sbGet('/rest/v1/renders?select=*,scenes(name,sessions(name))&order=id.asc');
+  if(!rows)return;
+  const n=rows.length,u=rows.reduce((s,r)=>s+parseFloat(r.cost||CPR),0);
   document.getElementById('spN').textContent=n;
   document.getElementById('spU').textContent='$'+u.toFixed(2);
-  document.getElementById('spK').textContent=Math.round(c)+' Kč';
-  document.getElementById('spB').innerHTML=V.length?V.map(v=>`<tr><td class="it">v${v.id}</td><td>${v.parentId?'Úprava (v'+v.parentId+')':'Nový'}</td><td>${v.note}</td><td class="it">$${v.cost.toFixed(3)}</td><td class="it">${(v.cost*CZK).toFixed(1)} Kč</td></tr>`).join(''):'<tr><td colspan="5" style="color:var(--text-light);text-align:center;padding:2rem;">Zatím žádné rendery</td></tr>';
+  document.getElementById('spK').textContent=Math.round(u*CZK)+' Kč';
+  document.getElementById('spB').innerHTML=rows.length?rows.map(r=>`<tr>
+    <td class="it">v${r.version}</td>
+    <td>${r.scenes?.sessions?.name||'—'}</td>
+    <td>${r.scenes?.name||'—'}</td>
+    <td>${r.note||''}</td>
+    <td class="it">$${parseFloat(r.cost||CPR).toFixed(3)}</td>
+    <td class="it">${(parseFloat(r.cost||CPR)*CZK).toFixed(1)} Kč</td></tr>`).join('')
+    :'<tr><td colspan="6" style="color:var(--text-light);text-align:center;padding:2rem;">Zatím žádné rendery</td></tr>';
 }
-
-// History
-function renderStrip(){
-  const p=document.getElementById('histP'),s=document.getElementById('vStr');
-  if(!V.length){p.style.display='none';return;}p.style.display='block';
-  s.innerHTML=V.map(v=>{const cl=cmpSel[0]===v.id?'ca':cmpSel[1]===v.id?'cb':'';
-    return`<div class="vc ${cl}" onclick="vClick(${v.id})" title="${v.note}"><img src="${v.imgSrc}"><div class="vc-i"><div class="vi">v${v.id}${v.parentId?' ← v'+v.parentId:''}</div><div class="vn">${v.note}</div><div class="vp">${(v.cost*CZK).toFixed(1)} Kč</div></div></div>`;
-  }).join('');
-}
-
-function vClick(id){
-  if(!cmpSel.length)cmpSel=[id];
-  else if(cmpSel.length===1){if(cmpSel[0]===id){const v=V.find(x=>x.id===id);if(v)showRender(v);cmpSel=[];document.getElementById('cmpV').classList.remove('on');}else{cmpSel.push(id);showCmp();}}
-  else{cmpSel=[id];document.getElementById('cmpV').classList.remove('on');}
-  renderStrip();
-}
-function showCmp(){const a=V.find(v=>v.id===cmpSel[0]),b=V.find(v=>v.id===cmpSel[1]);if(!a||!b)return;document.getElementById('cA').src=a.imgSrc;document.getElementById('cB').src=b.imgSrc;document.getElementById('cLA').textContent=`v${a.id} — ${a.note}`;document.getElementById('cLB').textContent=`v${b.id} — ${b.note}`;document.getElementById('cmpV').classList.add('on');}
-function clearCmp(){cmpSel=[];document.getElementById('cmpV').classList.remove('on');renderStrip();}
+// Load spendings when tab is clicked
+document.querySelector('[data-nav="spend"]').addEventListener('click',()=>{showView('spend');loadSpend();});
 </script>
 </body>
 </html>
