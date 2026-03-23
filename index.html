@@ -282,38 +282,52 @@ input.fi{resize:none;}
 
     <!-- Step 4: Render -->
     <div class="step-content" id="sc-render">
-      <div class="duo">
-        <div>
-          <div class="fg">
-            <div class="fl">Prompt</div>
-            <textarea class="fi fi-mono" id="promptOut" readonly></textarea>
-            <div class="btns" style="margin-top:0.5rem">
-              <button class="btn btn-f" id="genBtn">Vygenerovat prompt</button>
-              <button class="btn btn-o" id="copyBtn">Kopírovat</button>
+      <!-- Sub-tabs -->
+      <div class="sub-tabs" style="display:flex;gap:0.25rem;margin-bottom:1.5rem;">
+        <button class="btn btn-f btn-sm" id="subRender" onclick="showSub('render')">Render</button>
+        <button class="btn btn-o btn-sm" id="subIter" onclick="showSub('iter')">Iterace <span id="iterCount"></span></button>
+      </div>
+
+      <!-- Sub: Render -->
+      <div id="sub-render">
+        <div class="duo">
+          <div>
+            <div class="fg">
+              <div class="fl">Prompt</div>
+              <textarea class="fi fi-mono" id="promptOut" readonly></textarea>
+              <div class="btns" style="margin-top:0.5rem">
+                <button class="btn btn-f" id="genBtn">Vygenerovat prompt</button>
+                <button class="btn btn-o" id="copyBtn">Kopírovat</button>
+              </div>
             </div>
           </div>
-        </div>
-        <div>
-          <div class="btns">
-            <button class="btn btn-r" id="renderBtn">Renderovat</button>
-          </div>
-          <div class="rout" id="rout"></div>
-          <div class="refine-box" id="refineBox" style="display:none">
-            <div class="fl">Nová iterace</div>
-            <div class="refine-row">
-              <input class="fi" id="refIn" placeholder="Změň podlahu na dub, teplejší světlo...">
-              <button class="btn btn-r btn-sm" id="refBtn">Renderovat</button>
+          <div>
+            <div class="btns">
+              <button class="btn btn-r" id="renderBtn">Renderovat</button>
+              <button class="btn btn-o btn-sm" id="reRenderBtn" style="display:none" onclick="doRender(null)">Znovu od začátku</button>
             </div>
-            <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.3rem;">Pošle předchozí render zpět do AI s tvými změnami</div>
-          </div>
-          <div class="loader" id="loader"><div class="loader-bar"></div></div>
-          <div class="st" id="renderSt"></div>
-          <div class="hist" id="histP" style="display:none">
-            <div class="fl">Verze</div>
-            <div class="hist-strip" id="vStr"></div>
+            <div class="rout" id="rout"></div>
+            <div class="refine-box" id="refineBox" style="display:none">
+              <div class="fl">Nová iterace</div>
+              <div class="refine-row">
+                <input class="fi" id="refIn" placeholder="Změň podlahu na dub, teplejší světlo...">
+                <button class="btn btn-r btn-sm" id="refBtn">Renderovat</button>
+              </div>
+              <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.3rem;">Pošle předchozí render zpět do AI s tvými změnami</div>
+            </div>
+            <div class="loader" id="loader"><div class="loader-bar"></div></div>
+            <div class="st" id="renderSt"></div>
           </div>
         </div>
       </div>
+
+      <!-- Sub: Iterations -->
+      <div id="sub-iter" style="display:none">
+        <div id="iterEmpty" style="color:var(--text-light);font-size:0.85rem;padding:2rem 0;">Zatím žádné verze. Nejdřív vyrenderuj scénu.</div>
+        <div class="hist-strip" id="vStr" style="margin-bottom:1.5rem;"></div>
+        <div id="iterDetail"></div>
+      </div>
+
       <div class="step-nav" style="margin-top:1.5rem">
         <button class="btn btn-o" onclick="goStep(2)">← Nastavení</button>
       </div>
@@ -433,7 +447,7 @@ async function goScene(id){
   if(curScene.description){ST.description=curScene.description;document.getElementById('description').value=ST.description;}
   if(curScene.settings){const s=curScene.settings;Object.assign(ST,s);restoreSettings(s);}
   // Go to appropriate step
-  if(sceneRenders.length){goStep(3);renderStrip();showRender(sceneRenders[sceneRenders.length-1]);document.getElementById('refineBox').style.display='block';}
+  if(sceneRenders.length){goStep(3);renderStrip();showRender(sceneRenders[sceneRenders.length-1]);document.getElementById('refineBox').style.display='block';document.getElementById('reRenderBtn').style.display='';updIterCount();}
   else if(curScene.description)goStep(2);
   else if(curScene.source_image_path)goStep(1);
   else goStep(0);
@@ -596,7 +610,7 @@ async function doRender(note){
       const row={version:ver,scene_id:curScene.id,note:v.note,prompt:rp,cost:CPR,parent_id:v.parentId,image_path:url};
       const saved=await sbPost('/rest/v1/renders',row,{'Prefer':'return=representation'});
       v.imgSrc=url;v.dbId=saved?.[0]?.id;
-      sceneRenders.push(v);renderStrip();showRender(v);document.getElementById('refineBox').style.display='block';ok=true;
+      sceneRenders.push(v);renderStrip();showRender(v);document.getElementById('refineBox').style.display='block';document.getElementById('reRenderBtn').style.display='';updIterCount();ok=true;
     }}
     stR(ok?'':'Žádný obrázek',!ok);
   }catch(e){stR(e.message,1);}
@@ -635,11 +649,69 @@ async function updStyleRefUI(){
   box.innerHTML=`<div class="style-ref-preview"><img src="${r[0].image_path}"><div class="style-ref-info"><strong>v${r[0].version}</strong> — ${r[0].note||''}<br>Nové rendery budou vizuálně odpovídat tomuto stylu.<div class="btns" style="margin-top:0.4rem"><button class="btn btn-o btn-sm" onclick="clearStyleRef()">Zrušit</button></div></div></div>`;
 }
 
-// --- Version strip ---
-function renderStrip(){const p=document.getElementById('histP'),s=document.getElementById('vStr');
-  if(!sceneRenders.length){p.style.display='none';return;}p.style.display='block';
-  s.innerHTML=sceneRenders.map(v=>`<div class="vc" onclick="showRender(sceneRenders.find(x=>x.id===${v.id}))">
+// --- Sub-tabs ---
+function showSub(which){
+  document.getElementById('sub-render').style.display=which==='render'?'':'none';
+  document.getElementById('sub-iter').style.display=which==='iter'?'':'none';
+  document.getElementById('subRender').className='btn btn-sm '+(which==='render'?'btn-f':'btn-o');
+  document.getElementById('subIter').className='btn btn-sm '+(which==='iter'?'btn-f':'btn-o');
+  if(which==='iter')renderIterDetail();
+}
+function updIterCount(){
+  const el=document.getElementById('iterCount');
+  if(el)el.textContent=sceneRenders.length?`(${sceneRenders.length})`:'';
+}
+
+// --- Version strip (in Iterace tab) ---
+function renderStrip(){
+  const s=document.getElementById('vStr');
+  s.innerHTML=sceneRenders.map(v=>`<div class="vc" onclick="selectIter(${v.id})">
     <img src="${v.imgSrc}"><div class="vc-i"><div class="vi">v${v.id}</div><div class="vn">${v.note}</div><div class="vp">${(v.cost*CZK).toFixed(1)} Kč</div></div></div>`).join('');
+}
+
+function renderIterDetail(){
+  const el=document.getElementById('iterDetail');
+  const empty=document.getElementById('iterEmpty');
+  if(!sceneRenders.length){empty.style.display='';el.innerHTML='';return;}
+  empty.style.display='none';
+  renderStrip();
+  // Show last render detail by default
+  selectIter(sceneRenders[sceneRenders.length-1].id);
+}
+
+function selectIter(id){
+  const v=sceneRenders.find(x=>x.id===id);if(!v)return;
+  // Highlight in strip
+  document.querySelectorAll('#vStr .vc').forEach(c=>c.style.borderColor='');
+  const cards=document.querySelectorAll('#vStr .vc');
+  const idx=sceneRenders.findIndex(x=>x.id===id);
+  if(cards[idx])cards[idx].style.borderColor='var(--olive)';
+
+  document.getElementById('iterDetail').innerHTML=`
+    <div class="duo" style="margin-top:1rem;">
+      <div>
+        <img src="${v.imgSrc}" style="max-width:100%;border:1px solid var(--border);display:block;">
+      </div>
+      <div>
+        <div style="font-family:var(--serif);font-size:1.1rem;margin-bottom:0.5rem;">Verze ${v.id}</div>
+        <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.3rem;">${v.note}</div>
+        <div style="font-size:0.75rem;color:var(--text-light);margin-bottom:1rem;font-family:var(--serif);font-style:italic;">
+          $${v.cost.toFixed(3)} · ${(v.cost*CZK).toFixed(1)} Kč${v.parentId?' · iterace z předchozí verze':''}
+        </div>
+        <div class="btns">
+          <button class="btn btn-o btn-sm" onclick="dlV(${v.id})">Stáhnout</button>
+          <button class="btn btn-o btn-sm" onclick="setStyleRef(${v.dbId})">Referenční styl</button>
+          <button class="btn btn-o btn-sm" onclick="loadIterToRender(${v.id})">Iterovat z této verze</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function loadIterToRender(id){
+  const v=sceneRenders.find(x=>x.id===id);if(!v)return;
+  showRender(v);
+  document.getElementById('refineBox').style.display='block';
+  showSub('render');
 }
 
 // --- Spendings ---
