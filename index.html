@@ -135,6 +135,15 @@ input.fi{resize:none;}
 .cmp-p:first-child{border-color:var(--brown);}
 .cmp-p:last-child{border-color:var(--olive);}
 
+/* Style ref */
+.style-ref{margin-top:1rem;padding:1rem;background:var(--olive-pale);border:1px solid var(--border);}
+.style-ref .fl{margin-bottom:0.4rem;}
+.style-ref-preview{display:flex;align-items:flex-start;gap:0.75rem;}
+.style-ref-preview img{width:100px;height:70px;object-fit:cover;border:1px solid var(--border);}
+.style-ref-info{font-size:0.75rem;color:var(--text-dim);line-height:1.4;}
+.style-ref-info strong{color:var(--text);font-weight:500;}
+.style-ref-empty{font-size:0.75rem;color:var(--text-dim);line-height:1.5;}
+
 /* Spendings */
 .sp-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:2.5rem;}
 .sp-c{background:var(--white);border:1px solid var(--border);padding:1.5rem;text-align:center;}
@@ -241,6 +250,16 @@ input.fi{resize:none;}
           <div class="sl"><span class="sl-e">Volně</span><input type="range" id="angS" min="0" max="100" value="80"><span class="sl-e">Přesně</span></div>
         </div>
         <div class="fg">
+          <div class="fl">Patro</div>
+          <div class="pills" id="floorLevel">
+            <div class="pill" data-val="ground">Přízemí</div>
+            <div class="pill on" data-val="low">1.–2. NP</div>
+            <div class="pill" data-val="mid">3.–5. NP</div>
+            <div class="pill" data-val="high">6.+ NP</div>
+            <div class="pill" data-val="penthouse">Střešní</div>
+          </div>
+        </div>
+        <div class="fg">
           <div class="fl">Výhled z oken</div>
           <input class="fi" id="windowView" placeholder="Pražské Staré Město, park, vnitroblok...">
         </div>
@@ -277,6 +296,15 @@ input.fi{resize:none;}
           <div class="loader" id="loader"><div class="loader-bar"></div></div>
           <div class="st" id="renderSt"></div>
         </div>
+
+        <!-- Style reference -->
+        <div class="style-ref" id="styleRefBox">
+          <div class="fl">Referenční styl <span class="v" id="styleRefStatus">žádný</span></div>
+          <div id="styleRefContent">
+            <div class="style-ref-empty">Zatím žádný render. Až vygeneruješ první render, můžeš ho nastavit jako referenční styl — další obrázky ze SketchUp se pak renderují ve stejném vizuálním stylu.</div>
+          </div>
+        </div>
+
         <div class="rout" id="rout"></div>
 
         <!-- Refine box — shown after first render -->
@@ -340,12 +368,12 @@ document.getElementById('pwdIn').addEventListener('keydown',e=>{if(e.key==='Ente
 document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('nav a').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));a.classList.add('on');document.getElementById('v-'+a.dataset.view).classList.add('on');}));
 
 // State
-const S={imageData:null,description:'',sceneType:'exterior',timeOfDay:'midday',weather:'clear',material:75,angle:80,vegetation:50,people:30};
-let V=[],cmpSel=[];
+const S={imageData:null,description:'',sceneType:'exterior',timeOfDay:'midday',weather:'clear',material:75,angle:80,vegetation:50,people:30,floor:'low'};
+let V=[],cmpSel=[],styleRefId=null;
 
 // LocalStorage
 function saveVersions(){try{localStorage.setItem(LS_KEY,JSON.stringify(V));}catch(e){console.warn('Storage full, removing oldest');V.shift();saveVersions();}}
-function loadVersions(){try{const d=localStorage.getItem(LS_KEY);if(d){V=JSON.parse(d);updSpend();renderStrip();if(V.length){showRender(V[V.length-1]);document.getElementById('refineBox').style.display='block';document.getElementById('rerunBtn').style.display='';}}}catch{}}
+function loadVersions(){try{const d=localStorage.getItem(LS_KEY);if(d){V=JSON.parse(d);updSpend();renderStrip();if(V.length){showRender(V[V.length-1]);document.getElementById('refineBox').style.display='block';document.getElementById('rerunBtn').style.display='';}}const sr=localStorage.getItem('marinada_styleRef');if(sr){styleRefId=+sr;updStyleRefUI();}}catch{}}
 
 // Upload
 const uz=document.getElementById('uploadZone'),fi=document.getElementById('fileInput');
@@ -358,7 +386,7 @@ function loadFile(f){if(!f.type.startsWith('image/'))return;const r=new FileRead
 
 // Toggles
 function tog(id,key){document.getElementById(id).addEventListener('click',e=>{const p=e.target.closest('[data-val]');if(!p)return;p.parentElement.querySelectorAll('[data-val]').forEach(x=>x.classList.remove('on'));p.classList.add('on');S[key]=p.dataset.val;});}
-tog('sceneType','sceneType');tog('timeOfDay','timeOfDay');tog('weather','weather');
+tog('sceneType','sceneType');tog('timeOfDay','timeOfDay');tog('weather','weather');tog('floorLevel','floor');
 
 // Sliders
 function sL(v){return v<25?'Nízká':v<50?'Střední':v<75?'Vysoká':'Maximální';}
@@ -403,7 +431,7 @@ function genPrompt(){
     'MATERIALS:',`- ${mat}`,'- Physically accurate: reflectivity, roughness, bump, subsurface scattering.','- Glass: reflections, transparency, green edge tint. Metal: specular highlights.','',
     'CAMERA:',`- ${ang}`,'- 1:1 layout match. Same walls, proportions. Only upgrade materials & lighting.','- Canon EOS R5, 24mm tilt-shift, f/5.6. Correct verticals.','',
     'CONTEXT:',`- ${vg}`,`- ${pp}`,isI?'- Realistic room context, tasteful decor.':'- Realistic sky, neighboring context, ground surface.',
-    wv?`- WINDOWS: View of ${wv}. Natural depth, atmospheric perspective.`:'','',
+    wv?`- WINDOWS: View of ${wv}. ${({ground:'Ground floor perspective — street-level view, pedestrians visible, close buildings across the street.',low:'Low floor (1st-2nd) — slightly elevated, treetops at eye level, nearby buildings and street partially visible.',mid:'Mid floor (3rd-5th) — elevated urban view, rooftops of lower buildings visible, broader cityscape.',high:'High floor (6th+) — panoramic elevated view, looking over rooftops, distant horizon visible.',penthouse:'Penthouse/rooftop level — wide skyline panorama, dramatic sky, distant landmarks visible.'})[S.floor]} Natural depth, atmospheric perspective.`:'','',
     'QUALITY:','- Indistinguishable from real photo. Architecture magazine quality.','- Global illumination, HDR, subtle atmosphere.','- Zero CG artifacts or flat shading.'
   ].filter(Boolean).join('\n');
 }
@@ -424,18 +452,37 @@ async function doRender(note){
   if(!pr||pr.startsWith('Nejdřív')){st('renderSt','Nejdřív vygeneruj prompt',1);return;}
   const src=note&&V.length?V[V.length-1].imgSrc:S.imageData;
   if(!src){st('renderSt','Nahraj obrázek',1);return;}
-  const rp=note?`Edit the attached architectural render. Keep everything EXCEPT: ${note}. Same angle, composition. Only change what was requested. Photorealistic output.`:pr;
 
-  st('renderSt',note?'Upravuji render...':'Generuji render...',0);
+  // Build prompt with style reference context
+  const styleRef=styleRefId?V.find(x=>x.id===styleRefId):null;
+  let rp;
+  if(note){
+    rp=`Edit the attached architectural render. Keep everything EXCEPT: ${note}. Same angle, composition. Only change what was requested. Photorealistic output.`;
+  } else if(styleRef){
+    rp=pr+'\n\nSTYLE REFERENCE:\nThe first attached image is the style reference — a previously rendered view. Match its EXACT rendering style: same color grading, material treatment, lighting mood, level of photorealism, color temperature, contrast, and post-processing look. The second attached image is the new SketchUp view to render. Apply the same visual style to this new view.';
+  } else {
+    rp=pr;
+  }
+
+  st('renderSt',note?'Upravuji render...':(styleRef?'Generuji se stylem z v'+styleRef.id+'...':'Generuji render...'),0);
   showLoader(true);
   document.getElementById('renderBtn').disabled=true;
   document.getElementById('refBtn')&&(document.getElementById('refBtn').disabled=true);
+
+  // Build parts: style ref image first (if set and not a refinement), then source image, then prompt
+  const parts=[];
+  if(styleRef&&!note){
+    const sb=styleRef.imgSrc.split(',')[1],sm=styleRef.imgSrc.split(';')[0].split(':')[1];
+    parts.push({inlineData:{mimeType:sm,data:sb}});
+  }
   const b=src.split(',')[1],m=src.split(';')[0].split(':')[1];
+  parts.push({inlineData:{mimeType:m,data:b}});
+  parts.push({text:rp});
 
   try{
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{inlineData:{mimeType:m,data:b}},{text:rp}]}],generationConfig:{responseModalities:['TEXT','IMAGE']}})
+      body:JSON.stringify({contents:[{parts}],generationConfig:{responseModalities:['TEXT','IMAGE']}})
     });
     const d=await r.json();if(d.error)throw new Error(d.error.message);
     let ok=false;
@@ -462,7 +509,39 @@ function showRender(v){
     <div class="rmeta">v${v.id} · $${v.cost.toFixed(3)} · ${(v.cost*CZK).toFixed(1)} Kč · ${v.note}</div>
     <div class="btns" style="margin-top:0.5rem">
       <button class="btn btn-o btn-sm" onclick="dlV(${v.id})">Stáhnout</button>
+      <button class="btn btn-o btn-sm" onclick="setStyleRef(${v.id})">Nastavit jako referenční styl</button>
     </div>`;
+}
+
+function setStyleRef(id){
+  styleRefId=id;
+  localStorage.setItem('marinada_styleRef',id);
+  updStyleRefUI();
+}
+function clearStyleRef(){
+  styleRefId=null;
+  localStorage.removeItem('marinada_styleRef');
+  updStyleRefUI();
+}
+function updStyleRefUI(){
+  const box=document.getElementById('styleRefContent');
+  const status=document.getElementById('styleRefStatus');
+  if(!styleRefId){
+    status.textContent='žádný';
+    box.innerHTML='<div class="style-ref-empty">Zatím žádný referenční styl. Až vygeneruješ render, klikni „Nastavit jako referenční styl" — další obrázky se pak renderují ve stejném vizuálním stylu.</div>';
+    return;
+  }
+  const v=V.find(x=>x.id===styleRefId);
+  if(!v){clearStyleRef();return;}
+  status.textContent='v'+v.id;
+  box.innerHTML=`<div class="style-ref-preview">
+    <img src="${v.imgSrc}">
+    <div class="style-ref-info">
+      <strong>v${v.id}</strong> — ${v.note}<br>
+      Všechny nové rendery budou vizuálně odpovídat tomuto stylu (barvy, světlo, materiály, nálada).
+      <div class="btns" style="margin-top:0.4rem"><button class="btn btn-o btn-sm" onclick="clearStyleRef()">Zrušit referenci</button></div>
+    </div>
+  </div>`;
 }
 
 function refine(){const i=document.getElementById('refIn'),n=i.value.trim();if(!n)return;i.value='';doRender(n);}
