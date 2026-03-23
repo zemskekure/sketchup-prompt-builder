@@ -166,6 +166,7 @@
       <div class="sub-tabs" style="display:flex;gap:0.25rem;margin-bottom:1.5rem;">
         <button class="btn btn-f btn-sm" id="subRender" onclick="ui.showSub('render')">Render</button>
         <button class="btn btn-o btn-sm" id="subIter" onclick="ui.showSub('iter')">Iterace <span id="iterCount"></span></button>
+        <button class="btn btn-o btn-sm" id="subOutput" onclick="ui.showSub('output')">Export</button>
       </div>
 
       <div id="sub-render">
@@ -200,6 +201,36 @@
         <div id="iterEmpty" style="color:var(--text-light);font-size:0.85rem;padding:2rem 0;">Zatím žádné verze.</div>
         <div class="hist-strip" id="vStr" style="margin-bottom:1.5rem;"></div>
         <div id="iterDetail"></div>
+      </div>
+
+      <!-- Sub: Export -->
+      <div id="sub-output" style="display:none">
+        <div id="outputEmpty" style="color:var(--text-light);font-size:0.85rem;padding:2rem 0;">Zatím žádné rendery k exportu.</div>
+        <div id="outputContent" style="display:none">
+          <div class="btns" style="margin-bottom:1rem;">
+            <button class="btn btn-o btn-sm" onclick="output.selectAll()">Vybrat vše</button>
+            <button class="btn btn-o btn-sm" onclick="output.selectNone()">Zrušit výběr</button>
+            <button class="btn btn-o btn-sm" onclick="output.select4K()">Pouze 4K</button>
+            <span style="border-left:1px solid var(--border);height:20px;margin:0 0.25rem;"></span>
+            <button class="btn btn-f btn-sm" onclick="output.zipSelected()">Stáhnout ZIP</button>
+            <button class="btn btn-r btn-sm" onclick="output.gen4KAll()">Vygenerovat chybějící 4K</button>
+          </div>
+          <div id="outputGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;"></div>
+
+          <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+            <div class="fl">Kontaktní arch</div>
+            <div class="sec-sub" style="margin-bottom:1rem;">Vytvoří přehledový obrázek všech vybraných renderů — ideální jako příloha k emailu klientovi.</div>
+            <button class="btn btn-f btn-sm" onclick="output.contactSheet()">Vygenerovat kontaktní arch</button>
+            <div id="contactSheetResult" style="margin-top:1rem;"></div>
+          </div>
+
+          <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+            <div class="fl">Poznámky k verzím</div>
+            <div class="sec-sub" style="margin-bottom:1rem;">Pojmenuj verze pro klienta — např. „Finální", „Varianta B".</div>
+            <div id="renameList"></div>
+          </div>
+        </div>
+        <div class="st" id="outputSt"></div>
       </div>
 
       <div class="step-nav" style="margin-top:1.5rem">

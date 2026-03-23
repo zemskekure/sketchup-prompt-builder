@@ -257,7 +257,11 @@ const ui = {
   updDescPreview(){const p=$('descPreview'),d=$('description').value;if(d){p.textContent=d.substring(0,120)+(d.length>120?'…':'');p.style.display='';}else p.style.display='none';},
   toggleDesc(){const w=$('descWrap'),t=$('descToggle');if(w.style.display==='none'){w.style.display='';t.textContent='skrýt ▴';$('descPreview').style.display='none';}else{w.style.display='none';t.textContent='zobrazit ▾';ui.updDescPreview();}},
   togglePrompt(){const w=$('promptWrap'),t=$('promptToggle');if(w.style.display==='none'){w.style.display='';t.textContent='skrýt ▴';}else{w.style.display='none';t.textContent='zobrazit ▾';}},
-  showSub(which){$('sub-render').style.display=which==='render'?'':'none';$('sub-iter').style.display=which==='iter'?'':'none';$('subRender').className='btn btn-sm '+(which==='render'?'btn-f':'btn-o');$('subIter').className='btn btn-sm '+(which==='iter'?'btn-f':'btn-o');if(which==='iter')iter.renderDetail();},
+  showSub(which){
+    ['render','iter','output'].forEach(t=>{$('sub-'+t).style.display=t===which?'':'none';$('sub'+t[0].toUpperCase()+t.slice(1)).className='btn btn-sm '+(t===which?'btn-f':'btn-o');});
+    if(which==='iter')iter.renderDetail();
+    if(which==='output')output.render();
+  },
   updIterCount(){const el=$('iterCount');if(el)el.textContent=state.renders.length?`(${state.renders.length})`:'';},
   showRender(v){
     const has4k=v.url4k&&validUrl(v.url4k);
@@ -604,6 +608,159 @@ const spend = {
       return`<tr><td class="it">${type}</td><td>${esc(r.scenes?.sessions?.name||'—')}</td><td>${esc(r.scenes?.name||'—')}</td><td>${esc(r.note||'')}</td><td class="it">$${parseFloat(r.cost||0).toFixed(3)}</td><td class="it">${(parseFloat(r.cost||0)*CZK_RATE).toFixed(1)} Kč</td></tr>`;
     }).join(''):'<tr><td colspan="6" style="color:var(--text-light);text-align:center;padding:2rem;">Zatím žádné rendery</td></tr>';
   }
+};
+
+/* ============================================================
+   OUTPUT / EXPORT
+   ============================================================ */
+const output = {
+  selected: new Set(),
+
+  render(){
+    const R=state.renders;
+    if(!R.length){$('outputEmpty').style.display='';$('outputContent').style.display='none';return;}
+    $('outputEmpty').style.display='none';$('outputContent').style.display='';
+    // Grid
+    $('outputGrid').innerHTML=R.map(v=>{
+      const has4k=v.url4k&&validUrl(v.url4k);
+      const checked=output.selected.has(v.id);
+      return`<div class="out-card ${checked?'checked':''}" id="oc${v.id}">
+        <div class="out-check ${checked?'on':''}" onclick="output.toggle(${v.id})">${checked?'✓':''}</div>
+        <img src="${esc(v.imgSrc)}" onclick="output.toggle(${v.id})">
+        <div class="out-card-body">
+          <div class="out-card-top">
+            <span class="out-card-name">v${v.id}</span>
+            <div class="out-card-badges">
+              <span class="out-badge b2k">2K</span>
+              ${has4k?'<span class="out-badge b4k">4K</span>':'<span class="out-badge no4k">—</span>'}
+            </div>
+          </div>
+          <div style="color:var(--text-dim);font-size:0.65rem;margin-top:0.15rem;">${esc(v.note)}</div>
+          <div class="out-card-note">
+            <input value="${esc(v.label||'')}" placeholder="Pojmenuj..." onchange="output.setLabel(${v.id},this.value)">
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    // Rename list
+    $('renameList').innerHTML=R.map(v=>`<div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.4rem;">
+      <span style="font-size:0.75rem;color:var(--text-dim);min-width:2rem;">v${v.id}</span>
+      <input class="fi" style="font-size:0.75rem;padding:0.3rem 0.5rem;" value="${esc(v.label||v.note)}" onchange="output.setLabel(${v.id},this.value)" placeholder="${esc(v.note)}">
+    </div>`).join('');
+  },
+
+  toggle(id){
+    if(output.selected.has(id))output.selected.delete(id);else output.selected.add(id);
+    output.render();
+  },
+  selectAll(){state.renders.forEach(v=>output.selected.add(v.id));output.render();},
+  selectNone(){output.selected.clear();output.render();},
+  select4K(){output.selected.clear();state.renders.filter(v=>v.url4k&&validUrl(v.url4k)).forEach(v=>output.selected.add(v.id));output.render();},
+
+  setLabel(id,label){
+    const v=state.renders.find(x=>x.id===id);if(!v)return;
+    v.label=label;
+    // Save to DB
+    if(v.dbId)sb.patch(`/rest/v1/renders?id=eq.${v.dbId}`,{note:label});
+  },
+
+  async zipSelected(){
+    const sel=state.renders.filter(v=>output.selected.has(v.id));
+    if(!sel.length){toast('Vyber alespoň jednu verzi');return;}
+    const p=$('zipProg');p.style.display='block';
+    const zip=new JSZip();
+    const sceneName=(state.curScene?.name||'scene').replace(/[\/\\]/g,'-');
+    for(let i=0;i<sel.length;i++){
+      const v=sel[i];
+      p.textContent=`Stahuji ${i+1}/${sel.length}...`;
+      const name=v.label||v.note||'render';
+      // 2K
+      if(validUrl(v.imgSrc)){try{const r=await fetch(v.imgSrc);zip.file(`${sceneName}-v${v.id}-${name.replace(/[\/\\]/g,'-')}-2k.png`,await r.blob());}catch{}}
+      // 4K if exists
+      if(v.url4k&&validUrl(v.url4k)){try{const r=await fetch(v.url4k);zip.file(`${sceneName}-v${v.id}-${name.replace(/[\/\\]/g,'-')}-4k.png`,await r.blob());}catch{}}
+    }
+    p.textContent='Komprimuji...';
+    const blob=await zip.generateAsync({type:'blob'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${sceneName}-export.zip`;a.click();URL.revokeObjectURL(a.href);
+    p.style.display='none';toast(`ZIP se ${sel.length} ${czPlural(sel.length,'verzí','verzemi','verzemi')} stažen`);
+  },
+
+  async gen4KAll(){
+    const missing=state.renders.filter(v=>output.selected.has(v.id)&&(!v.url4k||!validUrl(v.url4k)));
+    if(!missing.length){toast('Všechny vybrané už mají 4K');return;}
+    if(!confirm(`Vygenerovat 4K pro ${missing.length} ${czPlural(missing.length,'verzi','verze','verzí')}? (~${(missing.length*3.2).toFixed(0)} Kč)`))return;
+    const st=$('outputSt');
+    for(let i=0;i<missing.length;i++){
+      const v=missing[i];
+      st.textContent=`Generuji 4K ${i+1}/${missing.length} (v${v.id})...`;st.className='st ld';
+      try{
+        const{b64:b,mime:m}=await sb.toB64(v.imgSrc);
+        const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({contents:[{parts:[{inlineData:{mimeType:m,data:b}},{text:'Upscale to 4K. Keep EXACT same image. Only increase resolution.'}]}],generationConfig:{responseModalities:['TEXT','IMAGE'],imageConfig:{imageSize:'4K'}}})});
+        const d=await r.json();if(d.error)throw new Error(d.error.message);
+        for(const p of d.candidates[0].content.parts){if(p.inlineData){
+          const src=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+          const fname=`render-s${state.curScene.id}-v${v.id}-4k-${Date.now()}.png`;
+          const url=await sb.uploadImg(src,fname);
+          sb.post('/rest/v1/renders',{version:0,scene_id:state.curScene.id,note:'4K verze v'+v.id,cost:0.151,parent_id:v.dbId,image_path:url},{'Prefer':'return=minimal'});
+          v.url4k=url;
+        }}
+      }catch(e){st.textContent=`Chyba u v${v.id}: ${e.message}`;st.className='st er';await new Promise(r=>setTimeout(r,2000));}
+    }
+    st.textContent='Hotovo!';st.className='st ld';setTimeout(()=>{st.textContent='';},2000);
+    output.render();
+  },
+
+  async contactSheet(){
+    const sel=state.renders.filter(v=>output.selected.has(v.id));
+    if(!sel.length){toast('Vyber alespoň jednu verzi');return;}
+    const st=$('outputSt');st.textContent='Vytvářím kontaktní arch...';st.className='st ld';
+    try{
+      const imgs=[];
+      for(const v of sel){
+        const img=new Image();img.crossOrigin='anonymous';
+        await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=v.imgSrc;});
+        imgs.push({img,label:v.label||v.note||'v'+v.id});
+      }
+      // Layout: 2 columns
+      const cols=Math.min(2,imgs.length);
+      const rows=Math.ceil(imgs.length/cols);
+      const cellW=800,cellH=600,pad=20,labelH=30;
+      const cw=cols*cellW+(cols+1)*pad;
+      const ch=rows*(cellH+labelH)+(rows+1)*pad+60;
+      const canvas=document.createElement('canvas');canvas.width=cw;canvas.height=ch;
+      const ctx=canvas.getContext('2d');
+      ctx.fillStyle='#f4f1ea';ctx.fillRect(0,0,cw,ch);
+      // Title
+      ctx.fillStyle='#2c2c28';ctx.font='bold 24px Helvetica Neue, sans-serif';
+      ctx.fillText((state.curScene?.name||'marinada')+' — kontaktní arch',pad,40);
+      ctx.fillStyle='#8a8578';ctx.font='14px Helvetica Neue, sans-serif';
+      ctx.fillText(new Date().toLocaleDateString('cs-CZ'),pad+ctx.measureText((state.curScene?.name||'')+' — kontaktní arch').width+20,40);
+
+      for(let i=0;i<imgs.length;i++){
+        const col=i%cols,row=Math.floor(i/cols);
+        const x=pad+col*(cellW+pad),y=60+pad+row*(cellH+labelH+pad);
+        // Draw image scaled to fit
+        const{img,label}=imgs[i];
+        const scale=Math.min(cellW/img.width,cellH/img.height);
+        const dw=img.width*scale,dh=img.height*scale;
+        ctx.fillStyle='#ffffff';ctx.fillRect(x,y,cellW,cellH);
+        ctx.drawImage(img,x+(cellW-dw)/2,y+(cellH-dh)/2,dw,dh);
+        ctx.strokeStyle='#ddd8cc';ctx.strokeRect(x,y,cellW,cellH);
+        // Label
+        ctx.fillStyle='#2c2c28';ctx.font='13px Helvetica Neue, sans-serif';
+        ctx.fillText(label,x,y+cellH+18);
+      }
+      // Download
+      canvas.toBlob(blob=>{
+        const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${(state.curScene?.name||'marinada').replace(/[\/\\]/g,'-')}-kontaktni-arch.png`;a.click();URL.revokeObjectURL(a.href);
+      },'image/png');
+      // Also show preview
+      $('contactSheetResult').innerHTML='';$('contactSheetResult').appendChild(canvas);
+      st.textContent='Kontaktní arch vytvořen a stažen';setTimeout(()=>{st.textContent='';},3000);
+    }catch(e){st.textContent=e.message;st.className='st er';}
+  },
 };
 
 /* ============================================================

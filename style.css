@@ -162,6 +162,27 @@ input.fi{resize:none;}
 .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--text);color:var(--cream);padding:0.6rem 1.2rem;font-size:0.8rem;border-radius:6px;z-index:200;display:none;animation:fadeIn 0.2s;}
 @keyframes fadeIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
+/* Output grid */
+.out-card{background:var(--white);border:1px solid var(--border);overflow:hidden;position:relative;transition:border-color 0.2s;}
+.out-card.checked{border-color:var(--olive);border-width:2px;}
+.out-card img{width:100%;height:130px;object-fit:cover;display:block;cursor:pointer;}
+.out-card-body{padding:0.5rem 0.6rem;font-size:0.7rem;}
+.out-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.2rem;}
+.out-card-name{font-weight:500;color:var(--text);}
+.out-card-badges{display:flex;gap:0.25rem;}
+.out-badge{padding:0.1rem 0.35rem;font-size:0.58rem;border-radius:3px;font-weight:500;}
+.out-badge.b2k{background:var(--olive-pale);color:var(--olive);}
+.out-badge.b4k{background:var(--olive);color:var(--cream);}
+.out-badge.no4k{background:var(--border-light);color:var(--text-light);}
+.out-check{position:absolute;top:6px;left:6px;width:20px;height:20px;background:var(--white);border:1.5px solid var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.7rem;color:var(--olive);transition:all 0.15s;}
+.out-check.on{background:var(--olive);border-color:var(--olive);color:var(--cream);}
+.out-card-note{display:flex;gap:0.3rem;align-items:center;margin-top:0.3rem;}
+.out-card-note input{flex:1;padding:0.2rem 0.4rem;font-size:0.68rem;border:1px solid var(--border);background:var(--white);color:var(--text);outline:none;font-family:var(--sans);}
+.out-card-note input:focus{border-color:var(--olive);}
+
+/* Contact sheet */
+#contactSheetResult canvas{max-width:100%;border:1px solid var(--border);}
+
 /* Progress for ZIP */
 .zip-progress{position:fixed;bottom:2rem;right:2rem;background:var(--white);border:1px solid var(--border);padding:0.75rem 1rem;font-size:0.8rem;color:var(--text-dim);z-index:200;display:none;min-width:200px;}
 
