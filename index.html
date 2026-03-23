@@ -442,7 +442,7 @@ uz.addEventListener('dragover',e=>{e.preventDefault();uz.style.borderColor='var(
 uz.addEventListener('dragleave',()=>{uz.style.borderColor='';});
 uz.addEventListener('drop',e=>{e.preventDefault();uz.style.borderColor='';if(e.dataTransfer.files.length)loadFile(e.dataTransfer.files[0]);});
 fi.addEventListener('change',()=>{if(fi.files.length)loadFile(fi.files[0]);});
-function loadFile(f){if(!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=e=>{S.imageData=e.target.result;uz.classList.add('has');document.getElementById('uploadHint').style.display='none';const old=uz.querySelector('img');if(old)old.remove();const img=document.createElement('img');img.src=S.imageData;uz.appendChild(img);document.getElementById('analyzeBtn').disabled=false;};r.readAsDataURL(f);}
+function loadFile(f){if(!f.type.startsWith('image/'))return;S.fileName=f.name;const r=new FileReader();r.onload=e=>{S.imageData=e.target.result;uz.classList.add('has');document.getElementById('uploadHint').style.display='none';const old=uz.querySelector('img');if(old)old.remove();const img=document.createElement('img');img.src=S.imageData;uz.appendChild(img);document.getElementById('analyzeBtn').disabled=false;};r.readAsDataURL(f);}
 
 // Toggles
 function tog(id,key){document.getElementById(id).addEventListener('click',e=>{const p=e.target.closest('[data-val]');if(!p)return;p.parentElement.querySelectorAll('[data-val]').forEach(x=>x.classList.remove('on'));p.classList.add('on');S[key]=p.dataset.val;});}
@@ -456,17 +456,38 @@ document.getElementById('vegS').addEventListener('input',e=>{S.vegetation=+e.tar
 document.getElementById('pplS').addEventListener('input',e=>{S.people=+e.target.value;document.getElementById('pplL').textContent=e.target.value+' %';});
 document.getElementById('description').addEventListener('input',e=>{S.description=e.target.value;});
 
-// Analyze
+// Analyze (with Supabase cache by filename)
 document.getElementById('analyzeBtn').addEventListener('click',analyze);
 async function analyze(){
   if(!S.imageData){st('analyzeStatus','Nejdřív nahraj obrázek',1);return;}
-  st('analyzeStatus','Analyzuji scénu...',0);document.getElementById('analyzeBtn').disabled=true;
+  document.getElementById('analyzeBtn').disabled=true;
+  const fname=S.fileName||'unnamed';
+
+  // Check cache first
+  try{
+    st('analyzeStatus','Hledám v cache...',0);
+    const cr=await fetch(`${SB_URL}/rest/v1/analyses?filename=eq.${encodeURIComponent(fname)}&select=description&limit=1`,{headers:sbHeaders()});
+    const cached=await cr.json();
+    if(cached&&cached.length>0){
+      document.getElementById('description').value=cached[0].description;
+      S.description=cached[0].description;
+      st('analyzeStatus','Načteno z cache (zdarma)',0);
+      document.getElementById('analyzeBtn').disabled=false;
+      return;
+    }
+  }catch(e){console.warn('Cache check failed:',e);}
+
+  // No cache — call Claude
+  st('analyzeStatus','Analyzuji scénu...',0);
   const b=S.imageData.split(',')[1],m=S.imageData.split(';')[0].split(':')[1];
   try{
     const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AK,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:m,data:b}},{type:'text',text:'You are an architectural visualization expert. Describe this SketchUp 3D model export in detail for generating a photorealistic render. Include: building form, materials (concrete, wood, glass, metal, brick, etc.), style, floors, roof, windows, landscape, camera angle. Be factual. Single dense paragraph.'}]}]})});
     const d=await r.json();if(d.error)throw new Error(d.error.message);
-    document.getElementById('description').value=d.content[0].text;S.description=d.content[0].text;
-    st('analyzeStatus','Hotovo',0);
+    const desc=d.content[0].text;
+    document.getElementById('description').value=desc;S.description=desc;
+    // Save to cache
+    fetch(`${SB_URL}/rest/v1/analyses`,{method:'POST',headers:sbHeaders(),body:JSON.stringify({filename:fname,description:desc})}).catch(e=>console.warn('Cache save failed:',e));
+    st('analyzeStatus','Hotovo (uloženo do cache)',0);
   }catch(e){st('analyzeStatus',e.message,1);}
   document.getElementById('analyzeBtn').disabled=false;
 }
