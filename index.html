@@ -297,17 +297,17 @@ input.fi{resize:none;}
           <div class="btns">
             <button class="btn btn-r" id="renderBtn">Renderovat</button>
           </div>
-          <div class="loader" id="loader"><div class="loader-bar"></div></div>
-          <div class="st" id="renderSt"></div>
           <div class="rout" id="rout"></div>
           <div class="refine-box" id="refineBox" style="display:none">
-            <div class="fl">Upravit render</div>
+            <div class="fl">Nová iterace</div>
             <div class="refine-row">
               <input class="fi" id="refIn" placeholder="Změň podlahu na dub, teplejší světlo...">
-              <button class="btn btn-r btn-sm" id="refBtn">Upravit</button>
+              <button class="btn btn-r btn-sm" id="refBtn">Renderovat</button>
             </div>
-            <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.3rem;">Pošle předchozí render zpět do AI s úpravami</div>
+            <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.3rem;">Pošle předchozí render zpět do AI s tvými změnami</div>
           </div>
+          <div class="loader" id="loader"><div class="loader-bar"></div></div>
+          <div class="st" id="renderSt"></div>
           <div class="hist" id="histP" style="display:none">
             <div class="fl">Verze</div>
             <div class="hist-strip" id="vStr"></div>
@@ -540,20 +540,43 @@ document.getElementById('copyBtn').addEventListener('click',()=>{navigator.clipb
 document.getElementById('renderBtn').addEventListener('click',()=>doRender(null));
 document.getElementById('refBtn').addEventListener('click',refine);
 document.getElementById('refIn').addEventListener('keydown',e=>{if(e.key==='Enter')refine();});
-function showLoader(on){const l=document.getElementById('loader');if(on){l.innerHTML='<div class="loader-bar"></div>';l.classList.add('on');}else l.classList.remove('on');}
+let loadTimer=null;
+function showLoader(on){const l=document.getElementById('loader');if(on){l.innerHTML='<div class="loader-bar"></div>';l.classList.add('on');}else{l.classList.remove('on');if(loadTimer){clearInterval(loadTimer);loadTimer=null;}}}
+
+function startLoadingMsgs(note){
+  const base=[
+    'Připravuji scénu...',
+    'Analyzuji geometrii a materiály...',
+    'Nastavuji osvětlení — '+({dawn:'úsvit',morning:'ranní slunce',midday:'polední světlo','golden-hour':'zlatá hodinka',sunset:'západ slunce',dusk:'soumrak',night:'noční scéna'}[ST.timeOfDay]||'denní světlo')+'...',
+    'Počítám odrazy na skle a kovu...',
+    'Generuji textury povrchů...',
+    'Aplikuji globální iluminaci...',
+    'Renderuji stíny a ambient occlusion...',
+    'Zpracovávám hloubku ostrosti...',
+    'Ladím barevnou teplotu...',
+    'Přidávám atmosférické efekty...',
+    'Finalizuji kompozici...',
+  ];
+  if(note)base.unshift('Aplikuji změny: '+note+'...');
+  if(ST.weather==='rainy')base.splice(5,0,'Generuji mokré povrchy a odrazy...');
+  if(ST.weather==='snowy')base.splice(5,0,'Pokládám sníh na střechy a terén...');
+  if(ST.vegetation>40)base.splice(6,0,'Zasazuji vegetaci do scény...');
+  let idx=0;
+  stR(base[0],0);
+  loadTimer=setInterval(()=>{idx++;if(idx<base.length)stR(base[idx],0);},2500);
+}
 
 async function doRender(note){
   const pr=document.getElementById('promptOut').value.trim();
   if(!pr||pr.startsWith('Nejdřív')){stR('Nejdřív vygeneruj prompt',1);return;}
   const src=note&&sceneRenders.length?sceneRenders[sceneRenders.length-1].imgSrc:ST.imageData;
   if(!src){stR('Nahraj obrázek',1);return;}
-  // Style ref from session
   const styleRef=curSession?.style_ref_render_id?sceneRenders.find(x=>x.dbId===curSession.style_ref_render_id)||await loadStyleRef():null;
   let rp;
   if(note)rp=`Edit the attached architectural render. Keep everything EXCEPT: ${note}. Same angle, composition. Photorealistic output.`;
   else if(styleRef)rp=pr+'\n\nSTYLE REFERENCE:\nFirst image is the style reference. Match its EXACT rendering style: color grading, materials, lighting, contrast. Second image is the new SketchUp view to render in that style.';
   else rp=pr;
-  stR(note?'Upravuji...':(styleRef?'Generuji se stylem...':'Generuji...'),0);showLoader(true);
+  showLoader(true);startLoadingMsgs(note);
   document.getElementById('renderBtn').disabled=true;
   const parts=[];
   if(styleRef&&!note){const {b64:sb,mime:sm}=await toB64(styleRef.imgSrc);parts.push({inlineData:{mimeType:sm,data:sb}});}
