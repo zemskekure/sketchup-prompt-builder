@@ -213,10 +213,7 @@ input.fi{resize:none;}
 
   <!-- SCENE STUDIO (step by step) -->
   <div class="view" id="v-scene">
-    <div class="sec-title-row">
-      <div class="sec-title" id="sceneTitle"></div>
-      <div class="mgmt" id="sceneMgmt"></div>
-    </div>
+    <div class="sec-title" id="sceneTitle"></div>
     <div class="steps" id="stepsBar"></div>
 
     <!-- Step 1: Upload -->
@@ -370,7 +367,7 @@ input.fi{resize:none;}
 <script>
 const EA='YrwsDbSwfHgAGSqPK5Vq8zJH3ubVNOBpBkoFPwHA/zcS3U6Cq1StskfgLiftypXBdNDh5f9440fXqEJMdtZlFMMZkhdf/kIzbvO2YJJeOfYRPdN71YX4OQ9A3nUBbJYOdbCZmpeRJJd9xLUbCf5y/z8I9GhRByMS1kCf1qrzpslG/XxQOJhOPF0KhhFs8q5fSWtrW+os5tI=';
 const EG='MzyQzn3RfMCVJOMSbfchNtHCe+QxwuVxp/k8Eyda10iGmeQfeydEGq93VsTWgY048QHh3b9z6FG0dsGMRjQlux3V/yWfVkKJ96Qep1Ds0CAOoAQ=';
-const CPR=0.067,CZK=21.2;
+const CPR=0.067,CZK=21.2,ANALYSIS_COST=0.01;
 const SB='https://vlbisbnvwfvvjbveihdf.supabase.co';
 const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsYmlzYm52d2Z2dmpidmVpaGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNzQ0MDYsImV4cCI6MjA4OTg1MDQwNn0.QjE8GFLVMpPA1NCb7sf54l1ZJyTlgRhX0qeEPNHXCnM';
 let AK='',GK='';
@@ -517,10 +514,6 @@ async function goScene(id){
   showView('scene');
   setCrumb([{label:'Projekty',fn:'goSessions()'},{label:curSession.name,fn:`goSession(${curSession.id})`},{label:curScene.name}]);
   document.getElementById('sceneTitle').textContent=curScene.name;
-  document.getElementById('sceneMgmt').innerHTML=`
-    <button class="btn btn-o" style="font-size:0.7rem;padding:0.25rem 0.5rem" onclick="renameScene(${curScene.id},'${curScene.name.replace(/'/g,"\\'")}')">Přejmenovat</button>
-    <button class="btn btn-o" style="font-size:0.7rem;padding:0.25rem 0.5rem" onclick="downloadSceneZip(${curScene.id},'${curScene.name.replace(/'/g,"\\'")}')">ZIP</button>
-    <button class="btn btn-o" style="font-size:0.7rem;padding:0.25rem 0.5rem;color:var(--red)" onclick="if(confirm('Smazat scénu?')){deleteScene(${curScene.id},'${curScene.name.replace(/'/g,"\\'")}');}">Smazat</button>`;
   // Load renders for this scene
   const rows=await sbGet(`/rest/v1/renders?scene_id=eq.${id}&select=*&order=version.asc`);
   sceneRenders=(rows||[]).map(r=>({id:r.version,imgSrc:r.image_path,note:r.note||'',prompt:r.prompt||'',cost:parseFloat(r.cost)||CPR,parentId:r.parent_id,dbId:r.id}));
@@ -599,6 +592,8 @@ async function analyze(){
     const d=await r.json();if(d.error)throw new Error(d.error.message);
     const desc=d.content[0].text;document.getElementById('description').value=desc;ST.description=desc;
     sbPost('/rest/v1/analyses',{filename:fname,description:desc}).catch(()=>{});
+    // Track analysis cost
+    if(curScene)sbPost('/rest/v1/renders',{version:0,scene_id:curScene.id,note:'Analýza scény (Claude)',cost:ANALYSIS_COST,image_path:'none'},{'Prefer':'return=minimal'}).catch(()=>{});
     sta('Hotovo (uloženo do cache)',0);
   }catch(e){sta(e.message,1);}
   document.getElementById('analyzeBtn').disabled=false;
@@ -679,7 +674,7 @@ async function doRender(note){
   const {b64:b,mime:m}=await toB64(src);parts.push({inlineData:{mimeType:m,data:b}});parts.push({text:rp});
   try{
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts}],generationConfig:{responseModalities:['TEXT','IMAGE']}})});
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts}],generationConfig:{responseModalities:['TEXT','IMAGE'],imageSize:'2048'}})});
     const d=await r.json();if(d.error)throw new Error(d.error.message);
     let ok=false;
     for(const p of d.candidates[0].content.parts){if(p.inlineData){
