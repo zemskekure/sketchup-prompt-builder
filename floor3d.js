@@ -356,11 +356,12 @@ function addLabel(text, pos, y) {
    DXF PARSER
    ============================================================ */
 function parseDXF(text) {
-  // Parse DXF group codes into pairs
-  const lines = text.split('\n').map(l => l.trim());
+  // Parse DXF group codes into pairs — handle \r\n and leading spaces
+  const raw = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = raw.split('\n');
   const pairs = [];
   for (let i = 0; i < lines.length - 1; i += 2) {
-    pairs.push({ code: parseInt(lines[i]), value: lines[i + 1] });
+    pairs.push({ code: parseInt(lines[i].trim()), value: lines[i + 1].trim() });
   }
 
   // Extract LINE and LWPOLYLINE entities from ENTITIES section
