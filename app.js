@@ -513,16 +513,17 @@ const render = {
         if(cur.note&&cur.note!=='Základní render'&&!cur.note.startsWith('Zaostřeno'))editChain.unshift(cur.note);
         cur=cur.parentId?state.renders.find(x=>x.dbId===cur.parentId):null;
       }
-      // Build a full prompt: base prompt + all accumulated edits baked in
+      // Build prompt with edits
       const basePrompt=$('promptOut').value.trim()||v.prompt||'';
-      const editBlock=editChain.length?`\n\nAPPLY THESE MODIFICATIONS TO THE RENDER:\n${editChain.map((e,i)=>`${i+1}. ${e}`).join('\n')}\n\nIntegrate ALL of the above modifications into a single cohesive photorealistic render. Every modification must be clearly visible.`:'';
-      const fullPrompt=basePrompt+editBlock+'\n\nCRITICAL: Generate maximum sharpness and detail. This must be a pristine, crisp, high-quality architectural photograph with no blur or artifacts whatsoever.';
+      const editBlock=editChain.length?`\n\nThese modifications have been applied and are visible in IMAGE 1:\n${editChain.map((e,i)=>`${i+1}. ${e}`).join('\n')}`:'';
 
-      // Send ONLY the SketchUp source + text — NO blurry image
+      // Send: blurry render (style ref) + SketchUp source (geometry) + prompt
+      const refD=await sb.toB64(v.imgSrc);
       const srcD=await sb.toB64(sourceImg);
       const parts=[
+        {inlineData:{mimeType:refD.mime,data:refD.b64}},
         {inlineData:{mimeType:srcD.mime,data:srcD.b64}},
-        {text:fullPrompt}
+        {text:basePrompt+editBlock+`\n\nYou are given two images:\n- IMAGE 1: A previous render showing the EXACT desired result — same lighting, colors, materials, decorations, people, everything. Use this as your visual style target. However this image has quality degradation (blur, artifacts).\n- IMAGE 2: The original SketchUp 3D model source with clean, sharp geometry.\n\nYour task: Generate a FRESH photorealistic render from the SketchUp source (IMAGE 2) that looks IDENTICAL to IMAGE 1 in every visual aspect — same lighting mood, same materials, same color grading, same decorations, same people placement — but at MAXIMUM sharpness and detail. Use IMAGE 2 for all geometry and spatial accuracy. Use IMAGE 1 ONLY for style, mood, colors, and content reference. The result must be perfectly crisp with zero blur.`}
       ];
       const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
         method:'POST',headers:{'Content-Type':'application/json'},
