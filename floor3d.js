@@ -422,23 +422,43 @@ function parseDXF(text) {
   }
 
   console.log('DXF debug:', debugCounts, 'allLines:', allLines.length, 'sample pairs:', pairs.slice(0, 20).map(p=>p.code+':'+p.value));
+  console.log('DXF raw lines:', allLines.length);
   if (!allLines.length) return { rooms: [], walls: [], doors: [], windows: [], dimensions: { width: 10, height: 10 } };
 
-  // Find bounding box
+  // Collect all coordinates to find the main cluster (ignore outliers)
+  const allX = [], allY = [];
+  for (const l of allLines) { allX.push(l.start[0], l.end[0]); allY.push(l.start[1], l.end[1]); }
+  allX.sort((a, b) => a - b); allY.sort((a, b) => a - b);
+
+  // Use IQR to clip outliers
+  const q1x = allX[Math.floor(allX.length * 0.05)], q3x = allX[Math.floor(allX.length * 0.95)];
+  const q1y = allY[Math.floor(allY.length * 0.05)], q3y = allY[Math.floor(allY.length * 0.95)];
+  const iqrX = q3x - q1x, iqrY = q3y - q1y;
+  const clipMinX = q1x - iqrX * 0.5, clipMaxX = q3x + iqrX * 0.5;
+  const clipMinY = q1y - iqrY * 0.5, clipMaxY = q3y + iqrY * 0.5;
+
+  // Filter lines to only those within the clipped bounds
+  const clipped = allLines.filter(l =>
+    l.start[0] >= clipMinX && l.start[0] <= clipMaxX && l.end[0] >= clipMinX && l.end[0] <= clipMaxX &&
+    l.start[1] >= clipMinY && l.start[1] <= clipMaxY && l.end[1] >= clipMinY && l.end[1] <= clipMaxY
+  );
+  console.log('DXF clipped lines:', clipped.length, 'clip bounds:', { clipMinX, clipMaxX, clipMinY, clipMaxY });
+
+  // Find bounding box of clipped data
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const l of allLines) {
+  for (const l of clipped) {
     minX = Math.min(minX, l.start[0], l.end[0]);
     minY = Math.min(minY, l.start[1], l.end[1]);
     maxX = Math.max(maxX, l.start[0], l.end[0]);
     maxY = Math.max(maxY, l.start[1], l.end[1]);
   }
 
-  // Normalize: shift to origin, detect if units are mm (values > 100) and convert
   const rawW = maxX - minX, rawH = maxY - minY;
-  const isMM = rawW > 100 || rawH > 100;
-  const scale = isMM ? 0.001 : 1; // mm to m
+  // Auto-detect units: if extent > 50, likely mm
+  const scale = rawW > 50 ? 0.001 : 1;
+  console.log('DXF bounds:', { minX, minY, maxX, maxY, rawW, rawH, scale });
 
-  const normalized = allLines.map(l => ({
+  const normalized = clipped.map(l => ({
     start: [(l.start[0] - minX) * scale, (l.start[1] - minY) * scale],
     end: [(l.end[0] - minX) * scale, (l.end[1] - minY) * scale],
     thickness: 0.15
@@ -446,12 +466,13 @@ function parseDXF(text) {
 
   const totalW = rawW * scale, totalH = rawH * scale;
 
-  // Filter out very short lines (annotations, dimension ticks)
-  const minLen = Math.max(totalW, totalH) * 0.03;
+  // Filter out very short lines (< 0.3m typically annotations)
+  const minLen = 0.3;
   const filtered = normalized.filter(l => {
     const dx = l.end[0] - l.start[0], dy = l.end[1] - l.start[1];
     return Math.sqrt(dx * dx + dy * dy) > minLen;
   });
+  console.log('DXF filtered walls:', filtered.length, 'plan size:', totalW.toFixed(1), 'x', totalH.toFixed(1), 'm');
 
   return {
     rooms: [{ name: 'Plan', points: [[0, 0], [totalW, 0], [totalW, totalH], [0, totalH]], floor_material: 'wood', color: '#d4c4a8' }],
