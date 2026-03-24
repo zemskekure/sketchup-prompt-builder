@@ -1159,11 +1159,14 @@ document.addEventListener('keydown',e=>{
     }catch(e){sendBtn.textContent='Chyba, zkus znovu';sendBtn.disabled=false;}
   });
 
+  // Expose for manual trigger
+  window.triggerCecky=showCecky;
+
   // Start timer after first interaction
   let started=false;
   document.addEventListener('click',()=>{
     if(started)return;started=true;
-    // First popup after 20 min, then every 20 min
-    setTimeout(()=>{showCecky();setInterval(showCecky,INTERVAL);},INTERVAL);
+    // First popup after 5 min, then every 20 min
+    setTimeout(()=>{showCecky();setInterval(showCecky,INTERVAL);},5*60*1000);
   },{once:false});
 })();
