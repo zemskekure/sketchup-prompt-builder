@@ -853,8 +853,6 @@ const master = {
         '- Photorealistic quality, architecture magazine standard.',
       ].filter(Boolean).join('\n');
 
-      const prompt=hybridParts.filter(Boolean).join('\n');
-
       // Build parts: left render, right render, source SketchUp
       const parts=[];
       const leftD=await sb.toB64(master.left.imgPath);
