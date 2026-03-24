@@ -74,7 +74,7 @@ const sb = {
    ============================================================ */
 async function unlock(pwd){
   const p=pwd||$('pwdIn').value;if(!p)return;$('lockErr').textContent='';
-  try{AK=await decrypt(EA,p);GK=await decrypt(EG,p);localStorage.setItem('marinada_pwd',p);$('lock').style.display='none';$('app').style.display='block';nav.goSessions();}
+  try{AK=await decrypt(EA,p);GK=await decrypt(EG,p);window.AK=AK;window.GK=GK;localStorage.setItem('marinada_pwd',p);$('lock').style.display='none';$('app').style.display='block';nav.goSessions();}
   catch{$('lockErr').textContent='Špatné heslo';$('pwdIn').value='';$('pwdIn').focus();}
 }
 $('unlockBtn').addEventListener('click',()=>unlock());
