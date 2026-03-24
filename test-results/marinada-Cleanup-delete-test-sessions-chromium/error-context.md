@@ -1,0 +1,109 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6] [cursor=pointer]: marinada
+    - generic [ref=e7]:
+      - navigation [ref=e8]:
+        - generic [ref=e9] [cursor=pointer]: Studio
+        - generic [ref=e10] [cursor=pointer]: Výdaje
+        - generic [ref=e11] [cursor=pointer]: Master Marinada
+      - generic [ref=e12] [cursor=pointer]: Odhlásit
+  - generic [ref=e13]: Projekty
+  - generic [ref=e14]:
+    - generic [ref=e15]: Projekty
+    - generic [ref=e16]: Každý projekt je jedna zakázka nebo prostor. Uvnitř najdeš jednotlivé scény a jejich rendery.
+    - generic [ref=e17]:
+      - generic [ref=e18] [cursor=pointer]: + Nový projekt
+      - generic [ref=e19]:
+        - generic [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: Žádné rendery
+          - generic [ref=e22]:
+            - generic [ref=e23]: Studio Test
+            - generic [ref=e24]: 1 scéna · 0 renderů
+        - generic [ref=e25]:
+          - button "Přejmenovat" [ref=e26] [cursor=pointer]
+          - button "ZIP" [ref=e27] [cursor=pointer]
+          - button "Smazat" [active] [ref=e28] [cursor=pointer]
+      - generic [ref=e29]:
+        - generic [ref=e30] [cursor=pointer]:
+          - generic [ref=e31]: Žádné rendery
+          - generic [ref=e32]:
+            - generic [ref=e33]: Studio Test
+            - generic [ref=e34]: 1 scéna · 0 renderů
+        - generic [ref=e35]:
+          - button "Přejmenovat" [ref=e36] [cursor=pointer]
+          - button "ZIP" [ref=e37] [cursor=pointer]
+          - button "Smazat" [ref=e38] [cursor=pointer]
+      - generic [ref=e39]:
+        - generic [ref=e40] [cursor=pointer]:
+          - generic [ref=e41]: Žádné rendery
+          - generic [ref=e42]:
+            - generic [ref=e43]: Studio Test
+            - generic [ref=e44]: 1 scéna · 0 renderů
+        - generic [ref=e45]:
+          - button "Přejmenovat" [ref=e46] [cursor=pointer]
+          - button "ZIP" [ref=e47] [cursor=pointer]
+          - button "Smazat" [ref=e48] [cursor=pointer]
+      - generic [ref=e49]:
+        - generic [ref=e50] [cursor=pointer]:
+          - generic [ref=e51]: Žádné rendery
+          - generic [ref=e52]:
+            - generic [ref=e53]: Breadcrumb Test
+            - generic [ref=e54]: 0 scén · 0 renderů
+        - generic [ref=e55]:
+          - button "Přejmenovat" [ref=e56] [cursor=pointer]
+          - button "ZIP" [ref=e57] [cursor=pointer]
+          - button "Smazat" [ref=e58] [cursor=pointer]
+      - generic [ref=e59]:
+        - generic [ref=e60] [cursor=pointer]:
+          - generic [ref=e61]: Žádné rendery
+          - generic [ref=e62]:
+            - generic [ref=e63]: UX Test Session
+            - generic [ref=e64]: 0 scén · 0 renderů
+        - generic [ref=e65]:
+          - button "Přejmenovat" [ref=e66] [cursor=pointer]
+          - button "ZIP" [ref=e67] [cursor=pointer]
+          - button "Smazat" [ref=e68] [cursor=pointer]
+      - generic [ref=e69]:
+        - generic [ref=e70] [cursor=pointer]:
+          - generic [ref=e71]: Žádné rendery
+          - generic [ref=e72]:
+            - generic [ref=e73]: Test Projekt E2E
+            - generic [ref=e74]: 0 scén · 0 renderů
+        - generic [ref=e75]:
+          - button "Přejmenovat" [ref=e76] [cursor=pointer]
+          - button "ZIP" [ref=e77] [cursor=pointer]
+          - button "Smazat" [ref=e78] [cursor=pointer]
+      - generic [ref=e79]:
+        - generic [ref=e80] [cursor=pointer]:
+          - img [ref=e81]
+          - generic [ref=e82]:
+            - generic [ref=e83]: RSJ nové
+            - generic [ref=e84]: 9 scén · 47 renderů
+        - generic [ref=e85]:
+          - button "Přejmenovat" [ref=e86] [cursor=pointer]
+          - button "ZIP" [ref=e87] [cursor=pointer]
+          - button "Smazat" [ref=e88] [cursor=pointer]
+      - generic [ref=e89]:
+        - generic [ref=e90] [cursor=pointer]:
+          - img [ref=e91]
+          - generic [ref=e92]:
+            - generic [ref=e93]: Paštiky
+            - generic [ref=e94]: 1 scéna · 3 rendery
+        - generic [ref=e95]:
+          - button "Přejmenovat" [ref=e96] [cursor=pointer]
+          - button "ZIP" [ref=e97] [cursor=pointer]
+          - button "Smazat" [ref=e98] [cursor=pointer]
+      - generic [ref=e99]:
+        - generic [ref=e100] [cursor=pointer]:
+          - img [ref=e101]
+          - generic [ref=e102]:
+            - generic [ref=e103]: RSJ
+            - generic [ref=e104]: 1 scéna · 5 renderů
+        - generic [ref=e105]:
+          - button "Přejmenovat" [ref=e106] [cursor=pointer]
+          - button "ZIP" [ref=e107] [cursor=pointer]
+          - button "Smazat" [ref=e108] [cursor=pointer]
+```

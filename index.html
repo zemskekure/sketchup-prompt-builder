@@ -6,6 +6,7 @@
 <title>marinada</title>
 <link rel="icon" href="olive.png" type="image/png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -36,6 +37,7 @@
         <a class="on" data-nav="studio" onclick="nav.goSessions()">Studio</a>
         <a data-nav="spend" onclick="nav.showView('spend');spend.load()">Výdaje</a>
       <a data-nav="master" onclick="nav.showView('master');master.init()" style="font-style:italic;font-family:var(--serif);">Master Marinada</a>
+      <a data-nav="floor3d" onclick="nav.showView('floor3d')">3D Plan</a>
       </nav>
       <a onclick="logout()" style="font-size:0.8rem;color:var(--text-light);cursor:pointer;text-decoration:none;border-left:1px solid var(--border);padding-left:1rem;font-weight:500;letter-spacing:0.02em;transition:color 0.15s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-light)'">Odhlásit</a>
     </div>
@@ -299,6 +301,47 @@
     </div>
   </div>
 
+  <!-- 3D PLAN -->
+  <div class="view" id="v-floor3d">
+    <div class="sec-title">3D Plan</div>
+    <div class="sec-sub">Nahraj pudorys (obrazek) a AI vytvor 3D pruchozi model s extrudovanymi stenami.</div>
+    <div class="duo">
+      <div>
+        <div class="fg">
+          <div class="fl">Pudorys</div>
+          <div class="drop" id="floorDrop" style="min-height:200px;">
+            <span class="drop-hint" id="floorHint"><em>Pretahni</em> pudorys nebo klikni</span>
+            <input type="file" id="floorFile" accept="image/*" style="display:none">
+          </div>
+        </div>
+        <div class="fg">
+          <div class="fl">Vyska stropu (m)</div>
+          <input class="fi" id="floorHeight" type="number" value="2.8" step="0.1" min="2" max="6">
+        </div>
+        <div class="fg">
+          <div class="fl">Kontext <span class="v">(volitelne)</span></div>
+          <input class="fi" id="floorContext" placeholder="Napr. byt 3+1, kancelar, restaurace...">
+        </div>
+        <div class="btns">
+          <button class="btn btn-f" id="floor3dBtn" disabled>Analyzovat a vygenerovat 3D</button>
+        </div>
+        <div class="loader" id="floorLoader"><div class="loader-bar"></div></div>
+        <div class="st" id="floorSt"></div>
+        <div id="floorJson" style="display:none;margin-top:1rem;">
+          <div class="fl" style="cursor:pointer" onclick="$('floorJsonWrap').style.display=$('floorJsonWrap').style.display==='none'?'':'none'">JSON data <span class="v">zobrazit</span></div>
+          <pre id="floorJsonWrap" style="display:none;font-size:0.65rem;background:var(--white);border:1px solid var(--border);border-radius:var(--r-sm);padding:0.5rem;overflow:auto;max-height:300px;"></pre>
+        </div>
+      </div>
+      <div>
+        <div class="fl">3D nahled</div>
+        <div id="floor3dCanvas" style="width:100%;height:500px;background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;position:relative;">
+          <div id="floor3dEmpty" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-light);font-size:0.85rem;">Nahraj pudorys pro 3D nahled</div>
+        </div>
+        <div style="font-size:0.65rem;color:var(--text-light);margin-top:0.4rem;">Tahni mysi pro otaceni, kolecko pro zoom, prave tlacitko pro posun</div>
+      </div>
+    </div>
+  </div>
+
   <!-- SPENDINGS -->
   <div class="view" id="v-spend">
     <div class="sec-title">Výdaje</div>
@@ -319,5 +362,6 @@
 <div class="zip-progress" id="zipProg"></div>
 
 <script src="app.js"></script>
+<script type="module" src="floor3d.js"></script>
 </body>
 </html>
