@@ -172,11 +172,13 @@
       <div class="rout" id="rout"></div>
       <div class="refine-box" id="refineBox" style="display:none">
         <div class="fl">Nová iterace</div>
+        <div class="fl" style="margin-bottom:0.4rem;font-size:0.62rem;text-transform:none;letter-spacing:0;">Rychlé úpravy</div>
+        <div class="pills" id="quickEdits" style="margin-bottom:0.75rem;"></div>
         <div class="refine-row">
-          <input class="fi" id="refIn" placeholder="Změň podlahu na dub, teplejší světlo...">
+          <input class="fi" id="refIn" placeholder="Nebo napiš vlastní úpravu...">
           <button class="btn btn-r btn-sm" id="refBtn">Renderovat</button>
         </div>
-        <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.3rem;">Pošle předchozí render zpět do AI s tvými změnami</div>
+        <div style="font-size:0.68rem;color:var(--text-light);margin-top:0.3rem;">Zaškrtni rychlé úpravy a/nebo napiš vlastní, pak klikni Renderovat</div>
       </div>
       <div class="loader" id="loader"><div class="loader-bar"></div></div>
       <div class="st" id="renderSt"></div>

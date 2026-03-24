@@ -216,7 +216,7 @@ const scene = {
     if(sc.description){S.description=sc.description;$('description').value=S.description;ui.updDescPreview();}
     if(sc.settings){const s=sc.settings;Object.assign(S,s);ui.restoreSettings(s);if(s.sceneHint)$('sceneHint').value=s.sceneHint;}
 
-    if(state.renders.length){scene.goStep(3);iter.renderStrip();ui.showRender(state.renders[state.renders.length-1]);$('refineBox').style.display='block';$('reRenderBtn').style.display='';$('reRenderHint').style.display='';$('toIterBtn').style.display='';ui.updIterCount();}
+    if(state.renders.length){scene.goStep(3);iter.renderStrip();ui.showRender(state.renders[state.renders.length-1]);$('refineBox').style.display='block';$('reRenderBtn').style.display='';$('reRenderHint').style.display='';$('toIterBtn').style.display='';ui.renderQuickEdits();ui.updIterCount();}
     else if(sc.description)scene.goStep(2);
     else if(sc.source_image_path)scene.goStep(1);
     else scene.goStep(0);
@@ -264,6 +264,35 @@ const ui = {
   togglePrompt(){const w=$('promptWrap'),t=$('promptToggle');if(w.style.display==='none'){w.style.display='';t.textContent='skrýt ▴';}else{w.style.display='none';t.textContent='zobrazit ▾';}},
   showSub(){},// legacy — now handled by steps
   updIterCount(){const el=$('iterCount');if(el)el.textContent=state.renders.length?`(${state.renders.length})`:'';},
+  renderQuickEdits(){
+    const isInterior=state.settings.sceneType==='interior';
+    const edits=isInterior?[
+      {emoji:'👤',label:'Přidej lidi',edit:'Add 3-4 realistic people naturally using the space — sitting, standing, having conversation'},
+      {emoji:'💡',label:'Rozsviť světla',edit:'Turn on all interior lights — warm ambient ceiling lights, pendant lamps, under-cabinet lighting. Cozy evening atmosphere'},
+      {emoji:'🌙',label:'Večerní nálada',edit:'Change to evening/dusk mood — warm interior lighting glowing, blue hour visible through windows, cozy atmosphere'},
+      {emoji:'🪟',label:'Staž žaluzie',edit:'Lower the window blinds/shades halfway, creating soft filtered light patterns on the floor'},
+      {emoji:'🪴',label:'Přidej rostliny',edit:'Add realistic indoor plants — a large monstera in the corner, small potted herbs, a hanging plant'},
+      {emoji:'📚',label:'Doplň dekorace',edit:'Add tasteful decor — books on shelves, a fruit bowl, candles, artwork on walls, cushions on seating'},
+      {emoji:'☀️',label:'Více světla',edit:'Brighten the scene significantly — more sunlight streaming through windows, lighter and airier atmosphere'},
+      {emoji:'🪵',label:'Teplejší tóny',edit:'Shift the overall color temperature warmer — more amber/honey tones, warm wood, golden light'},
+      {emoji:'❄️',label:'Chladnější tóny',edit:'Shift color temperature cooler — crisp whites, gray tones, blue-tinted daylight, minimalist Scandinavian feel'},
+      {emoji:'🧹',label:'Vyčisti prostor',edit:'Remove all clutter and decorative items. Clean, minimal, empty space with just the architecture and furniture'},
+    ]:[
+      {emoji:'👤',label:'Přidej lidi',edit:'Add 3-4 realistic people walking on sidewalk or entering the building for scale and life'},
+      {emoji:'🌳',label:'Přidej stromy',edit:'Add mature realistic trees, landscaping, green shrubs along the building'},
+      {emoji:'🚗',label:'Přidej auta',edit:'Add a few realistic parked cars along the street — modern, clean'},
+      {emoji:'🌅',label:'Západ slunce',edit:'Change lighting to golden hour sunset — warm orange sky, long dramatic shadows, golden reflections on glass'},
+      {emoji:'🌧️',label:'Po dešti',edit:'Make it look like just after rain — wet pavement with reflections, puddles, moody overcast sky, glistening surfaces'},
+      {emoji:'🌙',label:'Noční scéna',edit:'Change to nighttime — dark sky, building lit from within, exterior architectural lighting, street lamps glowing'},
+      {emoji:'❄️',label:'Zimní scéna',edit:'Add winter atmosphere — snow on rooftops and ground, bare trees, cold blue light, breath-visible cold'},
+      {emoji:'☀️',label:'Více světla',edit:'Brighten the scene — more direct sunlight, clearer sky, stronger shadows'},
+      {emoji:'🏗️',label:'Kontext okolí',edit:'Add realistic neighboring buildings, urban context, street infrastructure — make it feel like a real location'},
+      {emoji:'🪵',label:'Teplejší tóny',edit:'Shift overall color grading warmer — honey tones, warm stone, golden light'},
+    ];
+    $('quickEdits').innerHTML=edits.map(e=>
+      `<div class="pill" data-edit="${esc(e.edit)}" onclick="this.classList.toggle('on')">${e.emoji} ${e.label}</div>`
+    ).join('');
+  },
   showRender(v){
     const has4k=v.url4k&&validUrl(v.url4k);
     $('rout').innerHTML=`<img src="${esc(v.imgSrc)}">
@@ -358,7 +387,7 @@ const prompt_gen = {
     const ar=S.aspect!=='auto'?`\n- Aspect ratio: ${S.aspect}.`:'';
     $('promptOut').value=[
       `Transform the attached SketchUp screenshot into a photorealistic ${S.sceneType} architectural photograph.`,'',`Scene: ${d}`,'',
-      'LIGHTING:',`- ${T[S.timeOfDay]}`,`- ${W[S.weather]}`,isI?'- Interior: window ambient + artificial, warm spill, soft shadows.':'- Exterior: natural sky, ambient occlusion, accurate shadows.','',
+      'LIGHTING:',`- ${T[S.timeOfDay]}`,`- ${W[S.weather]}`,isI?'- Interior lighting: If windows are present, show natural light streaming in with realistic falloff. If no windows visible, rely entirely on artificial light sources — ceiling fixtures, pendant lamps, spotlights, under-cabinet lights. Create realistic warm pools of light with soft shadows. The space should feel like a real inhabited room photographed with professional lighting.':'- Exterior: natural sky illumination, ambient occlusion in corners and under overhangs, accurate shadow casting from sun position.','',
       'MATERIALS:',`- ${mat}`,'- Physically accurate surfaces. Glass: reflections + transparency. Metal: specular highlights.','',
       'CAMERA:',`- ${ang}`,'- 1:1 layout match. Only upgrade materials & lighting.','- Canon EOS R5, 24mm tilt-shift, f/5.6.',ar,'',
       'CONTEXT:',`- ${vg}`,`- ${pp}`,wv?`- WINDOWS: View of ${wv}. ${fl[S.floor]||''}`:'','',
@@ -371,8 +400,17 @@ const prompt_gen = {
    RENDER ENGINE
    ============================================================ */
 $('renderBtn').addEventListener('click',()=>render.run(null));
-$('refBtn').addEventListener('click',()=>{const n=$('refIn').value.trim();if(!n)return;$('refIn').value='';render.run(n);});
-$('refIn').addEventListener('keydown',e=>{if(e.key==='Enter'){const n=$('refIn').value.trim();if(!n)return;$('refIn').value='';render.run(n);}});
+$('refBtn').addEventListener('click',()=>{
+  const custom=$('refIn').value.trim();
+  const quickSel=Array.from(document.querySelectorAll('#quickEdits .pill.on')).map(p=>p.dataset.edit);
+  const allEdits=[...quickSel];
+  if(custom)allEdits.push(custom);
+  if(!allEdits.length){toast('Zaškrtni úpravu nebo napiš vlastní');return;}
+  $('refIn').value='';
+  document.querySelectorAll('#quickEdits .pill').forEach(p=>p.classList.remove('on'));
+  render.run(allEdits.join('. '));
+});
+$('refIn').addEventListener('keydown',e=>{if(e.key==='Enter'){$('refBtn').click();}});
 
 let loadTimer=null;
 const render = {
@@ -444,7 +482,7 @@ const render = {
         const row={version:ver,scene_id:state.curScene.id,note:v.note,prompt:rp,cost:CPR,parent_id:v.parentId,image_path:url};
         const saved=await sb.post('/rest/v1/renders',row,{'Prefer':'return=representation'});
         v.imgSrc=url;v.dbId=saved?.[0]?.id;
-        state.renders.push(v);state.iterateFromId=v.id;iter.renderStrip();ui.showRender(v);$('refineBox').style.display='block';$('reRenderBtn').style.display='';$('reRenderHint').style.display='';$('toIterBtn').style.display='';$('refIn').placeholder=`Iteruji z v${v.id} — popiš změny...`;ui.updIterCount();ok=true;
+        state.renders.push(v);state.iterateFromId=v.id;iter.renderStrip();ui.showRender(v);$('refineBox').style.display='block';$('reRenderBtn').style.display='';$('reRenderHint').style.display='';$('toIterBtn').style.display='';$('refIn').placeholder=`Iteruji z v${v.id} — nebo zaškrtni rychlé úpravy`;ui.updIterCount();ok=true;
       }}
       render.stR(ok?'':'Žádný obrázek',!ok);
     }catch(e){render.stR(e.message,1);}
@@ -555,7 +593,7 @@ const iter = {
     state.iterateFromId=v.id;
     ui.showRender(v);
     $('refineBox').style.display='block';
-    $('refIn').placeholder=`Iteruji z v${v.id} — popiš změny...`;
+    $('refIn').placeholder=`Iteruji z v${v.id} — nebo zaškrtni rychlé úpravy`;
     scene.goStep(3);
   },
   async remove(verId,dbId){
@@ -738,25 +776,45 @@ const master = {
       const leftSec=parseSections(leftPrompt);
       const rightSec=parseSections(rightPrompt);
 
-      // Build hybrid prompt
-      let hybridParts=['Transform the attached SketchUp source image into a photorealistic architectural photograph.',''];
-      // Take scene description from the source side
+      // Build explicit hybrid prompt
       const srcSide=master.source==='left'?master.left:master.right;
       const sceneMatch=(srcSide.prompt||'').match(/Scene: (.+?)(\n\n|\n[A-Z])/s);
-      if(sceneMatch)hybridParts.push('Scene: '+sceneMatch[1],'');
 
-      for(const attr of MASTER_ATTRS){
+      // Build per-attribute instructions referencing specific images
+      const attrInstructions=MASTER_ATTRS.map(attr=>{
         const side=master.attrs[attr.key]||'left';
-        const secs=side==='left'?leftSec:rightSec;
-        const label=side==='left'?'levého':'pravého';
-        if(attr.section&&secs[attr.section]){
-          hybridParts.push(`${attr.section} (z ${label} renderu):`);
-          hybridParts.push(secs[attr.section].trim());
-          hybridParts.push('');
-        }
-      }
-      hybridParts.push('IMPORTANT: This is a hybrid render. Image 1 is the LEFT reference render. Image 2 is the RIGHT reference render. Image 3 is the SketchUp source geometry.');
-      hybridParts.push('Match the visual qualities specified above from the indicated reference images. Generate a FRESH photorealistic render from the SketchUp source.');
+        const imgNum=side==='left'?'IMAGE 1 (left render)':'IMAGE 2 (right render)';
+        const descriptions={
+          lighting:`LIGHTING: Copy the exact lighting from ${imgNum} — same light direction, intensity, color temperature, shadows, and time-of-day mood.`,
+          materials:`MATERIALS: Use the exact same materials and surface textures visible in ${imgNum} — same wood grain, concrete finish, metal sheen, paint colors.`,
+          camera:`CAMERA/COMPOSITION: Match the camera angle, perspective, and framing from ${imgNum}.`,
+          people:`PEOPLE: Match the people/activity level from ${imgNum} — same number of figures, poses, and placement.`,
+          vegetation:`VEGETATION: Match the plants and greenery from ${imgNum} — same amount, type, and placement of vegetation.`,
+          windows:`WINDOW VIEW: Use the same view through windows as seen in ${imgNum} — same outside scene, depth, atmosphere.`,
+          mood:`COLOR GRADING & MOOD: Match the overall color palette, contrast, saturation, and post-processing look from ${imgNum}.`,
+        };
+        return descriptions[attr.key]||'';
+      }).filter(Boolean);
+
+      const prompt=[
+        'You are given 3 images:',
+        '- IMAGE 1 (first): Left reference render',
+        '- IMAGE 2 (second): Right reference render',
+        '- IMAGE 3 (third): Original SketchUp 3D model source',
+        '',
+        'Create a NEW photorealistic architectural photograph from the SketchUp source (IMAGE 3), combining specific visual qualities from the two reference renders as specified below.',
+        '',
+        sceneMatch?'Scene: '+sceneMatch[1]:'',
+        '',
+        ...attrInstructions,
+        '',
+        'CRITICAL INSTRUCTIONS:',
+        '- Render from IMAGE 3 (SketchUp source) for geometry and spatial layout.',
+        '- For each attribute above, look at the SPECIFIC referenced image and match that quality.',
+        '- The result should look like a coherent, professional architectural photograph.',
+        '- Do NOT just blend the two images. Pick distinct qualities from each as specified.',
+        '- Photorealistic quality, architecture magazine standard.',
+      ].filter(Boolean).join('\n');
 
       const prompt=hybridParts.filter(Boolean).join('\n');
 
