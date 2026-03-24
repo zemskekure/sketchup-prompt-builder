@@ -267,30 +267,30 @@ const ui = {
   renderQuickEdits(){
     const isInterior=state.settings.sceneType==='interior';
     const edits=isInterior?[
-      {emoji:'👤',label:'Přidej lidi',edit:'Add 3-4 realistic people naturally using the space — sitting, standing, having conversation'},
-      {emoji:'💡',label:'Rozsviť světla',edit:'Turn on all interior lights — warm ambient ceiling lights, pendant lamps, under-cabinet lighting. Cozy evening atmosphere'},
-      {emoji:'🌙',label:'Večerní nálada',edit:'Change to evening/dusk mood — warm interior lighting glowing, blue hour visible through windows, cozy atmosphere'},
-      {emoji:'🪟',label:'Staž žaluzie',edit:'Lower the window blinds/shades halfway, creating soft filtered light patterns on the floor'},
-      {emoji:'🪴',label:'Přidej rostliny',edit:'Add realistic indoor plants — a large monstera in the corner, small potted herbs, a hanging plant'},
-      {emoji:'📚',label:'Doplň dekorace',edit:'Add tasteful decor — books on shelves, a fruit bowl, candles, artwork on walls, cushions on seating'},
-      {emoji:'☀️',label:'Více světla',edit:'Brighten the scene significantly — more sunlight streaming through windows, lighter and airier atmosphere'},
-      {emoji:'🪵',label:'Teplejší tóny',edit:'Shift the overall color temperature warmer — more amber/honey tones, warm wood, golden light'},
-      {emoji:'❄️',label:'Chladnější tóny',edit:'Shift color temperature cooler — crisp whites, gray tones, blue-tinted daylight, minimalist Scandinavian feel'},
-      {emoji:'🧹',label:'Vyčisti prostor',edit:'Remove all clutter and decorative items. Clean, minimal, empty space with just the architecture and furniture'},
+      {label:'Přidej lidi',edit:'Add 3-4 realistic people naturally using the space — sitting, standing, having conversation'},
+      {label:'Rozsviť světla',edit:'Turn on all interior lights — warm ambient ceiling lights, pendant lamps, under-cabinet lighting. Cozy evening atmosphere'},
+      {label:'Večerní nálada',edit:'Change to evening/dusk mood — warm interior lighting glowing, blue hour visible through windows, cozy atmosphere'},
+      {label:'Staž žaluzie',edit:'Lower the window blinds/shades halfway, creating soft filtered light patterns on the floor'},
+      {label:'Přidej rostliny',edit:'Add realistic indoor plants — a large monstera in the corner, small potted herbs, a hanging plant'},
+      {label:'Doplň dekorace',edit:'Add tasteful decor — books on shelves, a fruit bowl, candles, artwork on walls, cushions on seating'},
+      {label:'Více světla',edit:'Brighten the scene significantly — more sunlight streaming through windows, lighter and airier atmosphere'},
+      {label:'Teplejší tóny',edit:'Shift the overall color temperature warmer — more amber/honey tones, warm wood, golden light'},
+      {label:'Chladnější tóny',edit:'Shift color temperature cooler — crisp whites, gray tones, blue-tinted daylight, minimalist Scandinavian feel'},
+      {label:'Vyčisti prostor',edit:'Remove all clutter and decorative items. Clean, minimal, empty space with just the architecture and furniture'},
     ]:[
-      {emoji:'👤',label:'Přidej lidi',edit:'Add 3-4 realistic people walking on sidewalk or entering the building for scale and life'},
-      {emoji:'🌳',label:'Přidej stromy',edit:'Add mature realistic trees, landscaping, green shrubs along the building'},
-      {emoji:'🚗',label:'Přidej auta',edit:'Add a few realistic parked cars along the street — modern, clean'},
-      {emoji:'🌅',label:'Západ slunce',edit:'Change lighting to golden hour sunset — warm orange sky, long dramatic shadows, golden reflections on glass'},
-      {emoji:'🌧️',label:'Po dešti',edit:'Make it look like just after rain — wet pavement with reflections, puddles, moody overcast sky, glistening surfaces'},
-      {emoji:'🌙',label:'Noční scéna',edit:'Change to nighttime — dark sky, building lit from within, exterior architectural lighting, street lamps glowing'},
-      {emoji:'❄️',label:'Zimní scéna',edit:'Add winter atmosphere — snow on rooftops and ground, bare trees, cold blue light, breath-visible cold'},
-      {emoji:'☀️',label:'Více světla',edit:'Brighten the scene — more direct sunlight, clearer sky, stronger shadows'},
-      {emoji:'🏗️',label:'Kontext okolí',edit:'Add realistic neighboring buildings, urban context, street infrastructure — make it feel like a real location'},
-      {emoji:'🪵',label:'Teplejší tóny',edit:'Shift overall color grading warmer — honey tones, warm stone, golden light'},
+      {label:'Přidej lidi',edit:'Add 3-4 realistic people walking on sidewalk or entering the building for scale and life'},
+      {label:'Přidej stromy',edit:'Add mature realistic trees, landscaping, green shrubs along the building'},
+      {label:'Přidej auta',edit:'Add a few realistic parked cars along the street — modern, clean'},
+      {label:'Západ slunce',edit:'Change lighting to golden hour sunset — warm orange sky, long dramatic shadows, golden reflections on glass'},
+      {label:'Po dešti',edit:'Make it look like just after rain — wet pavement with reflections, puddles, moody overcast sky, glistening surfaces'},
+      {label:'Noční scéna',edit:'Change to nighttime — dark sky, building lit from within, exterior architectural lighting, street lamps glowing'},
+      {label:'Zimní scéna',edit:'Add winter atmosphere — snow on rooftops and ground, bare trees, cold blue light, breath-visible cold'},
+      {label:'Více světla',edit:'Brighten the scene — more direct sunlight, clearer sky, stronger shadows'},
+      {label:'Kontext okolí',edit:'Add realistic neighboring buildings, urban context, street infrastructure — make it feel like a real location'},
+      {label:'Teplejší tóny',edit:'Shift overall color grading warmer — honey tones, warm stone, golden light'},
     ];
     $('quickEdits').innerHTML=edits.map(e=>
-      `<div class="pill" data-edit="${esc(e.edit)}" onclick="this.classList.toggle('on')">${e.emoji} ${e.label}</div>`
+      `<div class="pill" data-edit="${esc(e.edit)}" onclick="this.classList.toggle('on')">${e.label}</div>`
     ).join('');
   },
   showRender(v){
@@ -504,14 +504,25 @@ const render = {
     const sourceImg=state.settings.imageData;
     if(!sourceImg){toast('Žádný zdrojový obrázek');return;}
     const btn=$('refreshBtn');if(btn){btn.disabled=true;btn.textContent='Zaostřuji...';}
-    const st=$('st4k');if(st){st.textContent='Generuji ostrý render...';st.className='st ld';}
+    const st=$('st4k');if(st){st.textContent='Generuji ostrý render (čistě z textu)...';st.className='st ld';}
     try{
-      const refD=await sb.toB64(v.imgSrc);
+      // Walk the ancestry to collect ALL edits for this version
+      const editChain=[];
+      let cur=v;
+      while(cur){
+        if(cur.note&&cur.note!=='Základní render'&&!cur.note.startsWith('Zaostřeno'))editChain.unshift(cur.note);
+        cur=cur.parentId?state.renders.find(x=>x.dbId===cur.parentId):null;
+      }
+      // Build a full prompt: base prompt + all accumulated edits baked in
+      const basePrompt=$('promptOut').value.trim()||v.prompt||'';
+      const editBlock=editChain.length?`\n\nAPPLY THESE MODIFICATIONS TO THE RENDER:\n${editChain.map((e,i)=>`${i+1}. ${e}`).join('\n')}\n\nIntegrate ALL of the above modifications into a single cohesive photorealistic render. Every modification must be clearly visible.`:'';
+      const fullPrompt=basePrompt+editBlock+'\n\nCRITICAL: Generate maximum sharpness and detail. This must be a pristine, crisp, high-quality architectural photograph with no blur or artifacts whatsoever.';
+
+      // Send ONLY the SketchUp source + text — NO blurry image
       const srcD=await sb.toB64(sourceImg);
       const parts=[
-        {inlineData:{mimeType:refD.mime,data:refD.b64}},
         {inlineData:{mimeType:srcD.mime,data:srcD.b64}},
-        {text:`You are given two images. IMAGE 1 is a photorealistic architectural render that has become slightly blurry/degraded through iterative editing. IMAGE 2 is the original SketchUp 3D model source.\n\nGenerate a FRESH, CRISP, SHARP photorealistic render that looks IDENTICAL to IMAGE 1 — same lighting, same materials, same colors, same people, same decorations, same everything — but rendered completely fresh from the SketchUp source at maximum sharpness and quality. Fix any blur, artifacts, or quality degradation. The result should be indistinguishable from IMAGE 1 but perfectly sharp and detailed.`}
+        {text:fullPrompt}
       ];
       const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
         method:'POST',headers:{'Content-Type':'application/json'},
