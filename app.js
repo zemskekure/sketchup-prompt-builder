@@ -301,6 +301,7 @@ const ui = {
         <button class="btn btn-o btn-sm" onclick="render.dl(${v.id})">Stáhnout 2K</button>
         ${has4k?`<button class="btn btn-f btn-sm" onclick="render.dl4K(${v.id})">Stáhnout 4K</button>`:`<button class="btn btn-f btn-sm" onclick="render.gen4K(${v.id})" id="btn4k">Vygenerovat 4K</button>`}
         <button class="btn btn-o btn-sm" onclick="styleRef.set(${v.dbId})">Referenční styl</button>
+        <button class="btn btn-o btn-sm" onclick="render.refresh(${v.id})" id="refreshBtn">Zaostřit</button>
       </div><div class="st" id="st4k"></div>`;
   },
 };
@@ -497,6 +498,42 @@ const render = {
     const v=state.renders.find(x=>x.id===id);if(!v?.url4k)return;
     try{const r=await fetch(v.url4k);const blob=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`marinada-v${v.id}-4k.png`;a.click();URL.revokeObjectURL(a.href);}
     catch{window.open(v.url4k,'_blank');}
+  },
+  async refresh(id){
+    const v=state.renders.find(x=>x.id===id);if(!v)return;
+    const sourceImg=state.settings.imageData;
+    if(!sourceImg){toast('Žádný zdrojový obrázek');return;}
+    const btn=$('refreshBtn');if(btn){btn.disabled=true;btn.textContent='Zaostřuji...';}
+    const st=$('st4k');if(st){st.textContent='Generuji ostrý render...';st.className='st ld';}
+    try{
+      const refD=await sb.toB64(v.imgSrc);
+      const srcD=await sb.toB64(sourceImg);
+      const parts=[
+        {inlineData:{mimeType:refD.mime,data:refD.b64}},
+        {inlineData:{mimeType:srcD.mime,data:srcD.b64}},
+        {text:`You are given two images. IMAGE 1 is a photorealistic architectural render that has become slightly blurry/degraded through iterative editing. IMAGE 2 is the original SketchUp 3D model source.\n\nGenerate a FRESH, CRISP, SHARP photorealistic render that looks IDENTICAL to IMAGE 1 — same lighting, same materials, same colors, same people, same decorations, same everything — but rendered completely fresh from the SketchUp source at maximum sharpness and quality. Fix any blur, artifacts, or quality degradation. The result should be indistinguishable from IMAGE 1 but perfectly sharp and detailed.`}
+      ];
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts}],generationConfig:{responseModalities:['TEXT','IMAGE'],imageConfig:{imageSize:'2K'}}})
+      });
+      const d=await r.json();if(d.error)throw new Error(d.error.message);
+      for(const p of d.candidates[0].content.parts){if(p.inlineData){
+        const imgSrc=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+        const ver=state.renders.length+1;
+        const newV={id:ver,imgSrc,note:'Zaostřeno z v'+v.id,prompt:'Refresh/sharpen',cost:CPR,parentId:v.dbId};
+        const fname=`render-s${state.curScene.id}-v${ver}-${Date.now()}.png`;
+        const url=await sb.uploadImg(imgSrc,fname);
+        const row={version:ver,scene_id:state.curScene.id,note:newV.note,prompt:newV.prompt,cost:CPR,parent_id:v.dbId,image_path:url};
+        const saved=await sb.post('/rest/v1/renders',row,{'Prefer':'return=representation'});
+        newV.imgSrc=url;newV.dbId=saved?.[0]?.id;
+        state.renders.push(newV);state.iterateFromId=newV.id;
+        iter.renderStrip();ui.showRender(newV);ui.updIterCount();
+        if(st){st.textContent='Zaostřeno!';setTimeout(()=>{st.textContent='';},3000);}
+        toast('Ostrá verze vytvořena jako v'+ver);
+      }}
+    }catch(e){if(st){st.textContent=e.message;st.className='st er';}}
+    if(btn){btn.disabled=false;btn.textContent='Zaostřit';}
   },
   async gen4K(id){
     const v=state.renders.find(x=>x.id===id);if(!v)return;
