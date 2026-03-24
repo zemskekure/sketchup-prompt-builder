@@ -364,30 +364,36 @@ function parseDXF(text) {
     pairs.push({ code: parseInt(lines[i].trim()), value: lines[i + 1].trim() });
   }
 
-  // Extract LINE and LWPOLYLINE entities from ENTITIES section
-  const walls = [];
+  // Extract LINE and LWPOLYLINE entities
   const allLines = [];
   let inEntities = false;
   let entity = null;
   let entityType = '';
   let polyPts = [];
+  let debugCounts = { pairs: pairs.length, entities: 0, lines: 0, polys: 0 };
 
   for (const { code, value } of pairs) {
-    if (code === 2 && value === 'ENTITIES') inEntities = true;
-    if (code === 0 && value === 'ENDSEC') inEntities = false;
-    if (!inEntities) continue;
+    if (code === 2 && value === 'ENTITIES') { inEntities = true; continue; }
+    if (code === 0 && value === 'ENDSEC' && inEntities) { inEntities = false; continue; }
+    // Also try without strict ENTITIES section — some DXFs have entities scattered
+    const isEntityStart = code === 0 && (value === 'LINE' || value === 'LWPOLYLINE' || value === 'POLYLINE');
+    if (!inEntities && !isEntityStart) continue;
+    if (isEntityStart) inEntities = true; // force into entity mode
 
     if (code === 0) {
       // Flush previous entity
-      if (entityType === 'LINE' && entity) {
+      if (entityType === 'LINE' && entity && entity.x1 != null) {
         allLines.push({ start: [entity.x1, entity.y1], end: [entity.x2, entity.y2] });
+        debugCounts.lines++;
       }
       if (entityType === 'LWPOLYLINE' && polyPts.length >= 2) {
         for (let i = 0; i < polyPts.length - 1; i++) {
-          allLines.push({ start: polyPts[i], end: polyPts[i + 1] });
+          allLines.push({ start: [...polyPts[i]], end: [...polyPts[i + 1]] });
         }
-        if (entity?.closed) allLines.push({ start: polyPts[polyPts.length - 1], end: polyPts[0] });
+        if (entity?.closed) allLines.push({ start: [...polyPts[polyPts.length - 1]], end: [...polyPts[0]] });
+        debugCounts.polys++;
       }
+      debugCounts.entities++;
       entityType = value;
       entity = {};
       polyPts = [];
@@ -415,6 +421,7 @@ function parseDXF(text) {
     if (entity?.closed) allLines.push({ start: polyPts[polyPts.length - 1], end: polyPts[0] });
   }
 
+  console.log('DXF debug:', debugCounts, 'allLines:', allLines.length, 'sample pairs:', pairs.slice(0, 20).map(p=>p.code+':'+p.value));
   if (!allLines.length) return { rooms: [], walls: [], doors: [], windows: [], dimensions: { width: 10, height: 10 } };
 
   // Find bounding box
