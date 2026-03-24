@@ -879,6 +879,10 @@ const output = {
           <div class="out-card-note">
             <input value="${esc(v.label||'')}" placeholder="Pojmenuj..." onchange="output.setLabel(${v.id},this.value)">
           </div>
+          <div style="display:flex;gap:0.25rem;margin-top:0.35rem;">
+            <button class="btn btn-o" style="font-size:0.58rem;padding:0.18rem 0.4rem;" onclick="event.stopPropagation();render.dl(${v.id})">Stáhnout 2K</button>
+            ${has4k?`<button class="btn btn-f" style="font-size:0.58rem;padding:0.18rem 0.4rem;" onclick="event.stopPropagation();render.dl4K(${v.id})">Stáhnout 4K</button>`:''}
+          </div>
         </div>
       </div>`;
     }).join('');
