@@ -6,7 +6,6 @@
 <title>marinada</title>
 <link rel="icon" href="olive.png" type="image/png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -36,8 +35,6 @@
       <nav>
         <a class="on" data-nav="studio" onclick="nav.goSessions()">Studio</a>
         <a data-nav="spend" onclick="nav.showView('spend');spend.load()">Výdaje</a>
-      <a data-nav="master" onclick="nav.showView('master');master.init()" style="font-style:italic;font-family:var(--serif);">Master Marinada</a>
-      <a data-nav="floor3d" onclick="nav.showView('floor3d')">3D Plan</a>
       </nav>
       <a onclick="logout()" style="font-size:0.8rem;color:var(--text-light);cursor:pointer;text-decoration:none;border-left:1px solid var(--border);padding-left:1rem;font-weight:500;letter-spacing:0.02em;transition:color 0.15s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-light)'">Odhlásit</a>
     </div>
@@ -245,7 +242,8 @@
     </div>
   </div>
 
-  <!-- MASTER MARINADA -->
+  <!-- removed: Master Marinada + 3D Plan -->
+  <!--
   <div class="view" id="v-master">
     <div class="sec-title">Master Marinada</div>
     <div class="sec-sub">Vyber dva rendery z libovolných projektů a zkombinuj to nejlepší z obou — osvětlení jednoho, materiály druhého.</div>
@@ -340,7 +338,7 @@
         <div style="font-size:0.65rem;color:var(--text-light);margin-top:0.4rem;">Tahni mysi pro otaceni, kolecko pro zoom, prave tlacitko pro posun</div>
       </div>
     </div>
-  </div>
+  -->
 
   <!-- SPENDINGS -->
   <div class="view" id="v-spend">
@@ -362,6 +360,5 @@
 <div class="zip-progress" id="zipProg"></div>
 
 <script src="app.js"></script>
-<script type="module" src="floor3d.js"></script>
 </body>
 </html>
