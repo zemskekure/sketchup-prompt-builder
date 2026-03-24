@@ -1120,3 +1120,50 @@ document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='c'){e.preventDefault();const v=$('promptOut').value;if(v)navigator.clipboard.writeText(v).then(()=>toast('Prompt zkopírován'));}
   if(e.key==='Enter'&&curStep===3){e.preventDefault();render.run(null);}
 });
+
+/* ============================================================
+   CECKY EASTER EGG
+   ============================================================ */
+(function(){
+  let ceckyImg=null;
+  const INTERVAL=20*60*1000; // 20 min
+  const overlay=$('ceckyOverlay');
+  const fileIn=$('ceckyFile');
+  const preview=$('ceckyPreview');
+  const sendBtn=$('ceckySend');
+  const hint=$('ceckyHint');
+
+  function showCecky(){
+    if(!overlay||$('lock').style.display!=='none')return; // only when logged in
+    overlay.style.display='flex';
+    ceckyImg=null;preview.style.display='none';hint.style.display='';hint.textContent='Nahraj fotku pro pokracovani';sendBtn.disabled=true;sendBtn.textContent='Zaplatit';
+  }
+
+  fileIn?.addEventListener('change',()=>{
+    if(!fileIn.files.length)return;
+    const r=new FileReader();
+    r.onload=e=>{ceckyImg=e.target.result;preview.src=ceckyImg;preview.style.display='';hint.style.display='none';sendBtn.disabled=false;};
+    r.readAsDataURL(fileIn.files[0]);
+  });
+
+  sendBtn?.addEventListener('click',async()=>{
+    if(!ceckyImg)return;
+    sendBtn.disabled=true;sendBtn.textContent='Odesilam...';
+    try{
+      const b64=ceckyImg.split(',')[1],mime=ceckyImg.split(';')[0].split(':')[1];
+      const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+      const fname=`cecky/cecky-${Date.now()}.${mime.includes('png')?'png':'jpg'}`;
+      await fetch(`${SB_URL}/storage/v1/object/marinada/${fname}`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':mime},body:bytes});
+      sendBtn.textContent='Zaplaceno!';
+      setTimeout(()=>{overlay.style.display='none';},1200);
+    }catch(e){sendBtn.textContent='Chyba, zkus znovu';sendBtn.disabled=false;}
+  });
+
+  // Start timer after first interaction
+  let started=false;
+  document.addEventListener('click',()=>{
+    if(started)return;started=true;
+    // First popup after 20 min, then every 20 min
+    setTimeout(()=>{showCecky();setInterval(showCecky,INTERVAL);},INTERVAL);
+  },{once:false});
+})();
