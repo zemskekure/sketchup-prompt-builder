@@ -249,8 +249,8 @@ function build3D(data, ceilingH) {
   ground.receiveShadow = true;
   scene3d.add(ground);
 
-  // Walls
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0xf0ece4, roughness: 0.5 });
+  // Walls — use thicker walls for visibility
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0xd0c8b8, roughness: 0.5 });
   if (data.walls) {
     for (const wall of data.walls) {
       const sx = wall.start[0] - cx, sy = wall.start[1] - cy;
@@ -258,7 +258,7 @@ function build3D(data, ceilingH) {
       const dx = ex - sx, dy = ey - sy;
       const len = Math.sqrt(dx * dx + dy * dy);
       if (len < 0.01) continue;
-      const thick = wall.thickness || 0.15;
+      const thick = Math.max(wall.thickness || 0.15, 0.2);
       const geo = new THREE.BoxGeometry(len, ceilingH, thick);
       const mesh = new THREE.Mesh(geo, wallMat);
       mesh.position.set(sx + dx / 2, ceilingH / 2, -(sy + dy / 2));
@@ -307,10 +307,12 @@ function build3D(data, ceilingH) {
   }
 
   // Camera position
+  // Start with top-down view, slightly angled
   const maxDim = Math.max(dims.width, dims.height);
-  camera3d.position.set(maxDim * 0.6, maxDim * 0.8, maxDim * 0.6);
+  camera3d.position.set(0, maxDim * 1.2, maxDim * 0.3);
   controls3d.target.set(0, 0, 0);
   camera3d.lookAt(0, 0, 0);
+  console.log('3D camera set. dims:', dims, 'walls rendered:', data.walls?.length);
 
   // Animate
   function animate() {
