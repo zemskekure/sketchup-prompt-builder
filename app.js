@@ -912,7 +912,7 @@ const localEdit = {
         const renders=(sc.renders||[]).filter(r=>validUrl(r.image_path)&&r.version>0);
         if(!renders.length)return'';
         return`<div style="margin-left:0.5rem;margin-bottom:0.75rem;"><div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.35rem;">${esc(sc.name)}</div><div style="display:flex;gap:0.5rem;flex-wrap:wrap;">${renders.map(r=>
-          `<div style="width:100px;cursor:pointer;border:2px solid var(--border);border-radius:8px;overflow:hidden;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--olive)'" onmouseout="this.style.borderColor='var(--border)'" onclick="localEdit.selectRender('${esc(r.image_path)}')">
+          `<div style="width:100px;cursor:pointer;border:2px solid var(--border);border-radius:8px;overflow:hidden;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--olive)'" onmouseout="this.style.borderColor='var(--border)'" onclick="localEdit.selectRender('${esc(r.image_path)}',${sc.id},${r.id})">
             <img src="${esc(r.image_path)}" style="width:100%;height:65px;object-fit:cover;display:block;"><div style="font-size:0.6rem;padding:0.2rem 0.3rem;color:var(--text-dim);">v${r.version}</div></div>`
         ).join('')}</div></div>`;
       }).join('');
@@ -921,9 +921,11 @@ const localEdit = {
     $('localBrowserContent').innerHTML=html||'<div style="color:var(--text-light);padding:2rem;">Žádné rendery</div>';
   },
 
-  async selectRender(imgPath){
+  async selectRender(imgPath,sceneId,renderId){
     $('localBrowser').style.display='none';
     localEdit.imgSrc=imgPath;
+    localEdit.sceneId=sceneId||null;
+    localEdit.parentDbId=renderId||null;
     // Show in the pick area
     const pickEl=$('localEditPick');
     pickEl.style.padding='0';pickEl.style.borderStyle='solid';
@@ -1028,13 +1030,22 @@ CRITICAL RULES:
         const imgSrc=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
         const fname=`local-edit-${Date.now()}.png`;
         const url=await sb.uploadImg(imgSrc,fname);
+        // Save to renders table so it shows in iterations
+        const note='Lokální úprava: '+prompt;
+        if(localEdit.sceneId){
+          // Find next version number for this scene
+          const existing=await sb.get(`/rest/v1/renders?scene_id=eq.${localEdit.sceneId}&select=version&order=version.desc&limit=1`);
+          const nextVer=(existing?.[0]?.version||0)+1;
+          await sb.post('/rest/v1/renders',{version:nextVer,scene_id:localEdit.sceneId,note,prompt:editPrompt,cost:CPR,parent_id:localEdit.parentDbId,image_path:url},{'Prefer':'return=minimal'});
+        }
         $('localEditResult').innerHTML=`
           <img src="${esc(url)}" style="max-width:100%;border:1px solid var(--border);border-radius:var(--r);display:block;">
-          <div class="rmeta" style="margin-top:0.5rem;">Lokální úprava: ${esc(prompt)}</div>
+          <div class="rmeta" style="margin-top:0.5rem;">${esc(note)}</div>
           <div class="btns" style="margin-top:0.5rem;">
             <button class="btn btn-o btn-sm" onclick="localEdit.download('${esc(url)}')">Stáhnout</button>
             <button class="btn btn-o btn-sm" onclick="localEdit.editAgain('${esc(url)}')">Upravit znovu</button>
           </div>`;
+        toast('Uloženo do iterací scény');
       }}
     }catch(e){st.textContent=e.message;st.className='st er';}
     loader.classList.remove('on');btn.disabled=false;btn.textContent='Upravit oblast';
