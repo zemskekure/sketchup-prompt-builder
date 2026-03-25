@@ -316,10 +316,10 @@ const ui = {
   showRender(v){
     const has4k=v.url4k&&validUrl(v.url4k);
     $('rout').innerHTML=`
-      <div style="position:relative;display:inline-block;">
+      <div style="position:relative;">
         <img id="renderImg" src="${esc(v.imgSrc)}">
-        <div style="position:relative;display:none;cursor:crosshair;" id="localCanvasWrap">
-          <canvas id="localCanvas"></canvas>
+        <div style="display:none;cursor:crosshair;" id="localCanvasWrap">
+          <canvas id="localCanvas" style="max-width:100%;border:1px solid var(--border);border-radius:var(--r);display:block;"></canvas>
         </div>
       </div>
       <div class="rmeta">v${v.id} · $${v.cost.toFixed(3)} · ${(v.cost*CZK_RATE).toFixed(1)} Kč · ${esc(v.note)}</div>
@@ -1001,9 +1001,13 @@ const localEdit = {
     img.onload=()=>{
       localEdit.imgEl=img;
       const canvas=$('localCanvas');if(!canvas)return;
-      const scale=Math.min(600/img.width,1);
-      canvas.width=Math.round(img.width*scale);
-      canvas.height=Math.round(img.height*scale);
+      // Use native resolution for the canvas buffer
+      canvas.width=img.width;
+      canvas.height=img.height;
+      // Display at full container width via CSS
+      canvas.style.width='100%';
+      canvas.style.height='auto';
+      canvas.style.display='block';
       localEdit.ctx=canvas.getContext('2d');
       localEdit.ctx.drawImage(img,0,0,canvas.width,canvas.height);
       localEdit.history=[localEdit.ctx.getImageData(0,0,canvas.width,canvas.height)];
