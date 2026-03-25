@@ -315,20 +315,23 @@ const ui = {
   },
   showRender(v){
     const has4k=v.url4k&&validUrl(v.url4k);
-    $('rout').innerHTML=`<img src="${esc(v.imgSrc)}">
+    $('rout').innerHTML=`
+      <div style="position:relative;display:inline-block;">
+        <img id="renderImg" src="${esc(v.imgSrc)}">
+        <div style="position:relative;display:none;cursor:crosshair;" id="localCanvasWrap">
+          <canvas id="localCanvas"></canvas>
+        </div>
+      </div>
       <div class="rmeta">v${v.id} · $${v.cost.toFixed(3)} · ${(v.cost*CZK_RATE).toFixed(1)} Kč · ${esc(v.note)}</div>
       <div class="btns" style="margin-top:0.5rem">
         <button class="btn btn-o btn-sm" onclick="render.dl(${v.id})">Stáhnout 2K</button>
         ${has4k?`<button class="btn btn-f btn-sm" onclick="render.dl4K(${v.id})">Stáhnout 4K</button>`:`<button class="btn btn-f btn-sm" onclick="render.gen4K(${v.id})" id="btn4k">Vygenerovat 4K</button>`}
         <button class="btn btn-o btn-sm" onclick="styleRef.set(${v.dbId})">Referenční styl</button>
-        <button class="btn btn-local btn-sm" onclick="localEdit.openInline('${esc(v.imgSrc)}',${state.curScene?.id||'null'},${v.dbId||'null'})">Lokální úprava</button>
+        <button class="btn btn-local btn-sm" onclick="localEdit.openInline('${esc(v.imgSrc)}',${state.curScene?.id||'null'},${v.dbId||'null'})" id="localEditToggle">Lokální úprava</button>
       </div><div class="st" id="st4k"></div>
-      <div id="localEditInline" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
-        <div class="fl">Namaluj oblast <span class="v" id="localBrushLabel">Štětec: 30px</span></div>
-        <div style="position:relative;display:inline-block;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:crosshair;" id="localCanvasWrap">
-          <canvas id="localCanvas"></canvas>
-        </div>
-        <div class="btns" style="margin-top:0.5rem;">
+      <div id="localEditControls" style="display:none;margin-top:0.75rem;">
+        <div class="btns" style="margin-bottom:0.5rem;">
+          <span class="v" id="localBrushLabel">Štětec: 30px</span>
           <div class="sl" style="width:200px;">
             <span class="sl-e">Malý</span>
             <input type="range" id="localBrush" min="5" max="80" value="30" oninput="localEdit.updateBrush()">
@@ -337,7 +340,7 @@ const ui = {
           <button class="btn btn-o btn-sm" onclick="localEdit.clear()">Smazat</button>
           <button class="btn btn-o btn-sm" onclick="localEdit.undo()">Zpět</button>
         </div>
-        <div class="fg" style="margin-top:0.75rem;">
+        <div class="fg" style="margin-bottom:0.5rem;">
           <div class="fl">Co tam má být?</div>
           <input class="fi" id="localEditPrompt" placeholder="Napr: dubová podlaha, bílá zeď, přidej rostlinu...">
         </div>
@@ -952,7 +955,10 @@ const localEdit = {
     localEdit.imgSrc=imgPath;
     localEdit.sceneId=sceneId;
     localEdit.parentDbId=dbId;
-    $('localEditInline').style.display='';
+    // Hide the static image, show the canvas in its place
+    const img=$('renderImg');if(img)img.style.display='none';
+    const wrap=$('localCanvasWrap');if(wrap)wrap.style.display='';
+    const ctrl=$('localEditControls');if(ctrl)ctrl.style.display='';
     localEdit.setupCanvas(imgPath);
   },
 
@@ -1093,10 +1099,11 @@ CRITICAL RULES:
           const nextVer=(existing?.[0]?.version||0)+1;
           await sb.post('/rest/v1/renders',{version:nextVer,scene_id:localEdit.sceneId,note,prompt:editPrompt,cost:CPR,parent_id:localEdit.parentDbId,image_path:url},{'Prefer':'return=minimal'});
         }
-        // Update the render image in-place (works from both render and iteration views)
-        const mainImg=$('rout')?.querySelector('img')||$('iterDetail')?.querySelector('img');
-        if(mainImg)mainImg.src=url;
-        // Refresh canvas with the new image so user can keep editing
+        // Update the render image and refresh canvas for further edits
+        const renderImg=$('renderImg');
+        if(renderImg)renderImg.src=url;
+        const iterImg=$('iterDetail')?.querySelector('img');
+        if(iterImg)iterImg.src=url;
         localEdit.imgSrc=url;
         localEdit.setupCanvas(url);
         $('localEditPrompt').value='';
