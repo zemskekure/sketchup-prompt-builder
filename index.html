@@ -266,17 +266,9 @@
 
     <div id="masterControls" style="display:none;">
       <div class="fg">
-        <div class="fl">Poměr mixu <span class="v" id="masterBlendLabel">50 / 50</span></div>
-        <div class="sl">
-          <span class="sl-e">Levý</span>
-          <input type="range" id="masterBlend" min="0" max="100" value="50" oninput="master.updateBlend()">
-          <span class="sl-e">Pravý</span>
-        </div>
-      </div>
-      <div class="fg">
-        <div class="fl">Co chceš zkombinovat? <span class="v">(volitelné)</span></div>
-        <textarea class="fi" id="masterDesc" rows="3" placeholder="Napr: podlahu a nábytek z levého, osvětlení a barvy z pravého..."></textarea>
-        <div style="font-size:0.65rem;color:var(--text-light);margin-top:0.3rem;">Čím přesněji popíšeš, tím lepší výsledek. Nech prázdné pro rovnoměrný mix.</div>
+        <div class="fl">Co vzít odkud?</div>
+        <textarea class="fi" id="masterDesc" rows="3" placeholder="Napr: osvětlení a náladu z levého, podlahu a materiály z pravého, lidi z levého..."></textarea>
+        <div style="font-size:0.65rem;color:var(--text-light);margin-top:0.3rem;">Popiš přesně co chceš z kterého renderu. Čím konkrétnější, tím lepší výsledek.</div>
       </div>
       <div class="fg">
         <div class="fl">Zdrojový SketchUp</div>

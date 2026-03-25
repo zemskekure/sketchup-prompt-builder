@@ -734,20 +734,10 @@ const presets = {
 const master = {
   left: null,   // {imgSrc, note, sessionName, sceneName, version, sourceImg, prompt}
   right: null,
-  blend: 50,
   source: 'left',
   picking: null,
 
-  init(){
-    master.updateBlend();
-  },
-
-  updateBlend(){
-    const v=document.getElementById('masterBlend')?.value||50;
-    master.blend=parseInt(v);
-    const el=document.getElementById('masterBlendLabel');
-    if(el)el.textContent=`${100-master.blend} / ${master.blend}`;
-  },
+  init(){},
 
   setSource(el){
     document.querySelectorAll('#masterSourcePills .pill').forEach(p=>p.classList.remove('on'));
@@ -803,34 +793,30 @@ const master = {
     const st=document.getElementById('masterSt');st.textContent='';
 
     try{
-      const blend=master.blend;
-      const leftWeight=100-blend;
-      const rightWeight=blend;
       const userDesc=document.getElementById('masterDesc').value.trim();
+      if(!userDesc){toast('Popiš co chceš z kterého renderu');return;}
 
-      // Build prompt
-      let prompt=`You are given 3 images:
-- IMAGE 1: Left reference render (weight: ${leftWeight}%)
-- IMAGE 2: Right reference render (weight: ${rightWeight}%)
-- IMAGE 3: Original SketchUp source for geometry
+      const prompt=`You are given 3 images:
+- IMAGE 1 (LEFT): First reference render
+- IMAGE 2 (RIGHT): Second reference render
+- IMAGE 3: Original SketchUp 3D model source for geometry and camera angle
 
-Create a NEW photorealistic architectural render from the SketchUp source (IMAGE 3) that BLENDS the visual qualities of both reference renders.
+The user wants to combine specific elements from each render into one new image.
 
-BLEND RATIO: ${leftWeight}% from IMAGE 1, ${rightWeight}% from IMAGE 2.
-`;
-      if(leftWeight>70)prompt+=`IMAGE 1 should dominate — use its lighting, materials, colors as the primary style. Incorporate subtle hints from IMAGE 2.\n`;
-      else if(rightWeight>70)prompt+=`IMAGE 2 should dominate — use its lighting, materials, colors as the primary style. Incorporate subtle hints from IMAGE 1.\n`;
-      else prompt+=`Both images should contribute roughly equally. Blend their lighting, materials, color grading, and mood.\n`;
+USER'S INSTRUCTIONS (follow these PRECISELY):
+${userDesc}
 
-      if(userDesc){
-        prompt+=`\nSPECIFIC INSTRUCTIONS FROM USER: ${userDesc}\nFollow these instructions precisely — they override the blend ratio for the aspects they mention.\n`;
-      }
+When the user says "from left" or "z levého", they mean IMAGE 1.
+When the user says "from right" or "z pravého", they mean IMAGE 2.
 
-      prompt+=`\nIMPORTANT:
-- Render from IMAGE 3 (SketchUp) for geometry and spatial layout
-- The result must be a coherent, professional architectural photograph
-- Photorealistic quality, architecture magazine standard
-- No artifacts, no blend seams — one unified image`;
+RULES:
+- Render from IMAGE 3 (SketchUp source) for geometry, spatial layout, and camera angle
+- Pick the SPECIFIC visual qualities from IMAGE 1 or IMAGE 2 as the user described
+- For anything the user didn't mention, blend naturally from both
+- The result must be ONE coherent photorealistic architectural photograph
+- Architecture magazine quality — no artifacts, no seams, no CG look
+- If instructions mention lighting/mood from one image, match its exact color temperature and shadow direction
+- If instructions mention materials/floor from one image, match its exact textures and colors`;
 
       // Parts: left render, right render, source SketchUp
       const parts=[];
@@ -858,7 +844,7 @@ BLEND RATIO: ${leftWeight}% from IMAGE 1, ${rightWeight}% from IMAGE 2.
         const url=await sb.uploadImg(imgSrc,fname);
         document.getElementById('masterResult').innerHTML=`
           <img src="${esc(url)}" style="max-width:100%;border:1px solid var(--border);border-radius:var(--r);display:block;">
-          <div class="rmeta" style="margin-top:0.5rem;">L: ${esc(master.left.sessionName)} v${master.left.version} (${leftWeight}%) + R: ${esc(master.right.sessionName)} v${master.right.version} (${rightWeight}%)</div>
+          <div class="rmeta" style="margin-top:0.5rem;">L: ${esc(master.left.sessionName)} v${master.left.version} + R: ${esc(master.right.sessionName)} v${master.right.version}</div>
           <div class="btns" style="margin-top:0.75rem;">
             <button class="btn btn-o btn-sm" onclick="master.download('${esc(url)}')">Stáhnout</button>
           </div>`;
