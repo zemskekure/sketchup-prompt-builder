@@ -35,6 +35,7 @@
       <nav>
         <a class="on" data-nav="studio" onclick="nav.goSessions()">Studio</a>
         <a data-nav="spend" onclick="nav.showView('spend');spend.load()">Výdaje</a>
+      <a data-nav="master" onclick="nav.showView('master');master.init()" style="font-style:italic;font-family:var(--serif);">Master Marinada</a>
       </nav>
       <a onclick="logout()" style="font-size:0.8rem;color:var(--text-light);cursor:pointer;text-decoration:none;border-left:1px solid var(--border);padding-left:1rem;font-weight:500;letter-spacing:0.02em;transition:color 0.15s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-light)'">Odhlásit</a>
     </div>
@@ -242,6 +243,65 @@
     </div>
   </div>
 
+
+  <!-- MASTER MARINADA -->
+  <div class="view" id="v-master">
+    <div class="sec-title" style="font-style:italic;">Master Marinada</div>
+    <div class="sec-sub">Vyber dva rendery a smíchej je dohromady — vezmi to nejlepší z obou.</div>
+
+    <div class="duo" style="margin-bottom:1.5rem;">
+      <div>
+        <div class="fl">Levý render</div>
+        <div class="drop" id="masterLeftPick" style="min-height:160px;" onclick="master.pick('left')">
+          <span class="drop-hint" id="masterLeftHint">Klikni pro výběr</span>
+        </div>
+      </div>
+      <div>
+        <div class="fl">Pravý render</div>
+        <div class="drop" id="masterRightPick" style="min-height:160px;" onclick="master.pick('right')">
+          <span class="drop-hint" id="masterRightHint">Klikni pro výběr</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="masterControls" style="display:none;">
+      <div class="fg">
+        <div class="fl">Poměr mixu <span class="v" id="masterBlendLabel">50 / 50</span></div>
+        <div class="sl">
+          <span class="sl-e">Levý</span>
+          <input type="range" id="masterBlend" min="0" max="100" value="50" oninput="master.updateBlend()">
+          <span class="sl-e">Pravý</span>
+        </div>
+      </div>
+      <div class="fg">
+        <div class="fl">Co chceš zkombinovat? <span class="v">(volitelné)</span></div>
+        <textarea class="fi" id="masterDesc" rows="3" placeholder="Napr: podlahu a nábytek z levého, osvětlení a barvy z pravého..."></textarea>
+        <div style="font-size:0.65rem;color:var(--text-light);margin-top:0.3rem;">Čím přesněji popíšeš, tím lepší výsledek. Nech prázdné pro rovnoměrný mix.</div>
+      </div>
+      <div class="fg">
+        <div class="fl">Zdrojový SketchUp</div>
+        <div class="pills" id="masterSourcePills">
+          <div class="pill on" data-val="left" onclick="master.setSource(this)">Z levého</div>
+          <div class="pill" data-val="right" onclick="master.setSource(this)">Z pravého</div>
+        </div>
+        <div style="font-size:0.65rem;color:var(--text-light);margin-top:0.3rem;">Geometrie a úhel pohledu</div>
+      </div>
+      <button class="btn master-btn" onclick="master.generate()" id="masterGenBtn">Vytvořit Master Marinadu</button>
+      <div class="loader" id="masterLoader" style="margin-top:0.75rem;"></div>
+      <div class="st" id="masterSt"></div>
+      <div id="masterResult" style="margin-top:1.5rem;"></div>
+    </div>
+
+    <div id="masterBrowser" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:300;backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+      <div style="background:var(--cream);border-radius:16px;padding:2rem;max-width:800px;width:90%;max-height:80vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <div class="fl" style="margin:0;">Vyber render</div>
+          <button class="btn btn-o btn-sm" onclick="master.closeBrowser()">Zavřít</button>
+        </div>
+        <div id="masterBrowserContent"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- SPENDINGS -->
   <div class="view" id="v-spend">

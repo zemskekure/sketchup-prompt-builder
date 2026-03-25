@@ -727,208 +727,142 @@ const presets = {
   }
 };
 
+
 /* ============================================================
    MASTER MARINADA
    ============================================================ */
-const MASTER_ATTRS=[
-  {key:'lighting',name:'Osvětlení',section:'LIGHTING'},
-  {key:'materials',name:'Materiály',section:'MATERIALS'},
-  {key:'camera',name:'Kompozice / úhel',section:'CAMERA'},
-  {key:'people',name:'Lidé / aktivita',section:'CONTEXT',match:'people'},
-  {key:'vegetation',name:'Zeleň',section:'CONTEXT',match:'vegetation'},
-  {key:'windows',name:'Výhled z oken',section:'CONTEXT',match:'WINDOWS'},
-  {key:'mood',name:'Barvy / nálada',section:'QUALITY'},
-];
-
 const master = {
-  left: null,   // {render, scene, session, prompt, sourceImg}
+  left: null,   // {imgSrc, note, sessionName, sceneName, version, sourceImg, prompt}
   right: null,
-  attrs: {},    // key -> 'left' | 'right'
+  blend: 50,
   source: 'left',
-  picking: null, // 'left' | 'right'
+  picking: null,
 
   init(){
-    MASTER_ATTRS.forEach(a=>{if(!master.attrs[a.key])master.attrs[a.key]='left';});
-    master.renderAttrs();
+    master.updateBlend();
   },
 
-  async pickRender(side){
+  updateBlend(){
+    const v=document.getElementById('masterBlend')?.value||50;
+    master.blend=parseInt(v);
+    const el=document.getElementById('masterBlendLabel');
+    if(el)el.textContent=`${100-master.blend} / ${master.blend}`;
+  },
+
+  setSource(el){
+    document.querySelectorAll('#masterSourcePills .pill').forEach(p=>p.classList.remove('on'));
+    el.classList.add('on');
+    master.source=el.dataset.val;
+  },
+
+  async pick(side){
     master.picking=side;
-    const el=$('masterBrowser');
+    const el=document.getElementById('masterBrowser');
     el.style.display='flex';
-    $('masterBrowserContent').innerHTML='<div class="skeleton skel-card"></div>';
-    // Load all sessions with scenes and renders
+    document.getElementById('masterBrowserContent').innerHTML='<div class="skeleton skel-card"></div>';
     const sessions=await sb.get('/rest/v1/sessions?select=*,scenes(id,name,source_image_path,renders(id,version,image_path,note,prompt))&order=created_at.desc');
     let html='';
     for(const s of(sessions||[])){
       const scenesHtml=(s.scenes||[]).map(sc=>{
         const renders=(sc.renders||[]).filter(r=>validUrl(r.image_path)&&r.version>0);
         if(!renders.length)return'';
-        return`<div class="mbrow-scene"><div class="mbrow-scene-name">${esc(sc.name)}</div><div class="mbrow-renders">${renders.map(r=>
-          `<div class="mbrow-render" onclick="master.selectRender(${s.id},'${esc(s.name)}',${sc.id},'${esc(sc.name)}','${esc(sc.source_image_path||'')}',${r.id},${r.version},'${esc(r.image_path)}',\`${esc(r.prompt||'')}\`,'${esc(r.note||'')}')">
-            <img src="${esc(r.image_path)}"><div class="mbrow-render-label">v${r.version} — ${esc(r.note||'')}</div></div>`
+        return`<div style="margin-left:0.5rem;margin-bottom:0.75rem;"><div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.35rem;">${esc(sc.name)}</div><div style="display:flex;gap:0.5rem;flex-wrap:wrap;">${renders.map(r=>
+          `<div style="width:100px;cursor:pointer;border:2px solid var(--border);border-radius:8px;overflow:hidden;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--olive)'" onmouseout="this.style.borderColor='var(--border)'" onclick="master.selectRender('${side}','${esc(s.name)}','${esc(sc.name)}','${esc(sc.source_image_path||'')}',${r.version},'${esc(r.image_path)}',\'${esc(r.note||'')}\')">
+            <img src="${esc(r.image_path)}" style="width:100%;height:65px;object-fit:cover;display:block;"><div style="font-size:0.6rem;padding:0.2rem 0.3rem;color:var(--text-dim);">v${r.version}</div></div>`
         ).join('')}</div></div>`;
       }).join('');
-      if(scenesHtml)html+=`<div class="mbrow-session"><div class="mbrow-session-name">${esc(s.name)}</div>${scenesHtml}</div>`;
+      if(scenesHtml)html+=`<div style="margin-bottom:1.25rem;"><div style="font-family:var(--serif);font-size:1rem;margin-bottom:0.5rem;">${esc(s.name)}</div>${scenesHtml}</div>`;
     }
-    $('masterBrowserContent').innerHTML=html||'<div style="color:var(--text-light);padding:2rem;">Žádné rendery</div>';
+    document.getElementById('masterBrowserContent').innerHTML=html||'<div style="color:var(--text-light);padding:2rem;">Žádné rendery</div>';
   },
 
-  selectRender(sessionId,sessionName,sceneId,sceneName,sourceImg,renderId,version,imgPath,prompt,note){
-    const data={sessionId,sessionName,sceneId,sceneName,sourceImg,renderId,version,imgPath,prompt,note};
-    if(master.picking==='left')master.left=data;
-    else master.right=data;
+  selectRender(side,sessionName,sceneName,sourceImg,version,imgPath,note){
+    master[side]={sessionName,sceneName,sourceImg,version,imgPath,note};
     master.closeBrowser();
-    master.renderPicks();
-    if(master.left&&master.right)$('masterAttrs').style.display='';
-    master.renderAttrs();
+    master.renderPick(side);
+    if(master.left&&master.right)document.getElementById('masterControls').style.display='';
   },
 
-  closeBrowser(){$('masterBrowser').style.display='none';master.picking=null;},
+  closeBrowser(){document.getElementById('masterBrowser').style.display='none';},
 
-  renderPicks(){
-    ['left','right'].forEach(side=>{
-      const el=$('master'+(side==='left'?'Left':'Right')+'Pick');
-      const d=master[side];
-      if(!d){el.innerHTML='<span style="color:var(--text-light);font-size:0.85rem;">Klikni pro výběr renderu</span>';el.style.border='2px dashed var(--border)';return;}
-      el.style.border='2px solid var(--olive)';el.style.borderRadius='var(--r)';el.style.overflow='hidden';el.style.cursor='pointer';
-      el.innerHTML=`<img src="${esc(d.imgPath)}" style="width:100%;height:200px;object-fit:cover;display:block;">
-        <div style="padding:0.5rem 0.75rem;font-size:0.75rem;color:var(--text-dim);">
-          <strong style="color:var(--text)">${esc(d.sessionName)}</strong> → ${esc(d.sceneName)} → v${d.version}
-          <div style="font-size:0.68rem;margin-top:0.15rem;">${esc(d.note)}</div>
-        </div>`;
-    });
-  },
-
-  renderAttrs(){
-    if(!master.left||!master.right){$('masterAttrList').innerHTML='';return;}
-    $('masterAttrList').innerHTML=MASTER_ATTRS.map(a=>{
-      const val=master.attrs[a.key]||'left';
-      return`<div class="mattr">
-        <div class="mattr-name">${a.name}</div>
-        <div class="mattr-pick">
-          <div class="mattr-opt ${val==='left'?'on-l':''}" onclick="master.setAttr('${a.key}','left')">L</div>
-          <div class="mattr-opt ${val==='right'?'on-r':''}" onclick="master.setAttr('${a.key}','right')">R</div>
-        </div>
-      </div>`;
-    }).join('');
-  },
-
-  setAttr(key,side){master.attrs[key]=side;master.renderAttrs();},
-  setSource(side){
-    master.source=side;
-    $('masterSourcePick').querySelectorAll('.pill').forEach(p=>p.classList.toggle('on',p.dataset.val===side));
+  renderPick(side){
+    const el=document.getElementById(side==='left'?'masterLeftPick':'masterRightPick');
+    const d=master[side];
+    if(!d)return;
+    el.style.padding='0';el.style.borderStyle='solid';
+    el.innerHTML=`<img src="${esc(d.imgPath)}" style="width:100%;height:160px;object-fit:cover;display:block;border-radius:10px;">
+      <div style="padding:0.4rem 0.6rem;font-size:0.72rem;color:var(--text-dim);"><strong>${esc(d.sessionName)}</strong> > ${esc(d.sceneName)} > v${d.version}</div>`;
   },
 
   async generate(){
     if(!master.left||!master.right){toast('Vyber oba rendery');return;}
-    const btn=$('masterGenBtn');btn.disabled=true;btn.textContent='Generuji Master...';
-    const loader=$('masterLoader');loader.innerHTML='<div class="loader-dots"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div><div class="loader-track"><div class="loader-bar"></div></div><div class="loader-msg">Mixuji to nejlepší z obou renderů...</div>';
+    const btn=document.getElementById('masterGenBtn');btn.disabled=true;btn.textContent='Generuji Master...';
+    const loader=document.getElementById('masterLoader');
+    loader.innerHTML='<div class="loader-dots"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div><div class="loader-track"><div class="loader-bar"></div></div><div class="loader-msg">Mixuji to nejlepší z obou...</div>';
     loader.classList.add('on');
-    const st=$('masterSt');st.textContent='';
+    const st=document.getElementById('masterSt');st.textContent='';
 
     try{
-      // Build hybrid prompt from section assignments
-      const leftPrompt=master.left.prompt||'';
-      const rightPrompt=master.right.prompt||'';
+      const blend=master.blend;
+      const leftWeight=100-blend;
+      const rightWeight=blend;
+      const userDesc=document.getElementById('masterDesc').value.trim();
 
-      // Parse sections from prompts
-      function parseSections(p){
-        const sections={};let cur='';
-        for(const line of p.split('\n')){
-          const m=line.match(/^([A-Z]+):/);
-          if(m)cur=m[1];
-          if(cur)sections[cur]=(sections[cur]||'')+line+'\n';
-        }
-        return sections;
+      // Build prompt
+      let prompt=`You are given 3 images:
+- IMAGE 1: Left reference render (weight: ${leftWeight}%)
+- IMAGE 2: Right reference render (weight: ${rightWeight}%)
+- IMAGE 3: Original SketchUp source for geometry
+
+Create a NEW photorealistic architectural render from the SketchUp source (IMAGE 3) that BLENDS the visual qualities of both reference renders.
+
+BLEND RATIO: ${leftWeight}% from IMAGE 1, ${rightWeight}% from IMAGE 2.
+`;
+      if(leftWeight>70)prompt+=`IMAGE 1 should dominate — use its lighting, materials, colors as the primary style. Incorporate subtle hints from IMAGE 2.\n`;
+      else if(rightWeight>70)prompt+=`IMAGE 2 should dominate — use its lighting, materials, colors as the primary style. Incorporate subtle hints from IMAGE 1.\n`;
+      else prompt+=`Both images should contribute roughly equally. Blend their lighting, materials, color grading, and mood.\n`;
+
+      if(userDesc){
+        prompt+=`\nSPECIFIC INSTRUCTIONS FROM USER: ${userDesc}\nFollow these instructions precisely — they override the blend ratio for the aspects they mention.\n`;
       }
-      const leftSec=parseSections(leftPrompt);
-      const rightSec=parseSections(rightPrompt);
 
-      // Build explicit hybrid prompt
-      const srcSide=master.source==='left'?master.left:master.right;
-      const sceneMatch=(srcSide.prompt||'').match(/Scene: (.+?)(\n\n|\n[A-Z])/s);
+      prompt+=`\nIMPORTANT:
+- Render from IMAGE 3 (SketchUp) for geometry and spatial layout
+- The result must be a coherent, professional architectural photograph
+- Photorealistic quality, architecture magazine standard
+- No artifacts, no blend seams — one unified image`;
 
-      // Build per-attribute instructions referencing specific images
-      const attrInstructions=MASTER_ATTRS.map(attr=>{
-        const side=master.attrs[attr.key]||'left';
-        const imgNum=side==='left'?'IMAGE 1 (left render)':'IMAGE 2 (right render)';
-        const descriptions={
-          lighting:`LIGHTING: Copy the exact lighting from ${imgNum} — same light direction, intensity, color temperature, shadows, and time-of-day mood.`,
-          materials:`MATERIALS: Use the exact same materials and surface textures visible in ${imgNum} — same wood grain, concrete finish, metal sheen, paint colors.`,
-          camera:`CAMERA/COMPOSITION: Match the camera angle, perspective, and framing from ${imgNum}.`,
-          people:`PEOPLE: Match the people/activity level from ${imgNum} — same number of figures, poses, and placement.`,
-          vegetation:`VEGETATION: Match the plants and greenery from ${imgNum} — same amount, type, and placement of vegetation.`,
-          windows:`WINDOW VIEW: Use the same view through windows as seen in ${imgNum} — same outside scene, depth, atmosphere.`,
-          mood:`COLOR GRADING & MOOD: Match the overall color palette, contrast, saturation, and post-processing look from ${imgNum}.`,
-        };
-        return descriptions[attr.key]||'';
-      }).filter(Boolean);
-
-      const prompt=[
-        'You are given 3 images:',
-        '- IMAGE 1 (first): Left reference render',
-        '- IMAGE 2 (second): Right reference render',
-        '- IMAGE 3 (third): Original SketchUp 3D model source',
-        '',
-        'Create a NEW photorealistic architectural photograph from the SketchUp source (IMAGE 3), combining specific visual qualities from the two reference renders as specified below.',
-        '',
-        sceneMatch?'Scene: '+sceneMatch[1]:'',
-        '',
-        ...attrInstructions,
-        '',
-        'CRITICAL INSTRUCTIONS:',
-        '- Render from IMAGE 3 (SketchUp source) for geometry and spatial layout.',
-        '- For each attribute above, look at the SPECIFIC referenced image and match that quality.',
-        '- The result should look like a coherent, professional architectural photograph.',
-        '- Do NOT just blend the two images. Pick distinct qualities from each as specified.',
-        '- Photorealistic quality, architecture magazine standard.',
-      ].filter(Boolean).join('\n');
-
-      // Build parts: left render, right render, source SketchUp
+      // Parts: left render, right render, source SketchUp
       const parts=[];
       const leftD=await sb.toB64(master.left.imgPath);
       parts.push({inlineData:{mimeType:leftD.mime,data:leftD.b64}});
       const rightD=await sb.toB64(master.right.imgPath);
       parts.push({inlineData:{mimeType:rightD.mime,data:rightD.b64}});
 
-      // Source SketchUp image
-      const sourceData=master.source==='left'?master.left:master.right;
-      if(sourceData.sourceImg&&validUrl(sourceData.sourceImg)){
-        const srcD=await sb.toB64(sourceData.sourceImg);
+      const srcData=master.source==='left'?master.left:master.right;
+      if(srcData.sourceImg&&validUrl(srcData.sourceImg)){
+        const srcD=await sb.toB64(srcData.sourceImg);
         parts.push({inlineData:{mimeType:srcD.mime,data:srcD.b64}});
       }
       parts.push({text:prompt});
 
-      // Generate
       const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({contents:[{parts}],generationConfig:{responseModalities:['TEXT','IMAGE'],imageConfig:{imageSize:'2K'}}})
       });
       const d=await r.json();if(d.error)throw new Error(d.error.message);
 
-      let ok=false;
       for(const p of d.candidates[0].content.parts){if(p.inlineData){
         const imgSrc=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
-        // Upload to Supabase
         const fname=`master-${Date.now()}.png`;
         const url=await sb.uploadImg(imgSrc,fname);
-
-        $('masterResult').innerHTML=`
-          <div class="fl">Master Marinada</div>
+        document.getElementById('masterResult').innerHTML=`
           <img src="${esc(url)}" style="max-width:100%;border:1px solid var(--border);border-radius:var(--r);display:block;">
-          <div class="rmeta" style="margin-top:0.5rem;">
-            L: ${esc(master.left.sessionName)} → v${master.left.version} · R: ${esc(master.right.sessionName)} → v${master.right.version}
-          </div>
+          <div class="rmeta" style="margin-top:0.5rem;">L: ${esc(master.left.sessionName)} v${master.left.version} (${leftWeight}%) + R: ${esc(master.right.sessionName)} v${master.right.version} (${rightWeight}%)</div>
           <div class="btns" style="margin-top:0.75rem;">
-            <button class="btn btn-o btn-sm" onclick="master.download('${esc(url)}')">Stáhnout 2K</button>
-            <button class="btn btn-f btn-sm" onclick="master.gen4K('${esc(url)}')">Stáhnout v 4K</button>
-          </div>
-          <div class="st" id="masterDlSt"></div>`;
-        ok=true;
+            <button class="btn btn-o btn-sm" onclick="master.download('${esc(url)}')">Stáhnout</button>
+          </div>`;
       }}
-      if(!ok)throw new Error('Žádný obrázek');
-      st.textContent='';
     }catch(e){st.textContent=e.message;st.className='st er';}
     loader.classList.remove('on');btn.disabled=false;btn.textContent='Vytvořit Master Marinadu';
   },
@@ -937,25 +871,8 @@ const master = {
     try{const r=await fetch(url);const blob=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='master-marinada.png';a.click();URL.revokeObjectURL(a.href);}
     catch{window.open(url,'_blank');}
   },
-
-  async gen4K(url){
-    const st=$('masterDlSt');st.textContent='Generuji 4K...';st.className='st ld';
-    try{
-      const{b64:b,mime:m}=await sb.toB64(url);
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{parts:[{inlineData:{mimeType:m,data:b}},{text:'Upscale to 4K. Keep EXACT same image. Only increase resolution.'}]}],generationConfig:{responseModalities:['TEXT','IMAGE'],imageConfig:{imageSize:'4K'}}})
-      });
-      const d=await r.json();if(d.error)throw new Error(d.error.message);
-      for(const p of d.candidates[0].content.parts){if(p.inlineData){
-        const src=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
-        const blob=await(await fetch(src)).blob();
-        const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='master-marinada-4k.png';a.click();URL.revokeObjectURL(a.href);
-        st.textContent='4K staženo!';setTimeout(()=>{st.textContent='';},3000);
-      }}
-    }catch(e){st.textContent=e.message;st.className='st er';}
-  },
 };
+
 
 /* ============================================================
    SPENDINGS
