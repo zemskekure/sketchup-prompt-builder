@@ -67,6 +67,26 @@ const sb = {
     const bl=await(await fetch(src)).blob();
     return new Promise(res=>{const rd=new FileReader();rd.onload=()=>{const d=rd.result;res({b64:d.split(',')[1],mime:d.split(';')[0].split(':')[1]});};rd.readAsDataURL(bl);});
   },
+  // Resize image to stay under maxBytes (default 4.5MB for Claude's 5MB limit)
+  async resizeForApi(src, maxBytes=4500000){
+    const {b64,mime}=await sb.toB64(src);
+    const bytes=atob(b64).length;
+    if(bytes<=maxBytes)return{b64,mime};
+    // Need to resize — draw to canvas at reduced size
+    return new Promise(res=>{
+      const img=new Image();
+      img.onload=()=>{
+        let w=img.width,h=img.height;
+        const ratio=Math.sqrt(maxBytes/bytes)*0.9; // 10% safety margin
+        w=Math.round(w*ratio);h=Math.round(h*ratio);
+        const c=document.createElement('canvas');c.width=w;c.height=h;
+        const ctx=c.getContext('2d');ctx.drawImage(img,0,0,w,h);
+        const dataUrl=c.toDataURL('image/jpeg',0.85);
+        res({b64:dataUrl.split(',')[1],mime:'image/jpeg'});
+      };
+      img.src=src.startsWith('data:')?src:src;
+    });
+  },
 };
 
 /* ============================================================
@@ -351,7 +371,7 @@ const analyze = {
       if(c?.length){$('description').value=c[0].description;S.description=c[0].description;ui.updDescPreview();analyze.st('Načteno z cache (zdarma)',0);$('analyzeBtn').disabled=false;return;}
     }catch{}
     analyze.st('Analyzuji scénu...',0);
-    const {b64:b,mime:m}=await sb.toB64(S.imageData);
+    const {b64:b,mime:m}=await sb.resizeForApi(S.imageData);
     const hint=$('sceneHint').value.trim();
     const ctx=hint?` Context: this is "${hint}".`:'';
     try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AK,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
