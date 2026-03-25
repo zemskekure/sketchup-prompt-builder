@@ -321,8 +321,31 @@ const ui = {
         <button class="btn btn-o btn-sm" onclick="render.dl(${v.id})">Stáhnout 2K</button>
         ${has4k?`<button class="btn btn-f btn-sm" onclick="render.dl4K(${v.id})">Stáhnout 4K</button>`:`<button class="btn btn-f btn-sm" onclick="render.gen4K(${v.id})" id="btn4k">Vygenerovat 4K</button>`}
         <button class="btn btn-o btn-sm" onclick="styleRef.set(${v.dbId})">Referenční styl</button>
-        <button class="btn btn-o btn-sm" onclick="render.refresh(${v.id})" id="refreshBtn">Zaostřit</button>
-      </div><div class="st" id="st4k"></div>`;
+        <button class="btn btn-local btn-sm" onclick="localEdit.openInline('${esc(v.imgSrc)}',${state.curScene?.id||'null'},${v.dbId||'null'})">Lokální úprava</button>
+      </div><div class="st" id="st4k"></div>
+      <div id="localEditInline" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+        <div class="fl">Namaluj oblast <span class="v" id="localBrushLabel">Štětec: 30px</span></div>
+        <div style="position:relative;display:inline-block;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:crosshair;" id="localCanvasWrap">
+          <canvas id="localCanvas"></canvas>
+        </div>
+        <div class="btns" style="margin-top:0.5rem;">
+          <div class="sl" style="width:200px;">
+            <span class="sl-e">Malý</span>
+            <input type="range" id="localBrush" min="5" max="80" value="30" oninput="localEdit.updateBrush()">
+            <span class="sl-e">Velký</span>
+          </div>
+          <button class="btn btn-o btn-sm" onclick="localEdit.clear()">Smazat</button>
+          <button class="btn btn-o btn-sm" onclick="localEdit.undo()">Zpět</button>
+        </div>
+        <div class="fg" style="margin-top:0.75rem;">
+          <div class="fl">Co tam má být?</div>
+          <input class="fi" id="localEditPrompt" placeholder="Napr: dubová podlaha, bílá zeď, přidej rostlinu...">
+        </div>
+        <button class="btn btn-r" onclick="localEdit.generate()" id="localEditBtn">Upravit oblast</button>
+        <div class="loader" id="localEditLoader" style="margin-top:0.5rem;"></div>
+        <div class="st" id="localEditSt"></div>
+        <div id="localEditResult" style="margin-top:1rem;"></div>
+      </div>`;
   },
 };
 

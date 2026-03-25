@@ -107,6 +107,8 @@ input.fi{resize:none;}
 .btn-r:hover{background:#5c6a3e;box-shadow:0 2px 8px rgba(92,100,66,0.2);}
 .btn-r:disabled{background:var(--olive-pale);color:var(--text-light);cursor:default;box-shadow:none;transform:none;}
 .btn-sm{padding:0.4rem 0.75rem;font-size:0.73rem;}
+.btn-local{background:var(--olive);color:var(--cream);border:1.5px solid var(--olive);}
+.btn-local:hover{background:var(--olive-light);border-color:var(--olive-light);box-shadow:0 2px 12px rgba(92,100,66,0.25);}
 .btns{display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;}
 
 .st{font-size:0.78rem;min-height:1.3em;margin-top:0.3rem;}
