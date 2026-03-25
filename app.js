@@ -654,8 +654,33 @@ const iter = {
         ${has4k?`<button class="btn btn-f btn-sm" onclick="render.dl4K(${v.id})">Stáhnout 4K</button>`:''}
         <button class="btn btn-o btn-sm" onclick="styleRef.set(${v.dbId})">Referenční styl</button>
         <button class="btn btn-o btn-sm" onclick="iter.loadToRender(${v.id})">Iterovat</button>
+        <button class="btn btn-o btn-sm" onclick="localEdit.openInline('${esc(v.imgSrc)}',${state.curScene?.id||'null'},${v.dbId||'null'})">Lokální úprava</button>
         <button class="btn btn-o btn-sm" style="color:var(--red)" onclick="iter.remove(${v.id},${v.dbId})">Smazat</button>
-      </div></div></div>`;
+      </div>
+      <div id="localEditInline" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+        <div class="fl">Namaluj oblast <span class="v" id="localBrushLabel">Štětec: 30px</span></div>
+        <div style="position:relative;display:inline-block;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:crosshair;" id="localCanvasWrap">
+          <canvas id="localCanvas"></canvas>
+        </div>
+        <div class="btns" style="margin-top:0.5rem;">
+          <div class="sl" style="width:200px;">
+            <span class="sl-e">Malý</span>
+            <input type="range" id="localBrush" min="5" max="80" value="30" oninput="localEdit.updateBrush()">
+            <span class="sl-e">Velký</span>
+          </div>
+          <button class="btn btn-o btn-sm" onclick="localEdit.clear()">Smazat</button>
+          <button class="btn btn-o btn-sm" onclick="localEdit.undo()">Zpět</button>
+        </div>
+        <div class="fg" style="margin-top:0.75rem;">
+          <div class="fl">Co tam má být?</div>
+          <input class="fi" id="localEditPrompt" placeholder="Napr: dubová podlaha, bílá zeď, přidej rostlinu...">
+        </div>
+        <button class="btn btn-r" onclick="localEdit.generate()" id="localEditBtn">Upravit oblast</button>
+        <div class="loader" id="localEditLoader" style="margin-top:0.5rem;"></div>
+        <div class="st" id="localEditSt"></div>
+        <div id="localEditResult" style="margin-top:1rem;"></div>
+      </div>
+      </div></div>`;
   },
   loadToRender(id){
     const v=state.renders.find(x=>x.id===id);if(!v)return;
@@ -901,8 +926,17 @@ const localEdit = {
   brushSize: 30,
   history: [],
 
+  openInline(imgPath,sceneId,dbId){
+    localEdit.imgSrc=imgPath;
+    localEdit.sceneId=sceneId;
+    localEdit.parentDbId=dbId;
+    $('localEditInline').style.display='';
+    localEdit.setupCanvas(imgPath);
+  },
+
   async pick(){
     const el=$('localBrowser');
+    if(!el)return;
     el.style.display='flex';
     $('localBrowserContent').innerHTML='<div class="skeleton skel-card"></div>';
     const sessions=await sb.get('/rest/v1/sessions?select=*,scenes(id,name,renders(id,version,image_path,note))&order=created_at.desc');
@@ -922,34 +956,33 @@ const localEdit = {
   },
 
   async selectRender(imgPath,sceneId,renderId){
-    $('localBrowser').style.display='none';
+    const lb=$('localBrowser');if(lb)lb.style.display='none';
     localEdit.imgSrc=imgPath;
     localEdit.sceneId=sceneId||null;
     localEdit.parentDbId=renderId||null;
-    // Show in the pick area
     const pickEl=$('localEditPick');
-    pickEl.style.padding='0';pickEl.style.borderStyle='solid';
-    pickEl.innerHTML=`<img src="${esc(imgPath)}" style="width:100%;max-height:200px;object-fit:cover;display:block;border-radius:10px;">`;
-    // Setup canvas
-    $('localEditCanvas').style.display='';
+    if(pickEl){pickEl.style.padding='0';pickEl.style.borderStyle='solid';
+      pickEl.innerHTML=`<img src="${esc(imgPath)}" style="width:100%;max-height:200px;object-fit:cover;display:block;border-radius:10px;">`;}
+    const lec=$('localEditCanvas');if(lec)lec.style.display='';
+    localEdit.setupCanvas(imgPath);
+  },
+
+  setupCanvas(imgPath){
     const img=new Image();
     img.crossOrigin='anonymous';
     img.onload=()=>{
       localEdit.imgEl=img;
-      const canvas=$('localCanvas');
-      // Scale to max 700px wide
-      const scale=Math.min(700/img.width,1);
+      const canvas=$('localCanvas');if(!canvas)return;
+      const scale=Math.min(600/img.width,1);
       canvas.width=Math.round(img.width*scale);
       canvas.height=Math.round(img.height*scale);
       localEdit.ctx=canvas.getContext('2d');
       localEdit.ctx.drawImage(img,0,0,canvas.width,canvas.height);
       localEdit.history=[localEdit.ctx.getImageData(0,0,canvas.width,canvas.height)];
-      // Attach paint events
       canvas.onmousedown=e=>{localEdit.painting=true;localEdit.paint(e);};
       canvas.onmousemove=e=>{if(localEdit.painting)localEdit.paint(e);};
       canvas.onmouseup=()=>{localEdit.painting=false;localEdit.history.push(localEdit.ctx.getImageData(0,0,canvas.width,canvas.height));};
       canvas.onmouseleave=()=>{if(localEdit.painting){localEdit.painting=false;localEdit.history.push(localEdit.ctx.getImageData(0,0,canvas.width,canvas.height));}};
-      // Touch
       canvas.ontouchstart=e=>{e.preventDefault();localEdit.painting=true;localEdit.paint(e.touches[0]);};
       canvas.ontouchmove=e=>{e.preventDefault();if(localEdit.painting)localEdit.paint(e.touches[0]);};
       canvas.ontouchend=()=>{localEdit.painting=false;localEdit.history.push(localEdit.ctx.getImageData(0,0,canvas.width,canvas.height));};

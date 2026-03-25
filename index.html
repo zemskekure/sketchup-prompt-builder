@@ -36,7 +36,6 @@
         <a class="on" data-nav="studio" onclick="nav.goSessions()">Studio</a>
         <a data-nav="spend" onclick="nav.showView('spend');spend.load()">Výdaje</a>
       <a data-nav="master" onclick="nav.showView('master');master.init()" style="font-style:italic;font-family:var(--serif);">Master Marinada</a>
-      <a data-nav="localedit" onclick="nav.showView('localedit')">Lokální úprava</a>
       </nav>
       <a onclick="logout()" style="font-size:0.8rem;color:var(--text-light);cursor:pointer;text-decoration:none;border-left:1px solid var(--border);padding-left:1rem;font-weight:500;letter-spacing:0.02em;transition:color 0.15s;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-light)'">Odhlásit</a>
     </div>
@@ -296,51 +295,6 @@
           <button class="btn btn-o btn-sm" onclick="master.closeBrowser()">Zavřít</button>
         </div>
         <div id="masterBrowserContent"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- LOCAL EDIT -->
-  <div class="view" id="v-localedit">
-    <div class="sec-title">Lokální úprava</div>
-    <div class="sec-sub">Vyber render, namaluj oblast kterou chceš změnit, a popiš co tam má být.</div>
-    <div class="fg">
-      <div class="fl">Render k úpravě</div>
-      <div class="drop" id="localEditPick" style="min-height:120px;" onclick="localEdit.pick()">
-        <span class="drop-hint" id="localEditHint">Klikni pro výběr renderu</span>
-      </div>
-    </div>
-    <div id="localEditCanvas" style="display:none;">
-      <div class="fl">Namaluj oblast <span class="v" id="localBrushLabel">Štětec: 30px</span></div>
-      <div style="position:relative;display:inline-block;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:crosshair;" id="localCanvasWrap">
-        <canvas id="localCanvas"></canvas>
-      </div>
-      <div class="btns" style="margin-top:0.5rem;">
-        <div class="sl" style="width:200px;">
-          <span class="sl-e">Malý</span>
-          <input type="range" id="localBrush" min="5" max="80" value="30" oninput="localEdit.updateBrush()">
-          <span class="sl-e">Velký</span>
-        </div>
-        <button class="btn btn-o btn-sm" onclick="localEdit.clear()">Smazat</button>
-        <button class="btn btn-o btn-sm" onclick="localEdit.undo()">Zpět</button>
-      </div>
-      <div class="fg" style="margin-top:0.75rem;">
-        <div class="fl">Co tam má být?</div>
-        <input class="fi" id="localEditPrompt" placeholder="Napr: dubová podlaha, bílá zeď, přidej rostlinu...">
-      </div>
-      <button class="btn btn-r" onclick="localEdit.generate()" id="localEditBtn">Upravit oblast</button>
-      <div class="loader" id="localEditLoader" style="margin-top:0.5rem;"></div>
-      <div class="st" id="localEditSt"></div>
-      <div id="localEditResult" style="margin-top:1rem;"></div>
-    </div>
-
-    <div id="localBrowser" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:300;backdrop-filter:blur(4px);align-items:center;justify-content:center;">
-      <div style="background:var(--cream);border-radius:16px;padding:2rem;max-width:800px;width:90%;max-height:80vh;overflow-y:auto;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-          <div class="fl" style="margin:0;">Vyber render</div>
-          <button class="btn btn-o btn-sm" onclick="document.getElementById('localBrowser').style.display='none'">Zavřít</button>
-        </div>
-        <div id="localBrowserContent"></div>
       </div>
     </div>
   </div>
