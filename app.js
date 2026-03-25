@@ -902,10 +902,9 @@ const localEdit = {
   history: [],
 
   async pick(){
-    master.picking='_local';
-    const el=$('masterBrowser');
+    const el=$('localBrowser');
     el.style.display='flex';
-    $('masterBrowserContent').innerHTML='<div class="skeleton skel-card"></div>';
+    $('localBrowserContent').innerHTML='<div class="skeleton skel-card"></div>';
     const sessions=await sb.get('/rest/v1/sessions?select=*,scenes(id,name,renders(id,version,image_path,note))&order=created_at.desc');
     let html='';
     for(const s of(sessions||[])){
@@ -919,11 +918,11 @@ const localEdit = {
       }).join('');
       if(scenesHtml)html+=`<div style="margin-bottom:1.25rem;"><div style="font-family:var(--serif);font-size:1rem;margin-bottom:0.5rem;">${esc(s.name)}</div>${scenesHtml}</div>`;
     }
-    $('masterBrowserContent').innerHTML=html||'<div style="color:var(--text-light);padding:2rem;">Žádné rendery</div>';
+    $('localBrowserContent').innerHTML=html||'<div style="color:var(--text-light);padding:2rem;">Žádné rendery</div>';
   },
 
   async selectRender(imgPath){
-    master.closeBrowser();
+    $('localBrowser').style.display='none';
     localEdit.imgSrc=imgPath;
     // Show in the pick area
     const pickEl=$('localEditPick');
