@@ -736,8 +736,37 @@ const master = {
   right: null,
   source: 'left',
   picking: null,
+  attrs: {},
+  TOGGLES: [
+    {key:'lighting', name:'Osvětlení', prompt_l:'lighting, shadows, time of day, and light color temperature from IMAGE 1 (left)', prompt_r:'lighting, shadows, time of day, and light color temperature from IMAGE 2 (right)'},
+    {key:'materials', name:'Materiály a podlaha', prompt_l:'floor material, wall finishes, surface textures, and material colors from IMAGE 1 (left)', prompt_r:'floor material, wall finishes, surface textures, and material colors from IMAGE 2 (right)'},
+    {key:'colors', name:'Barvy a nálada', prompt_l:'overall color grading, contrast, saturation, and mood from IMAGE 1 (left)', prompt_r:'overall color grading, contrast, saturation, and mood from IMAGE 2 (right)'},
+    {key:'furniture', name:'Nábytek a dekorace', prompt_l:'furniture style, decorations, and objects from IMAGE 1 (left)', prompt_r:'furniture style, decorations, and objects from IMAGE 2 (right)'},
+    {key:'people', name:'Lidé', prompt_l:'people and activity level from IMAGE 1 (left)', prompt_r:'people and activity level from IMAGE 2 (right)'},
+    {key:'vegetation', name:'Zeleň a rostliny', prompt_l:'plants and vegetation from IMAGE 1 (left)', prompt_r:'plants and vegetation from IMAGE 2 (right)'},
+    {key:'windows', name:'Výhled z oken', prompt_l:'window view and outside scene from IMAGE 1 (left)', prompt_r:'window view and outside scene from IMAGE 2 (right)'},
+  ],
 
-  init(){},
+  init(){
+    master.TOGGLES.forEach(t=>{if(!master.attrs[t.key])master.attrs[t.key]='left';});
+    master.renderToggles();
+  },
+
+  renderToggles(){
+    const el=document.getElementById('masterToggles');if(!el)return;
+    el.innerHTML=master.TOGGLES.map(t=>{
+      const v=master.attrs[t.key]||'left';
+      return`<div class="mtog">
+        <div class="mtog-name">${t.name}</div>
+        <div class="mtog-btns">
+          <div class="mtog-btn ${v==='left'?'on-l':''}" onclick="master.setAttr('${t.key}','left')">Levý</div>
+          <div class="mtog-btn ${v==='right'?'on-r':''}" onclick="master.setAttr('${t.key}','right')">Pravý</div>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  setAttr(key,side){master.attrs[key]=side;master.renderToggles();},
 
   setSource(el){
     document.querySelectorAll('#masterSourcePills .pill').forEach(p=>p.classList.remove('on'));
@@ -794,29 +823,30 @@ const master = {
 
     try{
       const userDesc=document.getElementById('masterDesc').value.trim();
-      if(!userDesc){toast('Popiš co chceš z kterého renderu');return;}
 
-      const prompt=`You are given 3 images:
+      // Build per-attribute instructions from toggles
+      const attrLines=master.TOGGLES.map(t=>{
+        const side=master.attrs[t.key]||'left';
+        return`- Use ${side==='left'?t.prompt_l:t.prompt_r}`;
+      });
+
+      let prompt=`You are given 3 images:
 - IMAGE 1 (LEFT): First reference render
 - IMAGE 2 (RIGHT): Second reference render
 - IMAGE 3: Original SketchUp 3D model source for geometry and camera angle
 
-The user wants to combine specific elements from each render into one new image.
+Create a NEW photorealistic architectural render from the SketchUp source (IMAGE 3), combining specific visual elements from each reference render as listed below.
 
-USER'S INSTRUCTIONS (follow these PRECISELY):
-${userDesc}
+TAKE THESE SPECIFIC ELEMENTS:
+${attrLines.join('\n')}
+${userDesc?`\nADDITIONAL CHANGES: ${userDesc}`:``}
 
-When the user says "from left" or "z levého", they mean IMAGE 1.
-When the user says "from right" or "z pravého", they mean IMAGE 2.
-
-RULES:
-- Render from IMAGE 3 (SketchUp source) for geometry, spatial layout, and camera angle
-- Pick the SPECIFIC visual qualities from IMAGE 1 or IMAGE 2 as the user described
-- For anything the user didn't mention, blend naturally from both
+CRITICAL RULES:
+- Use IMAGE 3 (SketchUp) for geometry, spatial layout, walls, and camera angle
+- For EACH attribute listed above, look at the SPECIFIC image referenced and match that quality exactly
 - The result must be ONE coherent photorealistic architectural photograph
 - Architecture magazine quality — no artifacts, no seams, no CG look
-- If instructions mention lighting/mood from one image, match its exact color temperature and shadow direction
-- If instructions mention materials/floor from one image, match its exact textures and colors`;
+- Everything must blend naturally into one unified image`;
 
       // Parts: left render, right render, source SketchUp
       const parts=[];

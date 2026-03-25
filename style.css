@@ -209,6 +209,15 @@ input.fi{resize:none;}
 .zip-progress{position:fixed;bottom:2rem;right:2rem;background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:0.85rem 1.1rem;font-size:0.82rem;color:var(--text-dim);z-index:200;display:none;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.1);}
 
 /* Master Marinada */
+.mtog{display:flex;align-items:center;padding:0.55rem 0;border-bottom:1px solid var(--border-light);}
+.mtog:last-child{border:none;}
+.mtog-name{flex:1;font-size:0.82rem;font-weight:500;color:var(--text);}
+.mtog-btns{display:flex;gap:0.3rem;}
+.mtog-btn{padding:0.3rem 0.7rem;border-radius:20px;font-size:0.7rem;font-weight:600;cursor:pointer;transition:all 0.2s;border:1.5px solid var(--border);background:var(--white);color:var(--text-light);}
+.mtog-btn:hover{border-color:var(--olive);color:var(--text);}
+.mtog-btn.on-l{background:var(--olive);border-color:var(--olive);color:var(--cream);}
+.mtog-btn.on-r{background:var(--brown);border-color:var(--brown);color:var(--cream);}
+
 .master-btn{
   padding:0.75rem 2rem;font-size:0.95rem;font-weight:700;font-family:var(--serif);font-style:italic;
   background:linear-gradient(135deg,#5c6442,#8a7d3a,#6b7a4a);background-size:200% 200%;
