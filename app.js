@@ -891,6 +891,167 @@ CRITICAL RULES:
 
 
 /* ============================================================
+   LOCAL EDIT (paint mask)
+   ============================================================ */
+const localEdit = {
+  imgSrc: null,
+  imgEl: null,
+  ctx: null,
+  painting: false,
+  brushSize: 30,
+  history: [],
+
+  async pick(){
+    master.picking='_local';
+    const el=$('masterBrowser');
+    el.style.display='flex';
+    $('masterBrowserContent').innerHTML='<div class="skeleton skel-card"></div>';
+    const sessions=await sb.get('/rest/v1/sessions?select=*,scenes(id,name,renders(id,version,image_path,note))&order=created_at.desc');
+    let html='';
+    for(const s of(sessions||[])){
+      const scenesHtml=(s.scenes||[]).map(sc=>{
+        const renders=(sc.renders||[]).filter(r=>validUrl(r.image_path)&&r.version>0);
+        if(!renders.length)return'';
+        return`<div style="margin-left:0.5rem;margin-bottom:0.75rem;"><div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.35rem;">${esc(sc.name)}</div><div style="display:flex;gap:0.5rem;flex-wrap:wrap;">${renders.map(r=>
+          `<div style="width:100px;cursor:pointer;border:2px solid var(--border);border-radius:8px;overflow:hidden;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--olive)'" onmouseout="this.style.borderColor='var(--border)'" onclick="localEdit.selectRender('${esc(r.image_path)}')">
+            <img src="${esc(r.image_path)}" style="width:100%;height:65px;object-fit:cover;display:block;"><div style="font-size:0.6rem;padding:0.2rem 0.3rem;color:var(--text-dim);">v${r.version}</div></div>`
+        ).join('')}</div></div>`;
+      }).join('');
+      if(scenesHtml)html+=`<div style="margin-bottom:1.25rem;"><div style="font-family:var(--serif);font-size:1rem;margin-bottom:0.5rem;">${esc(s.name)}</div>${scenesHtml}</div>`;
+    }
+    $('masterBrowserContent').innerHTML=html||'<div style="color:var(--text-light);padding:2rem;">Žádné rendery</div>';
+  },
+
+  async selectRender(imgPath){
+    master.closeBrowser();
+    localEdit.imgSrc=imgPath;
+    // Show in the pick area
+    const pickEl=$('localEditPick');
+    pickEl.style.padding='0';pickEl.style.borderStyle='solid';
+    pickEl.innerHTML=`<img src="${esc(imgPath)}" style="width:100%;max-height:200px;object-fit:cover;display:block;border-radius:10px;">`;
+    // Setup canvas
+    $('localEditCanvas').style.display='';
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=()=>{
+      localEdit.imgEl=img;
+      const canvas=$('localCanvas');
+      // Scale to max 700px wide
+      const scale=Math.min(700/img.width,1);
+      canvas.width=Math.round(img.width*scale);
+      canvas.height=Math.round(img.height*scale);
+      localEdit.ctx=canvas.getContext('2d');
+      localEdit.ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      localEdit.history=[localEdit.ctx.getImageData(0,0,canvas.width,canvas.height)];
+      // Attach paint events
+      canvas.onmousedown=e=>{localEdit.painting=true;localEdit.paint(e);};
+      canvas.onmousemove=e=>{if(localEdit.painting)localEdit.paint(e);};
+      canvas.onmouseup=()=>{localEdit.painting=false;localEdit.history.push(localEdit.ctx.getImageData(0,0,canvas.width,canvas.height));};
+      canvas.onmouseleave=()=>{if(localEdit.painting){localEdit.painting=false;localEdit.history.push(localEdit.ctx.getImageData(0,0,canvas.width,canvas.height));}};
+      // Touch
+      canvas.ontouchstart=e=>{e.preventDefault();localEdit.painting=true;localEdit.paint(e.touches[0]);};
+      canvas.ontouchmove=e=>{e.preventDefault();if(localEdit.painting)localEdit.paint(e.touches[0]);};
+      canvas.ontouchend=()=>{localEdit.painting=false;localEdit.history.push(localEdit.ctx.getImageData(0,0,canvas.width,canvas.height));};
+    };
+    img.src=imgPath;
+  },
+
+  paint(e){
+    if(!localEdit.ctx)return;
+    const canvas=$('localCanvas');
+    const rect=canvas.getBoundingClientRect();
+    const x=(e.clientX-rect.left)*(canvas.width/rect.width);
+    const y=(e.clientY-rect.top)*(canvas.height/rect.height);
+    localEdit.ctx.beginPath();
+    localEdit.ctx.arc(x,y,localEdit.brushSize/2,0,Math.PI*2);
+    localEdit.ctx.fillStyle='rgba(255,50,50,0.4)';
+    localEdit.ctx.fill();
+  },
+
+  updateBrush(){
+    localEdit.brushSize=parseInt($('localBrush').value);
+    $('localBrushLabel').textContent='Štětec: '+localEdit.brushSize+'px';
+  },
+
+  clear(){
+    if(!localEdit.ctx||!localEdit.imgEl)return;
+    const canvas=$('localCanvas');
+    localEdit.ctx.drawImage(localEdit.imgEl,0,0,canvas.width,canvas.height);
+    localEdit.history=[localEdit.ctx.getImageData(0,0,canvas.width,canvas.height)];
+  },
+
+  undo(){
+    if(!localEdit.ctx||localEdit.history.length<2)return;
+    localEdit.history.pop();
+    localEdit.ctx.putImageData(localEdit.history[localEdit.history.length-1],0,0);
+  },
+
+  async generate(){
+    const prompt=$('localEditPrompt').value.trim();
+    if(!prompt){toast('Napiš co tam má být');return;}
+    if(!localEdit.imgSrc){toast('Vyber render');return;}
+    const btn=$('localEditBtn');btn.disabled=true;btn.textContent='Upravuji...';
+    const loader=$('localEditLoader');
+    loader.innerHTML='<div class="loader-dots"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div></div><div class="loader-track"><div class="loader-bar"></div></div><div class="loader-msg">Měním vyznačenou oblast...</div>';
+    loader.classList.add('on');
+    const st=$('localEditSt');st.textContent='';
+
+    try{
+      // Get the canvas with red paint as data URL
+      const canvas=$('localCanvas');
+      const paintedDataUrl=canvas.toDataURL('image/jpeg',0.9);
+      const {b64,mime}=await sb.toB64(paintedDataUrl);
+
+      const editPrompt=`This image has areas highlighted in semi-transparent RED paint. These red-highlighted areas are the ONLY parts you should change.
+
+INSTRUCTION: Change the red-highlighted area to: ${prompt}
+
+CRITICAL RULES:
+- ONLY modify the area covered by the red/pink highlight
+- Remove the red highlight completely in the output
+- Keep EVERYTHING outside the red area EXACTLY identical — same lighting, materials, colors, perspective
+- The edited area must blend seamlessly with the surrounding image
+- Match the lighting and perspective of the surrounding area
+- Output a clean photorealistic architectural photograph with no red marks`;
+
+      const parts=[
+        {inlineData:{mimeType:mime,data:b64}},
+        {text:editPrompt}
+      ];
+
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GK}`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts}],generationConfig:{responseModalities:['TEXT','IMAGE'],imageConfig:{imageSize:'2K'}}})
+      });
+      const d=await r.json();if(d.error)throw new Error(d.error.message);
+
+      for(const p of d.candidates[0].content.parts){if(p.inlineData){
+        const imgSrc=`data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+        const fname=`local-edit-${Date.now()}.png`;
+        const url=await sb.uploadImg(imgSrc,fname);
+        $('localEditResult').innerHTML=`
+          <img src="${esc(url)}" style="max-width:100%;border:1px solid var(--border);border-radius:var(--r);display:block;">
+          <div class="rmeta" style="margin-top:0.5rem;">Lokální úprava: ${esc(prompt)}</div>
+          <div class="btns" style="margin-top:0.5rem;">
+            <button class="btn btn-o btn-sm" onclick="localEdit.download('${esc(url)}')">Stáhnout</button>
+            <button class="btn btn-o btn-sm" onclick="localEdit.editAgain('${esc(url)}')">Upravit znovu</button>
+          </div>`;
+      }}
+    }catch(e){st.textContent=e.message;st.className='st er';}
+    loader.classList.remove('on');btn.disabled=false;btn.textContent='Upravit oblast';
+  },
+
+  async download(url){
+    try{const r=await fetch(url);const blob=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='marinada-local-edit.png';a.click();URL.revokeObjectURL(a.href);}
+    catch{window.open(url,'_blank');}
+  },
+
+  async editAgain(url){
+    localEdit.selectRender(url);
+  },
+};
+
+/* ============================================================
    SPENDINGS
    ============================================================ */
 const spend = {

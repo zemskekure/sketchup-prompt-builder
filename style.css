@@ -248,4 +248,8 @@ input.fi{resize:none;}
 .mbrow-render img{width:100%;height:65px;object-fit:cover;display:block;}
 .mbrow-render-label{font-size:0.6rem;padding:0.2rem 0.3rem;color:var(--text-dim);}
 
+/* Local edit canvas */
+#localCanvasWrap{user-select:none;-webkit-user-select:none;touch-action:none;}
+#localCanvas{display:block;}
+
 @media(max-width:900px){.duo,.cards{grid-template-columns:1fr;}.shell{padding:0 1.25rem;}.sp-cards{grid-template-columns:1fr;}.steps{overflow-x:auto;}}
