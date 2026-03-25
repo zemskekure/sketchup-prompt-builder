@@ -344,7 +344,6 @@ const ui = {
         <button class="btn btn-r" onclick="localEdit.generate()" id="localEditBtn">Upravit oblast</button>
         <div class="loader" id="localEditLoader" style="margin-top:0.5rem;"></div>
         <div class="st" id="localEditSt"></div>
-        <div id="localEditResult" style="margin-top:1rem;"></div>
       </div>`;
   },
 };
@@ -1094,13 +1093,13 @@ CRITICAL RULES:
           const nextVer=(existing?.[0]?.version||0)+1;
           await sb.post('/rest/v1/renders',{version:nextVer,scene_id:localEdit.sceneId,note,prompt:editPrompt,cost:CPR,parent_id:localEdit.parentDbId,image_path:url},{'Prefer':'return=minimal'});
         }
-        $('localEditResult').innerHTML=`
-          <img src="${esc(url)}" style="max-width:100%;border:1px solid var(--border);border-radius:var(--r);display:block;">
-          <div class="rmeta" style="margin-top:0.5rem;">${esc(note)}</div>
-          <div class="btns" style="margin-top:0.5rem;">
-            <button class="btn btn-o btn-sm" onclick="localEdit.download('${esc(url)}')">Stáhnout</button>
-            <button class="btn btn-o btn-sm" onclick="localEdit.editAgain('${esc(url)}')">Upravit znovu</button>
-          </div>`;
+        // Update the render image in-place (works from both render and iteration views)
+        const mainImg=$('rout')?.querySelector('img')||$('iterDetail')?.querySelector('img');
+        if(mainImg)mainImg.src=url;
+        // Refresh canvas with the new image so user can keep editing
+        localEdit.imgSrc=url;
+        localEdit.setupCanvas(url);
+        $('localEditPrompt').value='';
         toast('Uloženo do iterací scény');
       }}
     }catch(e){st.textContent=e.message;st.className='st er';}
